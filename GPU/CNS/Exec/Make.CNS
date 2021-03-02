@@ -1,4 +1,4 @@
-AMREX_HOME := ../../../../..
+AMREX_HOME := ../../../../../amrex
 TOP := $(AMREX_HOME)/Tutorials/GPU/CNS
 
 EBASE := CNS
