@@ -26,7 +26,7 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@3.7.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACCESS_TOKEN: ${{ secrets.DEPLOY_DOCS }}
+          ACCESS_TOKEN: ${{ secrets.DEPLOY_DOCS_TUTORIALS }}
           REPOSITORY_NAME: AMReX-Codes/AMReX-Codes.github.io
           BRANCH: main # The branch the action should deploy to.
           FOLDER: Docs/build/html # The folder the action should deploy.
