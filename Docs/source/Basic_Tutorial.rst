@@ -59,9 +59,7 @@ want to link local files with the pre-built amrex library (libamrex.a) that has 
 We separate main.cpp from the main_C example into two separate files (main.cpp and 
 test_parameters.cpp), replace MyAmr.H by MyParams.H and add a Fortran file my_func.f90.  
 The GNUmakefile here assumes that you have already built the AMReX library; for instructions on how to do 
-that see the  Building_libamrex_ chapter.
-
-.. Building_libamrex: https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html
+that see the Building_libamrex chapter of the amrex docs here. `here <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html>`_.
 
 **HeatEquation**
 ----------------
