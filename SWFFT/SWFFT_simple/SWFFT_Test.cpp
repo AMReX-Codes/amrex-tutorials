@@ -83,7 +83,7 @@ SWFFT_Test::SWFFT_Test ()
         pp.query("verbose", verbose);
 	pp.query("prob_type", prob_type);
     }
-    
+
     BoxArray ba;
     {
         // Make up a dx that is not 1
@@ -119,7 +119,7 @@ SWFFT_Test::SWFFT_Test ()
         geom.define(domain, &real_box, CoordSys::cartesian, is_periodic.data());
     }
 
-    // Make sure we define both the phi_dft and the phi_spatial with the same DistributionMapping 
+    // Make sure we define both the phi_dft and the phi_spatial with the same DistributionMapping
     DistributionMapping dmap{ba};
 
     // Note that we are defining phi_spatial with NO ghost cells
@@ -165,7 +165,7 @@ SWFFT_Test::computeFFT ()
 
     if (verbose)
     {
-       amrex::Print() << "MAX / MIN VALUE OF DFT " <<  phi_dft.max(0) << " " 
+       amrex::Print() << "MAX / MIN VALUE OF DFT " <<  phi_dft.max(0) << " "
                       <<  phi_dft.min(0) << std::endl;
     }
 
@@ -175,7 +175,7 @@ SWFFT_Test::computeFFT ()
 void
 SWFFT_Test::WritePlotFile (const int step, const amrex::Real time)
 {
-    
+
     MultiFab plotfile;
     Vector<std::string> varNames;
     int nPlot;

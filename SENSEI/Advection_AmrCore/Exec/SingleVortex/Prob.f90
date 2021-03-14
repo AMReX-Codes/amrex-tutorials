@@ -15,7 +15,7 @@ subroutine initdata(level, time, lo, hi, &
 
   integer          :: i,j,k
   real(amrex_real) :: x,y,z,r2
-  
+
   !$omp parallel do private(i,j,k,x,y,z,r2) collapse(2)
   do k=lo(3),hi(3)
      do j=lo(2),hi(2)
@@ -23,7 +23,7 @@ subroutine initdata(level, time, lo, hi, &
         y = prob_lo(2) + (dble(j)+0.5d0) * dx(2)
         do i=lo(1),hi(1)
            x = prob_lo(1) + (dble(i)+0.5d0) * dx(1)
-           
+
            if ( amrex_spacedim .eq. 2) then
               r2 = ((x-0.5d0)**2 + (y-0.75d0)**2) / 0.01d0
               phi(i,j,k) = 1.d0 + exp(-r2)

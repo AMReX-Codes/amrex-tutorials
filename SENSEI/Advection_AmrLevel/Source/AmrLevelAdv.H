@@ -181,7 +181,7 @@ protected:
     static int       do_tracers;
     static std::unique_ptr<amrex::AmrTracerParticleContainer> TracerPC;
 #endif
-};    
+};
 
 //
 // Inlines.

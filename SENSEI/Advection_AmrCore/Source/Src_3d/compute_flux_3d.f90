@@ -42,7 +42,7 @@ contains
     real(amrex_real), intent(  out) :: flxz(fz_lo(1):fz_hi(1),fz_lo(2):fz_hi(2),fz_lo(3):fz_hi(3))
     real(amrex_real), dimension(glo(1):ghi(1),glo(2):ghi(2),glo(3):ghi(3)) :: &
          phix, phix_y, phix_z, phiy, phiy_x, phiy_z, phiz, phiz_x, phiz_y, slope
-         
+
     integer :: i, j, k
     real(amrex_real) :: hdtdx(3), tdtdx(3)
 
@@ -52,7 +52,7 @@ contains
     call slopex(glo, ghi, &
                 phi, ph_lo, ph_hi, &
                 slope, glo, ghi)
-                
+
     ! compute phi on x faces using umac to upwind; ignore transverse terms
     do       k = lo(3)-1, hi(3)+1
        do    j = lo(2)-1, hi(2)+1
@@ -71,7 +71,7 @@ contains
     call slopey(glo, ghi, &
                 phi, ph_lo, ph_hi, &
                 slope, glo, ghi)
-                
+
     ! compute phi on y faces using vmac to upwind; ignore transverse terms
     do       k = lo(3)-1, hi(3)+1
        do    j = lo(2)  , hi(2)+1
@@ -90,7 +90,7 @@ contains
     call slopez(glo, ghi, &
                 phi, ph_lo, ph_hi, &
                 slope, glo, ghi)
-                
+
     ! compute phi on z faces using wmac to upwind; ignore transverse terms
     do       k = lo(3)  , hi(3)+1
        do    j = lo(2)-1, hi(2)+1

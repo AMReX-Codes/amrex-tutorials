@@ -26,5 +26,5 @@ contains
     call amrex_filccn(phi_lo, phi_hi, phi, phi_lo, phi_hi, 1, domlo, domhi, delta, xlo, bc)
 
   end subroutine phifill
-  
+
 end module bc_fill_module

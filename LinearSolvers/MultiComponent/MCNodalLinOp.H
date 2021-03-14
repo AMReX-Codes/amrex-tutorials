@@ -9,12 +9,12 @@
 //              solids.uccs.edu
 //
 // Date:        September 3, 2019
-// 
+//
 // Description: This file defines the multi-component linear operator
 //
 // See also:    ./MCNodalLinOp.cpp (for implementation of class)
 //              ./main.cpp (for execution of the tutorial)
-// 
+//
 
 #ifndef MCNodalLinOp_H
 #define MCNodalLinOp_H
@@ -47,14 +47,14 @@ public :
 protected:
 	// Apply the operator, which is defined to be (in index notation)
 	//    D(phi)_i = coeff_{ij} * Laplacian(phi_j)
-	// where coeff_{ij} is stored as a vector, passed in using 
+	// where coeff_{ij} is stored as a vector, passed in using
 	// the setCoeff function
 	virtual void Fapply (int amrlev, int mglev,MultiFab& out,const MultiFab& in) const override ;
 	// Compute the diagonal of the operator
 	void Diag (int amrlev, int mglev, MultiFab& diag);
 protected:
 	void Diagonal (bool recompute=false);
-	// Run a Gauss-Siedel operation on the solution. 
+	// Run a Gauss-Siedel operation on the solution.
 	// (Note: this implementation uses just Diag and Fapply; no operator-specific code needed)
 	virtual void Fsmooth (int amrlev, int mglev, MultiFab& x,const MultiFab& b) const override;
 	// Divide out by the diagonal.
@@ -100,10 +100,10 @@ private:
 
 	bool m_is_bottom_singular = false;
 	bool m_masks_built = false;
-	
+
 	int ncomp = 1;
 	Vector<Real> coeff = {1.0};
-	
+
 protected:
 	bool m_diagonal_computed = false;
 	amrex::Vector<amrex::Vector<std::unique_ptr<amrex::MultiFab> > > m_diag;

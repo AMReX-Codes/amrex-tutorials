@@ -57,7 +57,7 @@ With a SENSEI module loaded, in a bash shell:
    source sensei_config
 
 
-There are two SENSEI tutorials included in amrex-tutorial, 
+There are two SENSEI tutorials included in amrex-tutorial,
 one for use with ``AmrCore``, and one for ``AmrLevel``.
 
 
@@ -69,7 +69,7 @@ Notably, this example does not use source code from amrex/Src/Amr
 (see the tutorial Advection_AmrLevel).
 
 The directory Exec/SingleVortex in Tutorials/SENSEI/Advection_AmrCore
-includes a makefile and a sample inputs file.  
+includes a makefile and a sample inputs file.
 Plotfiles are generated that can be viewed with amrvis2d / amrvis3d
 (CCSE's native vis / spreadsheet tool, downloadable separately from ccse.lbl.gov)
 or with VisIt.
@@ -145,7 +145,7 @@ This example uses source code from the amrex/Src/Base, Boundary, Amrlevel, and
 Amr directories.
 
 The directories Exec/SingleVortex and Exec/UniformVelocity in Tutorials/SENSEI/Advection_AmrLevel
-each include a makefile and a sample inputs file.  
+each include a makefile and a sample inputs file.
 Plotfiles are generated that can be viewed with amrvis2d / amrvis3d
 (CCSE's native vis / spreadsheet tool, downloadable separately from ccse.lbl.gov)
 or with VisIt.

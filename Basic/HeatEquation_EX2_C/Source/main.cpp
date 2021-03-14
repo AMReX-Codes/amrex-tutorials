@@ -13,9 +13,9 @@ using namespace amrex;
 int main (int argc, char* argv[])
 {
     amrex::Initialize(argc,argv);
-    
+
     main_main();
-    
+
     amrex::Finalize();
     return 0;
 }
@@ -35,7 +35,7 @@ void main_main ()
         // ParmParse is way of reading inputs from the inputs file
         ParmParse pp;
 
-        // We need to get n_cell from the inputs file - this is the number of cells on each side of 
+        // We need to get n_cell from the inputs file - this is the number of cells on each side of
         //   a square (or cubic) domain.
         pp.get("n_cell",n_cell);
 
@@ -50,7 +50,7 @@ void main_main ()
         // Default nsteps to 0, allow us to set it to something else in the inputs file
         nsteps = 10;
         pp.query("nsteps",nsteps);
-	
+
 	// By default, the boundary conditions will be set to periodic, or bc_lo = bc_hi = 0.
 	//Other options in this program include bc_lo, bc_hi = 2 for homogeneous Neumann, or
 	//bc_lo, bc_hi = 3 for external Dirichlet boundary conditions.
@@ -86,12 +86,12 @@ void main_main ()
         geom.define(domain,&real_box,CoordSys::cartesian,is_periodic.data());
     }
 
-    // Nghost = number of ghost cells for each array 
+    // Nghost = number of ghost cells for each array
     int Nghost = 1;
-    
+
     // Ncomp = number of components for each array
     int Ncomp  = 1;
-  
+
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
@@ -178,7 +178,7 @@ void main_main ()
         // new_phi = old_phi + dt * (something)
         advance(phi_old, phi_new, flux, dt, geom, bc);
         time = time + dt;
-        
+
         // Tell the I/O Processor to write out which step we're doing
         amrex::Print() << "Advanced step " << n << "\n";
 

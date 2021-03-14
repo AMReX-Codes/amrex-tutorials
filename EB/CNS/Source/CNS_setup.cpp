@@ -69,7 +69,7 @@ set_y_vel_bc(BCRec& bc, const BCRec& phys_bc)
     const int* hi_bc = phys_bc.hi();
     bc.setLo(0,tang_vel_bc[lo_bc[0]]);
     bc.setHi(0,tang_vel_bc[hi_bc[0]]);
-#if (AMREX_SPACEDIM >= 2)    
+#if (AMREX_SPACEDIM >= 2)
     bc.setLo(1,norm_vel_bc[lo_bc[1]]);
     bc.setHi(1,norm_vel_bc[hi_bc[1]]);
 #endif

@@ -19,9 +19,9 @@ int main (int argc, char* argv[])
 {
     MPI_Comm comm = mui::mpi_split_by_app( argc, argv );
     amrex::Initialize(argc,argv,true,comm);
-    
+
     main_main();
-    
+
     amrex::Finalize();
     return 0;
 }
@@ -42,7 +42,7 @@ void main_main ()
         // ParmParse is way of reading inputs from the inputs file
         ParmParse pp;
 
-        // We need to get n_cell from the inputs file - this is the number of cells on each side of 
+        // We need to get n_cell from the inputs file - this is the number of cells on each side of
         //   a square (or cubic) domain.
         pp.get("n_cell",n_cell);
 
@@ -81,10 +81,10 @@ void main_main ()
         // This defines a Geometry object
         geom.define(domain,&real_box,CoordSys::cartesian,is_periodic.data());
     }
-  
+
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
-    
+
     if (verbosity > 0) {
       Print() << "3D:" << std::endl << ba << std::endl;
       Print() << "3D:" << std::endl << dm << std::endl;
@@ -119,7 +119,7 @@ void main_main ()
     }
 
     // define an interface.  Note on the MUI side, the string "FHD-KMC-coupling" must match
-    // note you could use an uniface2d, however, uniface3d allows targeted receive of data on 3D side, 
+    // note you could use an uniface2d, however, uniface3d allows targeted receive of data on 3D side,
     // because multiple 3D grids contain the same (x,y) coordinates, where (x,y,z) is unique
     mui::uniface3d uniface( "mpi://FHD-side/FHD-KMC-coupling" );
     mui::sampler_exact3d<double> r;
@@ -134,7 +134,7 @@ void main_main ()
 
 	// Pull box from MFIter loop of MultiFab
 	const Box& bx = mfi.validbox();
-	
+
 	// Determine box dimensions & low indices
 	int nx = bx.size()[0];
 	int ny = bx.size()[1];
@@ -142,14 +142,14 @@ void main_main ()
 	int low_x = bx.smallEnd(0);
 	int low_y = bx.smallEnd(1);
 	int low_z = bx.smallEnd(2);
-	
+
 	if (verbosity > 0)
 	  Print() << "3D: nx, ny = " << nx << ", " << ny << std::endl;
-	
+
 	// Declare single index to iterate through each box
 	int local_indx = 0;
 
-	// Integer position vector used as unique identifier in MUI send & receive 
+	// Integer position vector used as unique identifier in MUI send & receive
 	Vector< int > pos;
 
 	// Temporary variable to store data to send
@@ -159,31 +159,31 @@ void main_main ()
         int k = 0;
 
 	if (k >= low_z && k <= low_z+nz) {  // Only send if on correct face
-	  
+
 	  // annouce send span
-	  geometry::box3d send_region( {(double)low_x, (double)low_y, (double)k}, 
+	  geometry::box3d send_region( {(double)low_x, (double)low_y, (double)k},
 				       {(double)(low_x + nx-1), (double)(low_y + ny-1), (double)k} );
-	  printf( "send region for rank %d: %d %d - %d %d\n", myrank, low_x, low_y, 
+	  printf( "send region for rank %d: %d %d - %d %d\n", myrank, low_x, low_y,
 		  low_x+nx, low_y+ny );
 	  uniface.announce_send_span( 0, 1, send_region );
 
 	  for(int j=0; j<ny; j++) {
 	    for(int i=0; i<nx; i++) {
-	      // Send 
+	      // Send
 
 	      // Determine global position in domain
 	      pos = {(int)(low_x+i), (int)(low_y+j)};
 	      point3d loc( (double)pos[0], (double)pos[1], (double)k);
-	      
+
 	      // Access MultiFab values directly (0th component), belonging to MFI grid
 	      // Note: make sure no ghost cells
 	      x_send = phi[mfi].dataPtr(0)[k*nx*ny + local_indx];
 
 	      // Send data point, specifying unique global location as identifier
 	      uniface.push( "channel1", loc, x_send);
-	      
+
 	      if (verbosity > 0) {
-		printf("SENDER %d, step %d: channel1 at (%d,%d) is %f\n", 
+		printf("SENDER %d, step %d: channel1 at (%d,%d) is %f\n",
 		       ParallelDescriptor::MyProc(), n, pos[0], pos[1], x_send);
 	      }
 
@@ -192,7 +192,7 @@ void main_main ()
 	  }
 	}
       }
-    
+
     // Make sure to "commit" pushed data
     uniface.commit( n );
 
@@ -208,10 +208,10 @@ void main_main ()
 
     for ( MFIter mfi(phi); mfi.isValid(); ++mfi )
       {
-	
+
 	// Pull box from MFIter loop of MultiFab
 	const Box& bx = mfi.validbox();
-	
+
 	// Determine box dimensions & low indices
 	int nx = bx.size()[0];
 	int ny = bx.size()[1];
@@ -219,14 +219,14 @@ void main_main ()
 	int low_x = bx.smallEnd(0);
 	int low_y = bx.smallEnd(1);
 	int low_z = bx.smallEnd(2);
-	
+
 	if (verbosity > 0)
 	  Print() << "3D: nx, ny = " << nx << ", " << ny << std::endl;
-	
+
 	// Declare single index to iterate through each box
 	int local_indx = 0;
 
-	// Integer position vector used as unique identifier in MUI send & receive 
+	// Integer position vector used as unique identifier in MUI send & receive
 	Vector< int > pos;
 
 	// Temporary variable to store incoming data
@@ -236,15 +236,15 @@ void main_main ()
         int k = 0;
 
 	if (k >= low_z && k <= low_z+nz) {  // Only recv if on correct face
-	  
+
 	  // announce 'span' for smart sending
-	  geometry::box3d recv_region( {(double)low_x, (double)low_y, (double)k}, 
+	  geometry::box3d recv_region( {(double)low_x, (double)low_y, (double)k},
 				       {(double)(low_x + nx-1), (double)(low_y + ny-1), (double)k} );
 	  uniface.announce_recv_span( 0, 1, recv_region);
-	  
+
 	  for(int j=0; j<ny; j++) {
 	    for(int i=0; i<nx; i++) {
-	      // Receive 
+	      // Receive
 
 	      // Determine global position in domain
 	      pos = {(int)(low_x+i), (int)(low_y+j)};
@@ -252,9 +252,9 @@ void main_main ()
 
 	      // Receive data point, specifying unique global location as identifier
 	      x_recv = uniface.fetch( "channel1", loc, n, r, t );
-	      
+
 	      if (verbosity > 0) {
-		printf("RETURNED %d, step %d: channel2 at (%d,%d) is %f\n", 
+		printf("RETURNED %d, step %d: channel2 at (%d,%d) is %f\n",
 		       myrank, n, pos[0], pos[1], x_recv);
 	      }
 
@@ -267,7 +267,7 @@ void main_main ()
 	  }
 	}
       }
-    
+
     // Clear data after it is received to free-up storage
     uniface.forget( n );
 

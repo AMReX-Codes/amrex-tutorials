@@ -3,18 +3,18 @@
 #include <AMReX_BLFort.H>
 
 #ifdef __cplusplus
-extern "C" 
+extern "C"
 {
 #endif
 
     // these are interfaces to fortran subroutines
 
-    void initdata(const int* level, const amrex_real* time, 
+    void initdata(const int* level, const amrex_real* time,
 		  const int* lo, const int* hi,
 		  BL_FORT_FAB_ARG_3D(state),
 		  const amrex_real* dx, const amrex_real* problo);
 
-    void get_face_velocity(const int* level, const amrex_real* time, 
+    void get_face_velocity(const int* level, const amrex_real* time,
 			   AMREX_D_DECL(BL_FORT_FAB_ARG(xvel),
 				  BL_FORT_FAB_ARG(yvel),
 				  BL_FORT_FAB_ARG(zvel)),
@@ -40,7 +40,7 @@ extern "C"
 
     void phifill (BL_FORT_FAB_ARG_3D(state),
 		  const int* dlo, const int* dhi,
-		  const amrex_real* dx, const amrex_real* glo, 
+		  const amrex_real* dx, const amrex_real* glo,
 		  const amrex_real* time, const int* bc);
 
 #ifdef __cplusplus

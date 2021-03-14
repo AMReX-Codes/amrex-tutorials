@@ -11,7 +11,7 @@ void advance (MultiFab& phi_old,
               Geometry const& geom,
 	      Vector<BCRec> const& BoundaryCondition)
 {
-    
+
     // Fill the ghost cells of each grid from the other grids
     // includes periodic domain boundaries
     phi_old.FillBoundary(geom.periodicity());
@@ -19,12 +19,12 @@ void advance (MultiFab& phi_old,
     FillDomainBoundary(phi_old, geom, BoundaryCondition);
 
     const BCRec& bc = BoundaryCondition[0];
-    
+
     //
     // Note that this simple example is not optimized.
     // The following two MFIter loops could be merged
     // and we do not have to use flux MultiFab.
-    // 
+    //
     // =======================================================
 
     const Real dxinv = geom.InvCellSize(0);
@@ -49,7 +49,7 @@ void advance (MultiFab& phi_old,
 	const Box& bx = mfi.validbox();
 	const Dim3 lo = lbound(bx);
 	const Dim3 hi = ubound(bx);
-	
+
         auto const& phi = phi_old.array(mfi);
 
 	amrex::ParallelFor(xbx,
@@ -58,7 +58,7 @@ void advance (MultiFab& phi_old,
 		compute_flux_x(i,j,k,fluxx,phi,dxinv,
 			       lo.x, hi.x, dom_lo.x, dom_hi.x, bc.lo(0), bc.hi(0));
 	    });
-	
+
 	amrex::ParallelFor(ybx,
 	    [=] AMREX_GPU_DEVICE (int i, int j, int k)
 	    {

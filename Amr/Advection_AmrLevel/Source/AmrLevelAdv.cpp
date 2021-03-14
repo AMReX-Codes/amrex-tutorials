@@ -37,7 +37,7 @@ AmrLevelAdv::AmrLevelAdv (Amr&            papa,
                           const DistributionMapping& dm,
                           Real            time)
     :
-    AmrLevel(papa,lev,level_geom,bl,dm,time) 
+    AmrLevel(papa,lev,level_geom,bl,dm,time)
 {
     flux_reg = 0;
     if (level > 0 && do_reflux)
@@ -47,7 +47,7 @@ AmrLevelAdv::AmrLevelAdv (Amr&            papa,
 //
 //The destructor.
 //
-AmrLevelAdv::~AmrLevelAdv () 
+AmrLevelAdv::~AmrLevelAdv ()
 {
     delete flux_reg;
 }
@@ -67,11 +67,11 @@ AmrLevelAdv::restart (Amr&          papa,
         flux_reg = new FluxRegister(grids,dmap,crse_ratio,level,NUM_STATE);
 }
 
-void 
+void
 AmrLevelAdv::checkPoint (const std::string& dir,
 		         std::ostream&      os,
                          VisMF::How         how,
-                         bool               dump_old) 
+                         bool               dump_old)
 {
   AmrLevel::checkPoint(dir, os, how, dump_old);
 #ifdef AMREX_PARTICLES
@@ -119,10 +119,10 @@ AmrLevelAdv::variableSetUp ()
     for (int i = 0; i < BL_SPACEDIM; ++i) {
 	lo_bc[i] = hi_bc[i] = BCType::int_dir;   // periodic boundaries
     }
-    
+
     BCRec bc(lo_bc, hi_bc);
 
-    desc_lst.setComponent(Phi_Type, 0, "phi", bc, 
+    desc_lst.setComponent(Phi_Type, 0, "phi", bc,
 			  StateDescriptor::BndryFunc(nullfill));
 }
 
@@ -130,7 +130,7 @@ AmrLevelAdv::variableSetUp ()
 //Cleanup data descriptors at end of run.
 //
 void
-AmrLevelAdv::variableCleanUp () 
+AmrLevelAdv::variableCleanUp ()
 {
     desc_lst.clear();
 #ifdef AMREX_PARTICLES
@@ -172,7 +172,7 @@ AmrLevelAdv::initData ()
 #endif
 
     if (verbose) {
-	amrex::Print() << "Done initializing the level " << level 
+	amrex::Print() << "Done initializing the level " << level
                        << " data " << std::endl;
     }
 }
@@ -248,7 +248,7 @@ AmrLevelAdv::advance (Real time,
     //
     FluxRegister *fine    = 0;
     FluxRegister *current = 0;
-    
+
     int finest_level = parent->finestLevel();
 
     if (do_reflux && level < finest_level) {
@@ -315,14 +315,14 @@ AmrLevelAdv::advance (Real time,
                 Umac[i][mfi].copy<RunOn::Host>(uface[i], bxtmp);
 	    }
             advect(&time, bx.loVect(), bx.hiVect(),
-		   BL_TO_FORTRAN_3D(statein), 
+		   BL_TO_FORTRAN_3D(statein),
 		   BL_TO_FORTRAN_3D(stateout),
 		   AMREX_D_DECL(BL_TO_FORTRAN_3D(uface[0]),
 			  BL_TO_FORTRAN_3D(uface[1]),
 			  BL_TO_FORTRAN_3D(uface[2])),
-		   AMREX_D_DECL(BL_TO_FORTRAN_3D(flux[0]), 
-			  BL_TO_FORTRAN_3D(flux[1]), 
-			  BL_TO_FORTRAN_3D(flux[2])), 
+		   AMREX_D_DECL(BL_TO_FORTRAN_3D(flux[0]),
+			  BL_TO_FORTRAN_3D(flux[1]),
+			  BL_TO_FORTRAN_3D(flux[2])),
 		   dx, &dt);
 
 	    if (do_reflux) {
@@ -358,7 +358,7 @@ AmrLevelAdv::advance (Real time,
 Real
 AmrLevelAdv::estTimeStep (Real)
 {
-    // This is just a dummy value to start with 
+    // This is just a dummy value to start with
     Real dt_est  = 1.0e+20;
 
     const Real* dx = geom.CellSize();
@@ -398,10 +398,10 @@ AmrLevelAdv::estTimeStep (Real)
     dt_est *= cfl;
 
     if (verbose) {
-	amrex::Print() << "AmrLevelAdv::estTimeStep at level " << level 
+	amrex::Print() << "AmrLevelAdv::estTimeStep at level " << level
                        << ":  dt_est = " << dt_est << std::endl;
     }
-    
+
     return dt_est;
 }
 
@@ -484,7 +484,7 @@ AmrLevelAdv::computeNewDt (int                   finest_level,
         dt_min[i] = adv_level.estTimeStep(dt_level[i]);
     }
 
-    if (post_regrid_flag == 1) 
+    if (post_regrid_flag == 1)
     {
 	//
 	// Limit dt's by pre-regrid dt
@@ -494,7 +494,7 @@ AmrLevelAdv::computeNewDt (int                   finest_level,
 	    dt_min[i] = std::min(dt_min[i],dt_level[i]);
 	}
     }
-    else 
+    else
     {
 	//
 	// Limit dt's by change_max * old dt
@@ -505,7 +505,7 @@ AmrLevelAdv::computeNewDt (int                   finest_level,
 	    dt_min[i] = std::min(dt_min[i],change_max*dt_level[i]);
 	}
     }
-    
+
     //
     // Find the minimum over all levels
     //
@@ -553,11 +553,11 @@ AmrLevelAdv::post_timestep (int iteration)
     if (level < finest_level)
         avgDown();
 
-#ifdef AMREX_PARTICLES    
+#ifdef AMREX_PARTICLES
     if (TracerPC)
       {
         const int ncycle = parent->nCycle(level);
-	
+
         if (iteration < ncycle || level == 0)
 	  {
             int ngrow = (level == 0) ? 0 : iteration;
@@ -584,7 +584,7 @@ AmrLevelAdv::post_regrid (int lbase, int new_finest) {
 //Do work after a restart().
 //
 void
-AmrLevelAdv::post_restart() 
+AmrLevelAdv::post_restart()
 {
 #ifdef AMREX_PARTICLES
     if (do_tracers && level == 0) {
@@ -633,17 +633,17 @@ AmrLevelAdv::errorEst (TagBoxArray& tags,
 #endif
     {
         Vector<int>  itags;
-	
+
 	for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi)
 	{
 	    const Box&  tilebx  = mfi.tilebox();
 
             TagBox&     tagfab  = tags[mfi];
-	    
+
 	    // We cannot pass tagfab to Fortran becuase it is BaseFab<char>.
 	    // So we are going to get a temporary integer array.
 	    tagfab.get_itags(itags, tilebx);
-	    
+
             // data pointer and index space
 	    int*        tptr    = itags.dataPtr();
 	    const int*  tlo     = tilebx.loVect();
@@ -651,8 +651,8 @@ AmrLevelAdv::errorEst (TagBoxArray& tags,
 
 	    state_error(tptr,  AMREX_ARLIM_3D(tlo), AMREX_ARLIM_3D(thi),
 			BL_TO_FORTRAN_3D(S_new[mfi]),
-			&tagval, &clearval, 
-			AMREX_ARLIM_3D(tilebx.loVect()), AMREX_ARLIM_3D(tilebx.hiVect()), 
+			&tagval, &clearval,
+			AMREX_ARLIM_3D(tilebx.loVect()), AMREX_ARLIM_3D(tilebx.hiVect()),
 			AMREX_ZFILL(dx), AMREX_ZFILL(prob_lo), &time, &level);
 	    //
 	    // Now update the tags in the TagBox.
@@ -671,7 +671,7 @@ AmrLevelAdv::read_params ()
 
     done = true;
 
-    ParmParse pp("adv");   
+    ParmParse pp("adv");
 
     pp.query("v",verbose);
     pp.query("cfl",cfl);
@@ -691,7 +691,7 @@ AmrLevelAdv::read_params ()
 
 #ifdef AMREX_PARTICLES
     pp.query("do_tracers", do_tracers);
-#endif 
+#endif
 
     //
     // read tagging parameters from probin file
@@ -722,15 +722,15 @@ AmrLevelAdv::reflux ()
     const auto strt = amrex::second();
 
     getFluxReg(level+1).Reflux(get_new_data(Phi_Type),1.0,0,0,NUM_STATE,geom);
-    
+
     if (verbose)
     {
         const int IOProc = ParallelDescriptor::IOProcessorNumber();
         auto      end    = amrex::second() - strt;
-	
+
         ParallelDescriptor::ReduceRealMax(end,IOProc);
-	
-        amrex::Print() << "AmrLevelAdv::reflux() at level " << level 
+
+        amrex::Print() << "AmrLevelAdv::reflux() at level " << level
                        << " : time = " << end << std::endl;
     }
 }
@@ -750,7 +750,7 @@ AmrLevelAdv::avgDown (int state_indx)
     AmrLevelAdv& fine_lev = getLevel(level+1);
     MultiFab&  S_fine   = fine_lev.get_new_data(state_indx);
     MultiFab&  S_crse   = get_new_data(state_indx);
-    
+
     amrex::average_down(S_fine,S_crse,
                          fine_lev.geom,geom,
                          0,S_fine.nComp(),parent->refRatio(level));
@@ -763,7 +763,7 @@ AmrLevelAdv::init_particles ()
   if (do_tracers && level == 0)
     {
       BL_ASSERT(TracerPC == nullptr);
-      
+
       TracerPC.reset(new AmrTracerParticleContainer(parent));
 
       AmrTracerParticleContainer::ParticleInitData pdata = {AMREX_D_DECL(0.0, 0.0, 0.0)};

@@ -9,6 +9,7 @@
 
 using namespace amrex;
 
+amrex::LevelBld* getLevelBld ();
 void initialize_EB2 (const Geometry& geom, const int required_level, const int max_level);
 
 int main (int argc, char* argv[])
@@ -26,7 +27,7 @@ int main (int argc, char* argv[])
     Real stop_time;
 
     {
-        ParmParse pp; 
+        ParmParse pp;
 
         max_step  = -1;
         strt_time =  0.0;
@@ -38,7 +39,7 @@ int main (int argc, char* argv[])
     }
 
     if (strt_time < 0.0) {
-        amrex::Abort("MUST SPECIFY a non-negative strt_time"); 
+        amrex::Abort("MUST SPECIFY a non-negative strt_time");
     }
 
     if (max_step < 0 && stop_time < 0.0) {
@@ -48,12 +49,12 @@ int main (int argc, char* argv[])
     {
         timer_init = amrex::second();
 
-	Amr amr;
+	Amr amr(getLevelBld());
         AmrLevel::SetEBSupportLevel(EBSupport::full);
         AmrLevel::SetEBMaxGrowCells(CNS::numGrow(),4,2);
 
         initialize_EB2(amr.Geom(amr.maxLevel()), amr.maxLevel(), amr.maxLevel());
-            
+
 	amr.init(strt_time,stop_time);
 
         timer_init = amrex::second() - timer_init;
@@ -63,21 +64,21 @@ int main (int argc, char* argv[])
 	while ( amr.okToContinue() &&
   	       (amr.levelSteps(0) < max_step || max_step < 0) &&
 	       (amr.cumTime() < stop_time || stop_time < 0.0) )
-	    
+
 	{
 	    //
 	    // Do a coarse timestep.  Recursively calls timeStep()
 	    //
 	    amr.coarseTimeStep(stop_time);
 	}
-	
+
         timer_advance = amrex::second() - timer_advance;
 
 	// Write final checkpoint and plotfile
 	if (amr.stepOfLastCheckPoint() < amr.levelSteps(0)) {
 	    amr.checkPoint();
 	}
-	
+
 	if (amr.stepOfLastPlotFile() < amr.levelSteps(0)) {
 	    amr.writePlotFile();
 	}

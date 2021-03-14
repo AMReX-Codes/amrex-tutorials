@@ -9,15 +9,15 @@
 //              solids.uccs.edu
 //
 // Date:        September 3, 2019
-// 
+//
 // Description: This tutorial demonstrates how to implement a multi-component
 //              nodal linear operator. This tutorial demonstrates the
 //              "CFStrategy::ghostnodes" method for computing the reflux at
-//              the coarse/fine boundary. 
+//              the coarse/fine boundary.
 //
 // See also:    ./MCNodalLinOp.H, ./MCNodalLinOp.cpp
 //              for implementation of the MC linear operator.
-// 
+//
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
@@ -33,7 +33,7 @@ int main (int argc, char* argv[])
 {
     Initialize(argc, argv);
     {
-    
+
     //
     // Read in mesh structure (# amr levels, # nodes)
     // Geometry will be a nnodes x nnodes (x nnodes) grid
@@ -50,7 +50,7 @@ int main (int argc, char* argv[])
         pp.query("nnodes",mesh.nnodes);
         pp.query("max_grid_size",mesh.max_grid_size);
     }
-    
+
     //
     // Read in linear operator parameters:
     //    ncomp = number of components for a MC solve
@@ -91,11 +91,11 @@ int main (int argc, char* argv[])
         pp.query("max_coarsening_level",mlmg.max_coarsening_level);
         pp.query("fixed_iter",mlmg.fixed_iter);
     }
-    
 
-    // 
+
+    //
     // Initialize geometry and grids
-    //    
+    //
     Vector<Geometry> geom;
   	Vector<BoxArray> cgrids, ngrids;
  	Vector<DistributionMapping> dmap;
@@ -109,14 +109,14 @@ int main (int argc, char* argv[])
 	RealBox rb({AMREX_D_DECL(-0.5,-0.5,-0.5)},
 	          {AMREX_D_DECL(0.5,0.5,0.5)});
 	Geometry::Setup(&rb, 0);
-	Box NDomain(IntVect{AMREX_D_DECL(0,0,0)}, 
-                IntVect{AMREX_D_DECL(mesh.nnodes,mesh.nnodes,mesh.nnodes)}, 
+	Box NDomain(IntVect{AMREX_D_DECL(0,0,0)},
+                IntVect{AMREX_D_DECL(mesh.nnodes,mesh.nnodes,mesh.nnodes)},
                 IntVect::TheNodeVector());
 	Box CDomain = convert(NDomain, IntVect::TheCellVector());
 
     //
     // Refine the grid
-    // 
+    //
 	Box domain = CDomain;
  	for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
  		{
@@ -128,8 +128,8 @@ int main (int argc, char* argv[])
 	{
 		cgrids[ilev].define(cdomain);
 		cgrids[ilev].maxSize(mesh.max_grid_size); // TODO
-		cdomain.grow(-mesh.nnodes/4); 
-		cdomain.refine(2); 
+		cdomain.grow(-mesh.nnodes/4);
+		cdomain.refine(2);
 		ngrids[ilev] = cgrids[ilev];
 		ngrids[ilev].convert(IntVect::TheNodeVector());
 	}
@@ -138,20 +138,20 @@ int main (int argc, char* argv[])
     // Initialize the solution and rhs fabs.
     // Initialize the RHS fab to the function:
     //    RHS[0] = x1*(1-x1) * x2(1-x2) * x3(1-x3)
-    //    RHS[1] = 0 
+    //    RHS[1] = 0
     //    RHS[2] = 0 ... etc
     //
     int nghost = 2;
  	for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
  	{
  		dmap   [ilev].define(cgrids[ilev]);
- 		solution[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost); 
+ 		solution[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         solution[ilev].setVal(0.0);
         solution[ilev].setMultiGhost(true);
  		rhs     [ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         rhs     [ilev].setVal(0.0);
         rhs     [ilev].setMultiGhost(true);
-           
+
 	    Box domain(geom[ilev].Domain());
         const Real AMREX_D_DECL( dx = geom[ilev].CellSize()[0],
                                  dy = geom[ilev].CellSize()[1],
@@ -160,40 +160,40 @@ int main (int argc, char* argv[])
                                  miny = geom[ilev].ProbLo()[1],
                                  minz = geom[ilev].ProbLo()[2]);
 	    domain.convert(IntVect::TheNodeVector());
-	    domain.grow(-1); // Shrink domain so we don't operate on any boundaries            
+	    domain.grow(-1); // Shrink domain so we don't operate on any boundaries
         for (MFIter mfi(solution[ilev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     	{
     		Box bx = mfi.tilebox();
     		bx.grow(1);        // Expand to cover first layer of ghost nodes
     		bx = bx & domain;  // Take intersection of box and the problem domain
-		
+
     		Array4<Real> const& RHS  = rhs[ilev].array(mfi);
     		for (int n = 0; n < op.ncomp; n++)
     			ParallelFor (bx,[=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                    
+
                     Real AMREX_D_DECL(x1 = i*dx + minx,
-                                      x2 = j*dy + miny, 
+                                      x2 = j*dy + miny,
                                       x3 = k*dz + minz);
 
                     if (n==0) RHS(i,j,k,n) = AMREX_D_TERM(   (x1-0.5)*(x1+0.5),
                                                            * (x2-0.5)*(x2+0.5),
                                                            * (x3-0.5)*(x3+0.5));
                     else RHS(i,j,k,n) = 0.0;
-    			});         
+    			});
  	    }
         rhs[ilev].FillBoundary(false,true);
     }
-         
-    // 
+
+    //
     // Set params to be passed to MLMG solver
     //
     LPInfo info;
     if (mlmg.agglomeration >= 0)        info.setAgglomeration(mlmg.agglomeration);
     if (mlmg.consolidation >= 0)        info.setConsolidation(mlmg.consolidation);
     if (mlmg.max_coarsening_level >= 0) info.setMaxCoarseningLevel(mlmg.max_coarsening_level);
-    
+
     //
-    // Initialize the MCNodalLinOp linear operator 
+    // Initialize the MCNodalLinOp linear operator
     // (see ./MCNodalLinOp.cpp, ./MCNodalLinOp.H for implementation)
     //
     MCNodalLinOp linop;
@@ -216,7 +216,7 @@ int main (int argc, char* argv[])
     // IMPORTANT! Use the "CFStrategy::ghostnodes" strategy to avoid
     // having to implement a complicated "reflux" routine!
     solver.setCFStrategy(MLMG::CFStrategy::ghostnodes);
-    
+
     //
     // Perform the solve
     //

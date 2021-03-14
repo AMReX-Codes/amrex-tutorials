@@ -129,7 +129,7 @@ void compute_flux_z (int i, int j, int k,
     {
 	fluxz(i,j,k) = (phi(i,j,k)-phi(i,j,k-1)) * dzinv;
     }
-} 
+}
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void update_phi (int i, int j, int k,
