@@ -40,8 +40,8 @@ AmrCoreAdv::AdvancePhiAtLevel (int lev, Real time, Real dt_lev, int /*iteration*
 #endif
     {
         FArrayBox tmpfab;
-	for (MFIter mfi(S_new,TilingIfNotGPU()); mfi.isValid(); ++mfi)
-	{
+        for (MFIter mfi(S_new,TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        {
             AMREX_ASSERT(S_new.nComp() == 1);
 
         // ======== GET FACE VELOCITY =========
@@ -52,7 +52,7 @@ AmrCoreAdv::AdvancePhiAtLevel (int lev, Real time, Real dt_lev, int /*iteration*
 
         // ======== FLUX CALC AND UPDATE =========
 
-	    const Box& bx = mfi.tilebox();
+            const Box& bx = mfi.tilebox();
             const Box& gbx = amrex::grow(bx, 1);
 
             Array4<Real const> statein  = Sborder.const_array(mfi);
@@ -365,17 +365,17 @@ AmrCoreAdv::AdvancePhiAtLevel (int lev, Real time, Real dt_lev, int /*iteration*
     // NOTE: the flux register associated with flux_reg[lev] is associated
     // with the lev/lev-1 interface (and has grid spacing associated with lev-1)
     if (do_reflux) {
-	if (flux_reg[lev+1]) {
-	    for (int i = 0; i < AMREX_SPACEDIM; ++i) {
-	        // update the lev+1/lev flux register (index lev+1)
-	        flux_reg[lev+1]->CrseInit(fluxes[i],i,0,0,fluxes[i].nComp(), -1.0);
-	    }
-	}
-	if (flux_reg[lev]) {
-	    for (int i = 0; i < AMREX_SPACEDIM; ++i) {
-	        // update the lev/lev-1 flux register (index lev)
-		flux_reg[lev]->FineAdd(fluxes[i],i,0,0,fluxes[i].nComp(), 1.0);
-	    }
-	}
+        if (flux_reg[lev+1]) {
+            for (int i = 0; i < AMREX_SPACEDIM; ++i) {
+                // update the lev+1/lev flux register (index lev+1)
+                flux_reg[lev+1]->CrseInit(fluxes[i],i,0,0,fluxes[i].nComp(), -1.0);
+            }
+        }
+        if (flux_reg[lev]) {
+            for (int i = 0; i < AMREX_SPACEDIM; ++i) {
+                // update the lev/lev-1 flux register (index lev)
+                flux_reg[lev]->FineAdd(fluxes[i],i,0,0,fluxes[i].nComp(), 1.0);
+            }
+        }
     }
 }

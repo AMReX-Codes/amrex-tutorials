@@ -77,7 +77,7 @@ int main (int argc, char* argv[])
         // define array of LinOpBCType for domain boundary conditions
         std::array<LinOpBCType,AMREX_SPACEDIM> bc_lo;
         std::array<LinOpBCType,AMREX_SPACEDIM> bc_hi;
-	for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             bc_lo[idim] = LinOpBCType::Periodic;
             bc_hi[idim] = LinOpBCType::Periodic;
         }

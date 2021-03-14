@@ -250,8 +250,8 @@ CellSortedParticleContainer::ReBin()
         const int np = particles.numParticles();
         for(int pindex = 0; pindex < np; ++pindex)
         {
-	    ParticleType& p = particles[pindex];
-	    if (p.idata(IntData::sorted)) continue;
+            ParticleType& p = particles[pindex];
+            if (p.idata(IntData::sorted)) continue;
             const IntVect& iv = this->Index(p, lev);
             p.idata(IntData::sorted) = 1;
             p.idata(IntData::i) = iv[0];
@@ -267,7 +267,7 @@ CellSortedParticleContainer::ReBin()
 
 void
 CellSortedParticleContainer::correctCellVectors(int old_index, int new_index,
-						int grid, const ParticleType& p)
+                                                int grid, const ParticleType& p)
 {
     if (! p.idata(IntData::sorted)) return;
     IntVect iv(p.idata(IntData::i), p.idata(IntData::j), p.idata(IntData::k));
@@ -295,8 +295,8 @@ CellSortedParticleContainer::SumCellVectors()
     {
         const Box& tile_box  = pti.tilebox();
         for (IntVect iv = tile_box.smallEnd(); iv <= tile_box.bigEnd(); tile_box.next(iv))
-	{
-	    np += m_vector_size[pti.index()](iv);
+        {
+            np += m_vector_size[pti.index()](iv);
         }
     }
 

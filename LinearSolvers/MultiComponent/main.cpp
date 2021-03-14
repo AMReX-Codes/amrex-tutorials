@@ -97,42 +97,42 @@ int main (int argc, char* argv[])
     // Initialize geometry and grids
     //
     Vector<Geometry> geom;
-  	Vector<BoxArray> cgrids, ngrids;
- 	Vector<DistributionMapping> dmap;
-  	Vector<MultiFab> solution, rhs;
- 	geom.resize(mesh.nlevels);
- 	cgrids.resize(mesh.nlevels);
- 	ngrids.resize(mesh.nlevels);
- 	dmap.resize(mesh.nlevels);
- 	solution.resize(mesh.nlevels);
- 	rhs.resize(mesh.nlevels);
-	RealBox rb({AMREX_D_DECL(-0.5,-0.5,-0.5)},
-	          {AMREX_D_DECL(0.5,0.5,0.5)});
-	Geometry::Setup(&rb, 0);
-	Box NDomain(IntVect{AMREX_D_DECL(0,0,0)},
+      Vector<BoxArray> cgrids, ngrids;
+     Vector<DistributionMapping> dmap;
+      Vector<MultiFab> solution, rhs;
+     geom.resize(mesh.nlevels);
+     cgrids.resize(mesh.nlevels);
+     ngrids.resize(mesh.nlevels);
+     dmap.resize(mesh.nlevels);
+     solution.resize(mesh.nlevels);
+     rhs.resize(mesh.nlevels);
+    RealBox rb({AMREX_D_DECL(-0.5,-0.5,-0.5)},
+              {AMREX_D_DECL(0.5,0.5,0.5)});
+    Geometry::Setup(&rb, 0);
+    Box NDomain(IntVect{AMREX_D_DECL(0,0,0)},
                 IntVect{AMREX_D_DECL(mesh.nnodes,mesh.nnodes,mesh.nnodes)},
                 IntVect::TheNodeVector());
-	Box CDomain = convert(NDomain, IntVect::TheCellVector());
+    Box CDomain = convert(NDomain, IntVect::TheCellVector());
 
     //
     // Refine the grid
     //
-	Box domain = CDomain;
- 	for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
- 		{
- 			geom[ilev].define(domain);
- 			domain.refine(2);
- 		}
-	Box cdomain = CDomain;
- 	for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
-	{
-		cgrids[ilev].define(cdomain);
-		cgrids[ilev].maxSize(mesh.max_grid_size); // TODO
-		cdomain.grow(-mesh.nnodes/4);
-		cdomain.refine(2);
-		ngrids[ilev] = cgrids[ilev];
-		ngrids[ilev].convert(IntVect::TheNodeVector());
-	}
+    Box domain = CDomain;
+     for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
+         {
+             geom[ilev].define(domain);
+             domain.refine(2);
+         }
+    Box cdomain = CDomain;
+     for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
+    {
+        cgrids[ilev].define(cdomain);
+        cgrids[ilev].maxSize(mesh.max_grid_size); // TODO
+        cdomain.grow(-mesh.nnodes/4);
+        cdomain.refine(2);
+        ngrids[ilev] = cgrids[ilev];
+        ngrids[ilev].convert(IntVect::TheNodeVector());
+    }
 
     //
     // Initialize the solution and rhs fabs.
@@ -142,34 +142,34 @@ int main (int argc, char* argv[])
     //    RHS[2] = 0 ... etc
     //
     int nghost = 2;
- 	for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
- 	{
- 		dmap   [ilev].define(cgrids[ilev]);
- 		solution[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
+     for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
+     {
+         dmap   [ilev].define(cgrids[ilev]);
+         solution[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         solution[ilev].setVal(0.0);
         solution[ilev].setMultiGhost(true);
- 		rhs     [ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
+         rhs     [ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         rhs     [ilev].setVal(0.0);
         rhs     [ilev].setMultiGhost(true);
 
-	    Box domain(geom[ilev].Domain());
+        Box domain(geom[ilev].Domain());
         const Real AMREX_D_DECL( dx = geom[ilev].CellSize()[0],
                                  dy = geom[ilev].CellSize()[1],
                                  dz = geom[ilev].CellSize()[2]);
         const Real AMREX_D_DECL( minx = geom[ilev].ProbLo()[0],
                                  miny = geom[ilev].ProbLo()[1],
                                  minz = geom[ilev].ProbLo()[2]);
-	    domain.convert(IntVect::TheNodeVector());
-	    domain.grow(-1); // Shrink domain so we don't operate on any boundaries
+        domain.convert(IntVect::TheNodeVector());
+        domain.grow(-1); // Shrink domain so we don't operate on any boundaries
         for (MFIter mfi(solution[ilev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    	{
-    		Box bx = mfi.tilebox();
-    		bx.grow(1);        // Expand to cover first layer of ghost nodes
-    		bx = bx & domain;  // Take intersection of box and the problem domain
+        {
+            Box bx = mfi.tilebox();
+            bx.grow(1);        // Expand to cover first layer of ghost nodes
+            bx = bx & domain;  // Take intersection of box and the problem domain
 
-    		Array4<Real> const& RHS  = rhs[ilev].array(mfi);
-    		for (int n = 0; n < op.ncomp; n++)
-    			ParallelFor (bx,[=] AMREX_GPU_DEVICE(int i, int j, int k) {
+            Array4<Real> const& RHS  = rhs[ilev].array(mfi);
+            for (int n = 0; n < op.ncomp; n++)
+                ParallelFor (bx,[=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     Real AMREX_D_DECL(x1 = i*dx + minx,
                                       x2 = j*dy + miny,
@@ -179,8 +179,8 @@ int main (int argc, char* argv[])
                                                            * (x2-0.5)*(x2+0.5),
                                                            * (x3-0.5)*(x3+0.5));
                     else RHS(i,j,k,n) = 0.0;
-    			});
- 	    }
+                });
+         }
         rhs[ilev].FillBoundary(false,true);
     }
 

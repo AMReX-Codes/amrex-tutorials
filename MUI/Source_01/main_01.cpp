@@ -132,65 +132,65 @@ void main_main ()
     for ( MFIter mfi(phi); mfi.isValid(); ++mfi )
       {
 
-	// Pull box from MFIter loop of MultiFab
-	const Box& bx = mfi.validbox();
+        // Pull box from MFIter loop of MultiFab
+        const Box& bx = mfi.validbox();
 
-	// Determine box dimensions & low indices
-	int nx = bx.size()[0];
-	int ny = bx.size()[1];
-	int nz = bx.size()[2];
-	int low_x = bx.smallEnd(0);
-	int low_y = bx.smallEnd(1);
-	int low_z = bx.smallEnd(2);
+        // Determine box dimensions & low indices
+        int nx = bx.size()[0];
+        int ny = bx.size()[1];
+        int nz = bx.size()[2];
+        int low_x = bx.smallEnd(0);
+        int low_y = bx.smallEnd(1);
+        int low_z = bx.smallEnd(2);
 
-	if (verbosity > 0)
-	  Print() << "3D: nx, ny = " << nx << ", " << ny << std::endl;
+        if (verbosity > 0)
+          Print() << "3D: nx, ny = " << nx << ", " << ny << std::endl;
 
-	// Declare single index to iterate through each box
-	int local_indx = 0;
+        // Declare single index to iterate through each box
+        int local_indx = 0;
 
-	// Integer position vector used as unique identifier in MUI send & receive
-	Vector< int > pos;
+        // Integer position vector used as unique identifier in MUI send & receive
+        Vector< int > pos;
 
-	// Temporary variable to store data to send
-	double x_send;
+        // Temporary variable to store data to send
+        double x_send;
 
-	// z-index of slice can be specified, in this case set to "lower most" face
+        // z-index of slice can be specified, in this case set to "lower most" face
         int k = 0;
 
-	if (k >= low_z && k <= low_z+nz) {  // Only send if on correct face
+        if (k >= low_z && k <= low_z+nz) {  // Only send if on correct face
 
-	  // annouce send span
-	  geometry::box3d send_region( {(double)low_x, (double)low_y, (double)k},
-				       {(double)(low_x + nx-1), (double)(low_y + ny-1), (double)k} );
-	  printf( "send region for rank %d: %d %d - %d %d\n", myrank, low_x, low_y,
-		  low_x+nx, low_y+ny );
-	  uniface.announce_send_span( 0, 1, send_region );
+          // annouce send span
+          geometry::box3d send_region( {(double)low_x, (double)low_y, (double)k},
+                                       {(double)(low_x + nx-1), (double)(low_y + ny-1), (double)k} );
+          printf( "send region for rank %d: %d %d - %d %d\n", myrank, low_x, low_y,
+                  low_x+nx, low_y+ny );
+          uniface.announce_send_span( 0, 1, send_region );
 
-	  for(int j=0; j<ny; j++) {
-	    for(int i=0; i<nx; i++) {
-	      // Send
+          for(int j=0; j<ny; j++) {
+            for(int i=0; i<nx; i++) {
+              // Send
 
-	      // Determine global position in domain
-	      pos = {(int)(low_x+i), (int)(low_y+j)};
-	      point3d loc( (double)pos[0], (double)pos[1], (double)k);
+              // Determine global position in domain
+              pos = {(int)(low_x+i), (int)(low_y+j)};
+              point3d loc( (double)pos[0], (double)pos[1], (double)k);
 
-	      // Access MultiFab values directly (0th component), belonging to MFI grid
-	      // Note: make sure no ghost cells
-	      x_send = phi[mfi].dataPtr(0)[k*nx*ny + local_indx];
+              // Access MultiFab values directly (0th component), belonging to MFI grid
+              // Note: make sure no ghost cells
+              x_send = phi[mfi].dataPtr(0)[k*nx*ny + local_indx];
 
-	      // Send data point, specifying unique global location as identifier
-	      uniface.push( "channel1", loc, x_send);
+              // Send data point, specifying unique global location as identifier
+              uniface.push( "channel1", loc, x_send);
 
-	      if (verbosity > 0) {
-		printf("SENDER %d, step %d: channel1 at (%d,%d) is %f\n",
-		       ParallelDescriptor::MyProc(), n, pos[0], pos[1], x_send);
-	      }
+              if (verbosity > 0) {
+                printf("SENDER %d, step %d: channel1 at (%d,%d) is %f\n",
+                       ParallelDescriptor::MyProc(), n, pos[0], pos[1], x_send);
+              }
 
-	      local_indx++;
-	    }
-	  }
-	}
+              local_indx++;
+            }
+          }
+        }
       }
 
     // Make sure to "commit" pushed data
@@ -209,63 +209,63 @@ void main_main ()
     for ( MFIter mfi(phi); mfi.isValid(); ++mfi )
       {
 
-	// Pull box from MFIter loop of MultiFab
-	const Box& bx = mfi.validbox();
+        // Pull box from MFIter loop of MultiFab
+        const Box& bx = mfi.validbox();
 
-	// Determine box dimensions & low indices
-	int nx = bx.size()[0];
-	int ny = bx.size()[1];
-	int nz = bx.size()[2];
-	int low_x = bx.smallEnd(0);
-	int low_y = bx.smallEnd(1);
-	int low_z = bx.smallEnd(2);
+        // Determine box dimensions & low indices
+        int nx = bx.size()[0];
+        int ny = bx.size()[1];
+        int nz = bx.size()[2];
+        int low_x = bx.smallEnd(0);
+        int low_y = bx.smallEnd(1);
+        int low_z = bx.smallEnd(2);
 
-	if (verbosity > 0)
-	  Print() << "3D: nx, ny = " << nx << ", " << ny << std::endl;
+        if (verbosity > 0)
+          Print() << "3D: nx, ny = " << nx << ", " << ny << std::endl;
 
-	// Declare single index to iterate through each box
-	int local_indx = 0;
+        // Declare single index to iterate through each box
+        int local_indx = 0;
 
-	// Integer position vector used as unique identifier in MUI send & receive
-	Vector< int > pos;
+        // Integer position vector used as unique identifier in MUI send & receive
+        Vector< int > pos;
 
-	// Temporary variable to store incoming data
-	double x_recv;
+        // Temporary variable to store incoming data
+        double x_recv;
 
-	// z-index of slice can be specified, in this case set to "lower most" face
+        // z-index of slice can be specified, in this case set to "lower most" face
         int k = 0;
 
-	if (k >= low_z && k <= low_z+nz) {  // Only recv if on correct face
+        if (k >= low_z && k <= low_z+nz) {  // Only recv if on correct face
 
-	  // announce 'span' for smart sending
-	  geometry::box3d recv_region( {(double)low_x, (double)low_y, (double)k},
-				       {(double)(low_x + nx-1), (double)(low_y + ny-1), (double)k} );
-	  uniface.announce_recv_span( 0, 1, recv_region);
+          // announce 'span' for smart sending
+          geometry::box3d recv_region( {(double)low_x, (double)low_y, (double)k},
+                                       {(double)(low_x + nx-1), (double)(low_y + ny-1), (double)k} );
+          uniface.announce_recv_span( 0, 1, recv_region);
 
-	  for(int j=0; j<ny; j++) {
-	    for(int i=0; i<nx; i++) {
-	      // Receive
+          for(int j=0; j<ny; j++) {
+            for(int i=0; i<nx; i++) {
+              // Receive
 
-	      // Determine global position in domain
-	      pos = {(int)(low_x+i), (int)(low_y+j)};
-	      point3d loc( (double)pos[0], (double)pos[1], (double)k);
+              // Determine global position in domain
+              pos = {(int)(low_x+i), (int)(low_y+j)};
+              point3d loc( (double)pos[0], (double)pos[1], (double)k);
 
-	      // Receive data point, specifying unique global location as identifier
-	      x_recv = uniface.fetch( "channel1", loc, n, r, t );
+              // Receive data point, specifying unique global location as identifier
+              x_recv = uniface.fetch( "channel1", loc, n, r, t );
 
-	      if (verbosity > 0) {
-		printf("RETURNED %d, step %d: channel2 at (%d,%d) is %f\n",
-		       myrank, n, pos[0], pos[1], x_recv);
-	      }
+              if (verbosity > 0) {
+                printf("RETURNED %d, step %d: channel2 at (%d,%d) is %f\n",
+                       myrank, n, pos[0], pos[1], x_recv);
+              }
 
-	      // Access MultiFab values directly (0th component), belonging to MFI grid
-	      // Note: make sure no ghost cells
-	      phi[mfi].dataPtr(0)[k*nx*ny + local_indx] = x_recv;
+              // Access MultiFab values directly (0th component), belonging to MFI grid
+              // Note: make sure no ghost cells
+              phi[mfi].dataPtr(0)[k*nx*ny + local_indx] = x_recv;
 
-	      local_indx++;
-	    }
-	  }
-	}
+              local_indx++;
+            }
+          }
+        }
       }
 
     // Clear data after it is received to free-up storage
@@ -276,8 +276,8 @@ void main_main ()
     // Write a plotfile of the current data (plot_int was defined in the inputs file)
     if (plot_int > 0 && n%plot_int == 0)
       {
-	const std::string& pltfile = amrex::Concatenate("plt3D_mod_",n,5);
-	WriteSingleLevelPlotfile(pltfile, phi, {"phi_modified"}, geom, time, n);
+        const std::string& pltfile = amrex::Concatenate("plt3D_mod_",n,5);
+        WriteSingleLevelPlotfile(pltfile, phi, {"phi_modified"}, geom, time, n);
       }
 
     // Call the timer again and compute the maximum difference between the start time and stop time

@@ -53,36 +53,36 @@ void advance (MultiFab& phi_old,
 
     for (int n = 0; n < phi_old.nComp(); ++n)
     {
-	for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-	{
-	    // lo-side BCs
-	    if (bc[n].lo(idim) == BCType::int_dir) {
-		bc_lo[idim] = LinOpBCType::Periodic;
-	    }
-	    else if (bc[n].lo(idim) == BCType::foextrap) {
-		bc_lo[idim] = LinOpBCType::Neumann;
-	    }
-	    else if (bc[n].lo(idim) == BCType::ext_dir) {
-		bc_lo[idim] = LinOpBCType::Dirichlet;
-	    }
-	    else {
-		amrex::Abort("Invalid bc_lo");
-	    }
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
+        {
+            // lo-side BCs
+            if (bc[n].lo(idim) == BCType::int_dir) {
+                bc_lo[idim] = LinOpBCType::Periodic;
+            }
+            else if (bc[n].lo(idim) == BCType::foextrap) {
+                bc_lo[idim] = LinOpBCType::Neumann;
+            }
+            else if (bc[n].lo(idim) == BCType::ext_dir) {
+                bc_lo[idim] = LinOpBCType::Dirichlet;
+            }
+            else {
+                amrex::Abort("Invalid bc_lo");
+            }
 
-	    // hi-side BCs
-	    if (bc[n].hi(idim) == BCType::int_dir) {
-		bc_hi[idim] = LinOpBCType::Periodic;
-	    }
-	    else if (bc[n].hi(idim) == BCType::foextrap) {
-		bc_hi[idim] = LinOpBCType::Neumann;
-	    }
-	    else if (bc[n].hi(idim) == BCType::ext_dir) {
-		bc_hi[idim] = LinOpBCType::Dirichlet;
-	    }
-	    else {
-		amrex::Abort("Invalid bc_hi");
-	    }
-	}
+            // hi-side BCs
+            if (bc[n].hi(idim) == BCType::int_dir) {
+                bc_hi[idim] = LinOpBCType::Periodic;
+            }
+            else if (bc[n].hi(idim) == BCType::foextrap) {
+                bc_hi[idim] = LinOpBCType::Neumann;
+            }
+            else if (bc[n].hi(idim) == BCType::ext_dir) {
+                bc_hi[idim] = LinOpBCType::Dirichlet;
+            }
+            else {
+                amrex::Abort("Invalid bc_hi");
+            }
+        }
     }
 
     // tell the solver what the domain boundary conditions are
@@ -108,10 +108,10 @@ void advance (MultiFab& phi_old,
     std::array<MultiFab,AMREX_SPACEDIM> face_bcoef;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
-	const BoxArray& ba = amrex::convert(acoef.boxArray(),
-					    IntVect::TheDimensionVector(idim));
-	face_bcoef[idim].define(ba, acoef.DistributionMap(), 1, 0);
-	face_bcoef[idim].setVal(dt);
+        const BoxArray& ba = amrex::convert(acoef.boxArray(),
+                                            IntVect::TheDimensionVector(idim));
+        face_bcoef[idim].define(ba, acoef.DistributionMap(), 1, 0);
+        face_bcoef[idim].setVal(dt);
     }
     mlabec.setBCoeffs(0, amrex::GetArrOfConstPtrs(face_bcoef));
 

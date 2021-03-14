@@ -76,7 +76,7 @@ void main_main ()
 
       // This defines the physical box, [-1,1] in each direction.
       RealBox real_box({AMREX_D_DECL(-1.0,-1.0,-1.0)},
-		       {AMREX_D_DECL( 1.0, 1.0,-1.0)});
+                       {AMREX_D_DECL( 1.0, 1.0,-1.0)});
 
       // This defines a Geometry object
       geom.define(domain,&real_box,CoordSys::cartesian,is_periodic.data());
@@ -119,58 +119,58 @@ void main_main ()
     for ( MFIter mfi(phi); mfi.isValid(); ++mfi )
       {
 
-	// Pull box from MFIter loop of MultiFab
-	const Box& bx = mfi.validbox();
+        // Pull box from MFIter loop of MultiFab
+        const Box& bx = mfi.validbox();
 
-	// Determine box dimensions & low indices
-	int nx = bx.size()[0];
-	int ny = bx.size()[1];
-	int low_x = bx.smallEnd(0);
-	int low_y = bx.smallEnd(1);
+        // Determine box dimensions & low indices
+        int nx = bx.size()[0];
+        int ny = bx.size()[1];
+        int low_x = bx.smallEnd(0);
+        int low_y = bx.smallEnd(1);
 
-	if (verbosity > 0)
-	  Print() << "2D: nx, ny = " << nx << ", " << ny << std::endl;
+        if (verbosity > 0)
+          Print() << "2D: nx, ny = " << nx << ", " << ny << std::endl;
 
-	// Declare single index to iterate through each box
-	int local_indx = 0;
+        // Declare single index to iterate through each box
+        int local_indx = 0;
 
-	// Integer position vector used as unique identifier in MUI send & receive
-	Vector< int > pos;
+        // Integer position vector used as unique identifier in MUI send & receive
+        Vector< int > pos;
 
-	// Temporary variable to store incoming data
-	double x_recv;
+        // Temporary variable to store incoming data
+        double x_recv;
 
-	// z-index of slice must be specified for receiving span on 3D side (uniface3d only)
+        // z-index of slice must be specified for receiving span on 3D side (uniface3d only)
         int k = 0;
 
         // announce 'span' for smart sending
-	geometry::box3d recv_region( {(double)low_x, (double)low_y, (double)k},
-				     {(double)(low_x + nx-1), (double)(low_y + ny-1), (double)k} );
-	uniface.announce_recv_span( 0, 1, recv_region);
+        geometry::box3d recv_region( {(double)low_x, (double)low_y, (double)k},
+                                     {(double)(low_x + nx-1), (double)(low_y + ny-1), (double)k} );
+        uniface.announce_recv_span( 0, 1, recv_region);
 
-	for(int j=0; j<ny; j++) {
-	  for(int i=0; i<nx; i++) {
-	    // Receive
+        for(int j=0; j<ny; j++) {
+          for(int i=0; i<nx; i++) {
+            // Receive
 
-	    // Determine global position in domain
-	    pos = {(int)(low_x+i), (int)(low_y+j)};
-	    point3d loc( (double)pos[0], (double)pos[1], (double)k);
+            // Determine global position in domain
+            pos = {(int)(low_x+i), (int)(low_y+j)};
+            point3d loc( (double)pos[0], (double)pos[1], (double)k);
 
-	    // Receive data point, specifying unique global location as identifier
-	    x_recv = uniface.fetch( "channel1", loc, n, r, t );
+            // Receive data point, specifying unique global location as identifier
+            x_recv = uniface.fetch( "channel1", loc, n, r, t );
 
-	    if (verbosity > 0) {
-	      printf("RECEIVER %d, step %d: channel1 at (%d,%d) is %f\n",
-		     myrank, n, pos[0], pos[1], x_recv);
-	    }
+            if (verbosity > 0) {
+              printf("RECEIVER %d, step %d: channel1 at (%d,%d) is %f\n",
+                     myrank, n, pos[0], pos[1], x_recv);
+            }
 
-	    // Access MultiFab values directly (0th component), belonging to MFI grid
-	    // Note: make sure no ghost cells
-	    phi[mfi].dataPtr(0)[local_indx] = x_recv;
+            // Access MultiFab values directly (0th component), belonging to MFI grid
+            // Note: make sure no ghost cells
+            phi[mfi].dataPtr(0)[local_indx] = x_recv;
 
-	    local_indx++;
-	  }
-	}
+            local_indx++;
+          }
+        }
       }
 
     // Clear data after it is received to free-up storage
@@ -181,8 +181,8 @@ void main_main ()
     // Write a plotfile of the current data (plot_int was defined in the inputs file)
     if (plot_int > 0 && n%plot_int == 0)
       {
-	const std::string& pltfile = amrex::Concatenate("plt2D_",n,5);
-	WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, n);
+        const std::string& pltfile = amrex::Concatenate("plt2D_",n,5);
+        WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, n);
       }
 
     // Modify 2D phi: in this case, multiply by a constant
@@ -194,60 +194,60 @@ void main_main ()
     for ( MFIter mfi(phi); mfi.isValid(); ++mfi )
       {
 
-	// Pull box from MFIter loop of MultiFab
-	const Box& bx = mfi.validbox();
+        // Pull box from MFIter loop of MultiFab
+        const Box& bx = mfi.validbox();
 
-	// Determine box dimensions & low indices
-	int nx = bx.size()[0];
-	int ny = bx.size()[1];
-	int low_x = bx.smallEnd(0);
-	int low_y = bx.smallEnd(1);
+        // Determine box dimensions & low indices
+        int nx = bx.size()[0];
+        int ny = bx.size()[1];
+        int low_x = bx.smallEnd(0);
+        int low_y = bx.smallEnd(1);
 
-	if (verbosity > 0)
-	  Print() << "3D: nx, ny = " << nx << ", " << ny << std::endl;
+        if (verbosity > 0)
+          Print() << "3D: nx, ny = " << nx << ", " << ny << std::endl;
 
-	// Declare single index to iterate through each box
-	int local_indx = 0;
+        // Declare single index to iterate through each box
+        int local_indx = 0;
 
-	// Integer position vector used as unique identifier in MUI send & receive
-	Vector< int > pos;
+        // Integer position vector used as unique identifier in MUI send & receive
+        Vector< int > pos;
 
-	// Temporary variable to store data to send
-	double x_send;
+        // Temporary variable to store data to send
+        double x_send;
 
-	// z-index of slice must be specified for receiving span on 3D side (uniface3d only)
+        // z-index of slice must be specified for receiving span on 3D side (uniface3d only)
         int k = 0;
 
-	// annouce send span
-	geometry::box3d send_region( {(double)low_x, (double)low_y, (double)k},
-				     {(double)(low_x + nx-1), (double)(low_y + ny-1), (double)k} );
-	printf( "send region for rank %d: %d %d - %d %d\n", myrank, low_x, low_y,
-		low_x+nx, low_y+ny );
-	uniface.announce_send_span( 0, 1, send_region );
+        // annouce send span
+        geometry::box3d send_region( {(double)low_x, (double)low_y, (double)k},
+                                     {(double)(low_x + nx-1), (double)(low_y + ny-1), (double)k} );
+        printf( "send region for rank %d: %d %d - %d %d\n", myrank, low_x, low_y,
+                low_x+nx, low_y+ny );
+        uniface.announce_send_span( 0, 1, send_region );
 
-	for(int j=0; j<ny; j++) {
-	  for(int i=0; i<nx; i++) {
-	    // Send
+        for(int j=0; j<ny; j++) {
+          for(int i=0; i<nx; i++) {
+            // Send
 
-	    // Determine global position in domain
-	    pos = {(int)(low_x+i), (int)(low_y+j)};
-	    point3d loc( (double)pos[0], (double)pos[1], (double)k);
+            // Determine global position in domain
+            pos = {(int)(low_x+i), (int)(low_y+j)};
+            point3d loc( (double)pos[0], (double)pos[1], (double)k);
 
-	    // Access MultiFab values directly (0th component), belonging to MFI grid
-	    // Note: make sure no ghost cells
-	    x_send = phi[mfi].dataPtr(0)[local_indx];
+            // Access MultiFab values directly (0th component), belonging to MFI grid
+            // Note: make sure no ghost cells
+            x_send = phi[mfi].dataPtr(0)[local_indx];
 
-	    // Send data point, specifying unique global location as identifier
-	    uniface.push( "channel1", loc, x_send);
+            // Send data point, specifying unique global location as identifier
+            uniface.push( "channel1", loc, x_send);
 
-	    if (verbosity > 0) {
-	      printf("SENDER %d, step %d: channel1 at (%d,%d) is %f\n",
-		     ParallelDescriptor::MyProc(), n, pos[0], pos[1], x_send);
-	    }
+            if (verbosity > 0) {
+              printf("SENDER %d, step %d: channel1 at (%d,%d) is %f\n",
+                     ParallelDescriptor::MyProc(), n, pos[0], pos[1], x_send);
+            }
 
-	    local_indx++;
-	  }
-	}
+            local_indx++;
+          }
+        }
       }
 
     // Make sure to "commit" pushed data

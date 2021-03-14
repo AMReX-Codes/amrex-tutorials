@@ -64,9 +64,9 @@ swfft_compute(MultiFab& phi_spatial, MultiFab& phi_dft, Geometry& geom, int verb
         int i = ba[ib].smallEnd(0) / nx;
         int j = ba[ib].smallEnd(1) / ny;
 #if (AMREX_SPACEDIM == 2)
-	int k = 0;
+        int k = 0;
 #elif (AMREX_SPACEDIM == 3)
-	int k = ba[ib].smallEnd(2) / nz;
+        int k = ba[ib].smallEnd(2) / nz;
 #endif
 
         // This would be the "correct" local index if the data wasn't being transformed
@@ -122,7 +122,7 @@ swfft_compute(MultiFab& phi_spatial, MultiFab& phi_dft, Geometry& geom, int verb
 
            complex_t temp(phi_spatial[mfi].dataPtr()[local_indx],0.);
            a[local_indx] = temp;
-      	   local_indx++;
+           local_indx++;
 
          }
        }
@@ -152,7 +152,7 @@ swfft_compute(MultiFab& phi_spatial, MultiFab& phi_dft, Geometry& geom, int verb
 
            // Divide by 2 pi N
            phi_dft[mfi].dataPtr()[local_indx] = fac * std::abs(b[local_indx]);
-       	   local_indx++;
+           local_indx++;
 
          }
         }

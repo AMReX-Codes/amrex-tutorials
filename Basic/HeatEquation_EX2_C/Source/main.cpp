@@ -51,18 +51,18 @@ void main_main ()
         nsteps = 10;
         pp.query("nsteps",nsteps);
 
-	// By default, the boundary conditions will be set to periodic, or bc_lo = bc_hi = 0.
-	//Other options in this program include bc_lo, bc_hi = 2 for homogeneous Neumann, or
-	//bc_lo, bc_hi = 3 for external Dirichlet boundary conditions.
+        // By default, the boundary conditions will be set to periodic, or bc_lo = bc_hi = 0.
+        //Other options in this program include bc_lo, bc_hi = 2 for homogeneous Neumann, or
+        //bc_lo, bc_hi = 3 for external Dirichlet boundary conditions.
         pp.queryarr("bc_lo", bc_lo);
-	pp.queryarr("bc_hi", bc_hi);
+        pp.queryarr("bc_hi", bc_hi);
     }
 
     Vector<int> is_periodic(AMREX_SPACEDIM,0);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-	if (bc_lo[idim] == INT_DIR && bc_hi[idim] == INT_DIR){
-	    is_periodic[idim] = 1;
-	}
+        if (bc_lo[idim] == INT_DIR && bc_hi[idim] == INT_DIR){
+            is_periodic[idim] = 1;
+        }
     }
 
     // make BoxArray and Geometry
@@ -108,40 +108,40 @@ void main_main ()
     Vector<BCRec> bc(phi_old.nComp());
     for (int n = 0; n < phi_old.nComp(); ++n)
     {
-	for(int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-	{
-	    //Internal Dirichlet Periodic Boundary conditions, or bc_lo = bc_hi = 0
-	    if (bc_lo[idim] == INT_DIR) {
-		bc[n].setLo(idim, BCType::int_dir);
-	    }
-	    //First Order Extrapolation for Neumann boundary conditions or bc_lo, bc_hi = 2
-	    else if (bc_lo[idim] == FOEXTRAP) {
-		bc[n].setLo(idim, BCType::foextrap);
-	    }
-	    //External Dirichlet Boundary Condition, or bc_lo, bc_hi = 3
-	    else if(bc_lo[idim] == EXT_DIR) {
-		bc[n].setLo(idim, BCType::ext_dir);
-	    }
-	    else {
-		amrex::Abort("Invalid bc_lo");
-	    }
+        for(int idim = 0; idim < AMREX_SPACEDIM; ++idim)
+        {
+            //Internal Dirichlet Periodic Boundary conditions, or bc_lo = bc_hi = 0
+            if (bc_lo[idim] == INT_DIR) {
+                bc[n].setLo(idim, BCType::int_dir);
+            }
+            //First Order Extrapolation for Neumann boundary conditions or bc_lo, bc_hi = 2
+            else if (bc_lo[idim] == FOEXTRAP) {
+                bc[n].setLo(idim, BCType::foextrap);
+            }
+            //External Dirichlet Boundary Condition, or bc_lo, bc_hi = 3
+            else if(bc_lo[idim] == EXT_DIR) {
+                bc[n].setLo(idim, BCType::ext_dir);
+            }
+            else {
+                amrex::Abort("Invalid bc_lo");
+            }
 
-	    //Internal Dirichlet Periodic Boundary conditions, or bc_lo = bc_hi = 0
-	    if (bc_hi[idim] == INT_DIR) {
-		bc[n].setHi(idim, BCType::int_dir);
-	    }
-	    //First Order Extrapolation for Neumann boundary conditions or bc_lo, bc_hi = 2
-	    else if (bc_hi[idim] == FOEXTRAP) {
-		bc[n].setHi(idim, BCType::foextrap);
-	    }
-	    //External Dirichlet Boundary Condition, or bc_lo, bc_hi = 3
-	    else if(bc_hi[idim] == EXT_DIR) {
-		bc[n].setHi(idim, BCType::ext_dir);
-	    }
-	    else {
-		amrex::Abort("Invalid bc_hi");
-	    }
-	}
+            //Internal Dirichlet Periodic Boundary conditions, or bc_lo = bc_hi = 0
+            if (bc_hi[idim] == INT_DIR) {
+                bc[n].setHi(idim, BCType::int_dir);
+            }
+            //First Order Extrapolation for Neumann boundary conditions or bc_lo, bc_hi = 2
+            else if (bc_hi[idim] == FOEXTRAP) {
+                bc[n].setHi(idim, BCType::foextrap);
+            }
+            //External Dirichlet Boundary Condition, or bc_lo, bc_hi = 3
+            else if(bc_hi[idim] == EXT_DIR) {
+                bc[n].setHi(idim, BCType::ext_dir);
+            }
+            else {
+                amrex::Abort("Invalid bc_hi");
+            }
+        }
     }
 
     Real cfl = 0.9;
@@ -157,7 +157,7 @@ void main_main ()
     if (plot_int > 0)
     {
         int n = 0;
-	const std::string& pltfile = amrex::Concatenate("plt",n,5);
+        const std::string& pltfile = amrex::Concatenate("plt",n,5);
         WriteSingleLevelPlotfile(pltfile, phi_new, {"phi"}, geom, time, 0);
     }
 

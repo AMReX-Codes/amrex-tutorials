@@ -8,8 +8,8 @@ using namespace amrex;
 
 void advance (MultiFab& phi_old,
               MultiFab& phi_new,
-	      Array<MultiFab, AMREX_SPACEDIM>& flux,
-	      Real dt,
+              Array<MultiFab, AMREX_SPACEDIM>& flux,
+              Real dt,
               const Geometry& geom,
               const Vector<BCRec>& bc)
 {

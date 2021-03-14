@@ -66,7 +66,7 @@ void test_cell_sorted(const TestParams& parms)
         particles.MoveParticles();
         particles.Redistribute();
         particles.ReBin();
-	amrex::Print() << " Number of particles in cell vectors is " << particles.SumCellVectors() << std::endl;
+        amrex::Print() << " Number of particles in cell vectors is " << particles.SumCellVectors() << std::endl;
     }
 
     amrex::Print() << "Done. " << std::endl;

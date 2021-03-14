@@ -95,30 +95,30 @@ void main_main ()
 
     for (int step = 0; step < params.nsteps; ++step) {
 
-	Real dt = pc.computeStepSize(cfl);
+        Real dt = pc.computeStepSize(cfl);
 
-	if (step % num_rebuild == 0)
-	{
-	  if (step > 0) pc.RedistributeLocal();
+        if (step % num_rebuild == 0)
+        {
+          if (step > 0) pc.RedistributeLocal();
 
-	  pc.fillNeighbors();
+          pc.fillNeighbors();
 
-	  pc.buildNeighborList(CheckPair());
-	}
-	else
-	{
-	  pc.updateNeighbors();
-	}
+          pc.buildNeighborList(CheckPair());
+        }
+        else
+        {
+          pc.updateNeighbors();
+        }
 
         if (params.print_min_dist)
-	   min_d = std::min(min_d, pc.minDistance());
+           min_d = std::min(min_d, pc.minDistance());
 
         if (params.print_neighbor_list)
            pc.printNeighborList();
 
-	pc.computeForces();
+        pc.computeForces();
 
-	pc.moveParticles(dt);
+        pc.moveParticles(dt);
     }
 
     pc.RedistributeLocal();

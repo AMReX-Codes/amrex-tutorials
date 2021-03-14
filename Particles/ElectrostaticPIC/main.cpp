@@ -324,8 +324,8 @@ void main_main () {
     Vector<Geometry> geom(num_levels);
     geom[0].define(domain,&real_box,CoordSys::cartesian,is_periodic);
     for (int lev = 1; lev < num_levels; ++lev) {
-	geom[lev].define(amrex::refine(geom[lev-1].Domain(), rr[lev-1]),
-			 &real_box, CoordSys::cartesian, is_periodic);
+        geom[lev].define(amrex::refine(geom[lev-1].Domain(), rr[lev-1]),
+                         &real_box, CoordSys::cartesian, is_periodic);
     }
 
     // make grids for each level

@@ -121,24 +121,24 @@ void main_main ()
     Vector<BCRec> bc(phi_old.nComp());
     for (int n = 0; n < phi_old.nComp(); ++n)
       {
-	for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-	  {
-	    // lo-side BCs
-	    if (bc_lo[idim] == INT_DIR) {
-	      bc[n].setLo(idim, BCType::int_dir);  // periodic uses "internal Dirichlet"
-	    }
-	    else {
-	      amrex::Abort("Invalid bc_lo");
-	    }
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
+          {
+            // lo-side BCs
+            if (bc_lo[idim] == INT_DIR) {
+              bc[n].setLo(idim, BCType::int_dir);  // periodic uses "internal Dirichlet"
+            }
+            else {
+              amrex::Abort("Invalid bc_lo");
+            }
 
-	    // hi-side BCs
-	    if (bc_hi[idim] == INT_DIR) {
-	      bc[n].setHi(idim, BCType::int_dir);  // periodic uses "internal Dirichlet"
-	    }
-	    else {
-	      amrex::Abort("Invalid bc_hi");
-	    }
-	  }
+            // hi-side BCs
+            if (bc_hi[idim] == INT_DIR) {
+              bc[n].setHi(idim, BCType::int_dir);  // periodic uses "internal Dirichlet"
+            }
+            else {
+              amrex::Abort("Invalid bc_hi");
+            }
+          }
       }
 
     // Build the flux multifabs
@@ -168,22 +168,22 @@ void main_main ()
     // Write a plotfile of the initial data if plot_int > 0 (plot_int was defined in the inputs file)
     if (plot_int > 0)
       {
-	if (plot_err == 1)  // Turn the solution into the error
-	  {
-	    MultiFab::Copy(phi_old, phi_new, 0, 0, 1, 0);
-	    for ( MFIter mfi(phi_new); mfi.isValid(); ++mfi )
-	      {
-		const Box& bx = mfi.validbox();
-		err_phi(BL_TO_FORTRAN_BOX(bx),
-			BL_TO_FORTRAN_ANYD(phi_new[mfi]),
-			geom.CellSize(), geom.ProbLo(), geom.ProbHi(),&a,&d,&r,&time);
-	      }
-	  }
-	int n = 0;
-	const std::string& pltfile = amrex::Concatenate("plt",n,5);
-	WriteSingleLevelPlotfile(pltfile, phi_new, {"phi"}, geom, time, 0);
-	if (plot_err == 1)  // Put the solution back
-	  MultiFab::Copy(phi_new, phi_old, 0, 0, 1, 0);
+        if (plot_err == 1)  // Turn the solution into the error
+          {
+            MultiFab::Copy(phi_old, phi_new, 0, 0, 1, 0);
+            for ( MFIter mfi(phi_new); mfi.isValid(); ++mfi )
+              {
+                const Box& bx = mfi.validbox();
+                err_phi(BL_TO_FORTRAN_BOX(bx),
+                        BL_TO_FORTRAN_ANYD(phi_new[mfi]),
+                        geom.CellSize(), geom.ProbLo(), geom.ProbHi(),&a,&d,&r,&time);
+              }
+          }
+        int n = 0;
+        const std::string& pltfile = amrex::Concatenate("plt",n,5);
+        WriteSingleLevelPlotfile(pltfile, phi_new, {"phi"}, geom, time, 0);
+        if (plot_err == 1)  // Put the solution back
+          MultiFab::Copy(phi_new, phi_old, 0, 0, 1, 0);
       }
 
   // Set an assorment of solver and parallization options and parameters
@@ -205,23 +205,23 @@ void main_main ()
   for (int n = 0; n < phi_old.nComp(); ++n)
     {
       for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-	{
-	  // lo-side BCs
-	  if (bc[n].lo(idim) == BCType::int_dir) {
-	    mgbc_lo[idim] = LinOpBCType::Periodic;
-	  }
-	  else {
-	    amrex::Abort("Invalid bc_lo");
-	  }
+        {
+          // lo-side BCs
+          if (bc[n].lo(idim) == BCType::int_dir) {
+            mgbc_lo[idim] = LinOpBCType::Periodic;
+          }
+          else {
+            amrex::Abort("Invalid bc_lo");
+          }
 
-	  // hi-side BCs
-	  if (bc[n].hi(idim) == BCType::int_dir) {
-	    mgbc_hi[idim] = LinOpBCType::Periodic;
-	  }
-	  else {
-	    amrex::Abort("Invalid bc_hi");
-	  }
-	}
+          // hi-side BCs
+          if (bc[n].hi(idim) == BCType::int_dir) {
+            mgbc_hi[idim] = LinOpBCType::Periodic;
+          }
+          else {
+            amrex::Abort("Invalid bc_hi");
+          }
+        }
     }
 
   // tell the solver what the domain boundary conditions are
@@ -245,9 +245,9 @@ void main_main ()
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
       {
         const BoxArray& bamg = amrex::convert(acoef.boxArray(),
-  					  IntVect::TheDimensionVector(idim));
+                                            IntVect::TheDimensionVector(idim));
         face_bcoef[idim].define(bamg, acoef.DistributionMap(), 1, 0);
-	face_bcoef[idim].setVal(1.0);
+        face_bcoef[idim].setVal(1.0);
       }
     mlabec.setBCoeffs(0, amrex::GetArrOfConstPtrs(face_bcoef));
 
@@ -278,13 +278,13 @@ void main_main ()
 
 
       if (plot_err == 1)  // Turn the solution into the error
-	for ( MFIter mfi(phi_new); mfi.isValid(); ++mfi )
-	  {
-	    const Box& bx = mfi.validbox();
-	    err_phi(BL_TO_FORTRAN_BOX(bx),
-		    BL_TO_FORTRAN_ANYD(phi_new[mfi]),
-		    geom.CellSize(), geom.ProbLo(), geom.ProbHi(),&a,&d,&r,&time);
-	  }
+        for ( MFIter mfi(phi_new); mfi.isValid(); ++mfi )
+          {
+            const Box& bx = mfi.validbox();
+            err_phi(BL_TO_FORTRAN_BOX(bx),
+                    BL_TO_FORTRAN_ANYD(phi_new[mfi]),
+                    geom.CellSize(), geom.ProbLo(), geom.ProbHi(),&a,&d,&r,&time);
+          }
 
         // Tell the I/O Processor to write out which step we're doing
         amrex::Print() << "Advanced step " << n << "\n";

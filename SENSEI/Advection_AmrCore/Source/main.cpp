@@ -25,19 +25,19 @@ int main(int argc, char* argv[])
         AmrCoreAdv amr_core_adv;
 
         // initialize AMR data
-	amr_core_adv.InitData();
+        amr_core_adv.InitData();
 
         // advance solution to final time
-	amr_core_adv.Evolve();
+        amr_core_adv.Evolve();
 
         // wallclock time
-	Real end_total = amrex::second() - strt_total;
+        Real end_total = amrex::second() - strt_total;
 
         // print wallclock time
-	ParallelDescriptor::ReduceRealMax(end_total ,ParallelDescriptor::IOProcessorNumber());
-	if (amr_core_adv.Verbose()) {
+        ParallelDescriptor::ReduceRealMax(end_total ,ParallelDescriptor::IOProcessorNumber());
+        if (amr_core_adv.Verbose()) {
             amrex::Print() << "\nTotal Time: " << end_total << '\n';
-	}
+        }
     }
 
     // destroy timer for profiling

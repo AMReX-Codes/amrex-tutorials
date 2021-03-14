@@ -18,8 +18,8 @@ struct IntData
     enum {
         sorted,
         i,
-	j,
-	k,
+        j,
+        k,
         ncomps
     };
 };

@@ -106,7 +106,7 @@ swfft_solver(MultiFab& rhs, MultiFab& soln, Geometry& geom, int verbose)
 
            complex_t temp(rhs[mfi].dataPtr()[local_indx],0.);
            a[local_indx] = temp;
-      	   local_indx++;
+           local_indx++;
 
          }
        }
@@ -144,7 +144,7 @@ swfft_solver(MultiFab& rhs, MultiFab& soln, Geometry& geom, int verbose)
 
            a[local_indx] = a[local_indx] / fac;
         }
-	local_indx++;
+        local_indx++;
 
       }
      }
@@ -165,7 +165,7 @@ swfft_solver(MultiFab& rhs, MultiFab& soln, Geometry& geom, int verbose)
 
            // Divide by 2 pi N
            soln[mfi].dataPtr()[local_indx] = fac * std::real(a[local_indx]);
-      	   local_indx++;
+           local_indx++;
 
          }
         }

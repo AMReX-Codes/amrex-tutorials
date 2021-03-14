@@ -139,7 +139,7 @@ void MDParticleContainer::computeForces()
                 Real r2 = dx*dx + dy*dy + dz*dz;
                 r2 = amrex::max(r2, Params::min_r*Params::min_r);
 
-		if (r2 > Params::cutoff*Params::cutoff) return;
+                if (r2 > Params::cutoff*Params::cutoff) return;
 
                 Real r = sqrt(r2);
 
@@ -175,8 +175,8 @@ Real MDParticleContainer::minDistance()
         auto nbor_data = m_neighbor_list[lev][index].data();
         ParticleType* pstruct = aos().dataPtr();
 
-	Gpu::DeviceScalar<Real> min_d_gpu(min_d);
-	Real* pmin_d = min_d_gpu.dataPtr();
+        Gpu::DeviceScalar<Real> min_d_gpu(min_d);
+        Real* pmin_d = min_d_gpu.dataPtr();
 
         AMREX_FOR_1D ( np, i,
         {
@@ -192,13 +192,13 @@ Real MDParticleContainer::minDistance()
                 r2 = amrex::max(r2, Params::min_r*Params::min_r);
                 Real r = sqrt(r2);
 
-		Gpu::Atomic::Min(pmin_d, r);
+                Gpu::Atomic::Min(pmin_d, r);
             }
         });
 
-	Gpu::Device::streamSynchronize();
+        Gpu::Device::streamSynchronize();
 
-	min_d = std::min(min_d, min_d_gpu.dataValue());
+        min_d = std::min(min_d, min_d_gpu.dataValue());
     }
     ParallelDescriptor::ReduceRealMin(min_d, ParallelDescriptor::IOProcessorNumber());
 

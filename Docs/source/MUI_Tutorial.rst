@@ -23,7 +23,7 @@ on a single line within the ``Exec_coupled`` directory. ``N1`` and ``n2`` are th
 The figure below shows one possible grid structure of the 2D (red grid) and 3D (multicolored blocks) setup.
 
 .. |a| image:: ./SWFFT/iface_rect.png
-	       :width: 60%
+               :width: 60%
 
 .. table::
    :align: center
