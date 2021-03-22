@@ -1,0 +1,252 @@
+name: linux
+
+on: [push, pull_request]
+
+jobs:
+
+  # Build all tutorials
+  tutorials_build:
+    name: GNU@7.5 C++14 [tutorials]
+    runs-on: ubuntu-18.04
+    env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: Build & Install
+      run: |
+        mkdir build
+        cd build
+        cmake ..                        \
+            -DCMAKE_BUILD_TYPE=Debug    \
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DAMReX_LINEAR_SOLVERS=ON   \
+            -DAMReX_FORTRAN_INTERFACES=ON \
+            -DAMReX_EB=ON                \
+            -DAMReX_PARTICLES=ON
+        make -j 2
+
+  # Build all tutorials
+  tutorials_cxx20:
+    name: GNU@10.1 C++20 OMP [tutorials]
+    runs-on: ubuntu-18.04
+    env: {CXXFLAGS: "-Werror -Wno-error=deprecated-declarations -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies_gcc10.sh
+    - name: Build & Install
+      run: |
+        mkdir build
+        cd build
+        cmake ..                        \
+            -DCMAKE_BUILD_TYPE=Debug    \
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DAMReX_OMP=ON              \
+            -DAMReX_PARTICLES=ON        \
+            -DAMReX_LINEAR_SOLVERS=ON   \
+            -DAMReX_FORTRAN_INTERFACES=ON \
+            -DAMReX_EB=ON                \
+            -DCMAKE_CXX_STANDARD=20     \
+            -DCMAKE_C_COMPILER=$(which gcc-10)              \
+            -DCMAKE_CXX_COMPILER=$(which g++-10)            \
+            -DCMAKE_Fortran_COMPILER=$(which gfortran-10)
+        make -j 2
+
+  tutorials_clang:
+    name: Clang@6.0 C++14 SP Particles DP Mesh Debug [tutorials]
+    runs-on: ubuntu-18.04
+    env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies_clang6.sh
+    - name: Build & Install
+      run: |
+        mkdir build
+        cd build
+        cmake ..                                      \
+            -DCMAKE_BUILD_TYPE=Debug                  \
+            -DCMAKE_VERBOSE_MAKEFILE=ON               \
+            -DAMReX_MPI=OFF                           \
+            -DAMReX_PARTICLES=ON                      \
+            -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN_INTERFACES=ON \
+            -DAMReX_EB=ON                 \
+            -DAMReX_PRECISION=DOUBLE                  \
+            -DAMReX_PARTICLES_PRECISION=SINGLE        \
+            -DCMAKE_CXX_STANDARD=14                   \
+            -DCMAKE_C_COMPILER=$(which clang)         \
+            -DCMAKE_CXX_COMPILER=$(which clang++)     \
+            -DCMAKE_Fortran_COMPILER=$(which gfortran)
+        make -j 2
+
+  # Build all tutorials w/o MPI
+  tutorials-nonmpi:
+    name: GNU@7.5 C++14 NOMPI [tutorials]
+    runs-on: ubuntu-18.04
+    env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: Build & Install
+      run: |
+        mkdir build
+        cd build
+        cmake ..                        \
+            -DCMAKE_BUILD_TYPE=Debug    \
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DAMReX_MPI=OFF             \
+            -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN_INTERFACES=ON \
+            -DAMReX_EB=ON                 \
+            -DAMReX_PARTICLES=ON
+        make -j 2
+
+  # Build all tutorials
+  tutorials-nofortran:
+    name: GNU@7.5 C++14 w/o Fortran [tutorials]
+    runs-on: ubuntu-18.04
+    env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies_nofortran.sh
+    - name: Build & Install
+      run: |
+        mkdir build
+        cd build
+        cmake ..                        \
+            -DCMAKE_BUILD_TYPE=Debug    \
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_EB=ON                 \
+            -DAMReX_PARTICLES=ON       \
+            -DAMReX_FORTRAN=OFF
+        make -j 2
+
+  # Build all tutorials with CUDA 9.2
+  tutorials-cuda9:
+    name: CUDA@9.2 GNU@6.5.0 C++14 Release [tutorials]
+    runs-on: ubuntu-18.04
+    env: {CXXFLAGS: "-fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies_nvcc9.sh
+    - name: Build & Install
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+        which nvcc || echo "nvcc not in PATH!"
+        mkdir build
+        cd build
+        cmake ..                                           \
+            -DCMAKE_VERBOSE_MAKEFILE=ON                    \
+            -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN_INTERFACES=ON \
+            -DAMReX_EB=ON                 \
+            -DAMReX_PARTICLES=ON                           \
+            -DAMReX_GPU_BACKEND=CUDA                       \
+            -DCMAKE_C_COMPILER=$(which gcc-6)              \
+            -DCMAKE_CXX_COMPILER=$(which g++-6)            \
+            -DCMAKE_CUDA_HOST_COMPILER=$(which g++-6)      \
+            -DCMAKE_Fortran_COMPILER=$(which gfortran-6)   \
+            -DAMReX_CUDA_ARCH=6.0 \
+            -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON
+        make -j 2
+
+  # Build all tutorials with CUDA 11.0.2 (recent supported)
+  tutorials-cuda11:
+    name: CUDA@11.2 GNU@9.3.0 C++17 Release [tutorials]
+    runs-on: ubuntu-20.04
+    env: {CXXFLAGS: "-fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies_nvcc11.sh
+    - name: Build & Install
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+        which nvcc || echo "nvcc not in PATH!"
+
+        cmake -S . -B build                              \
+            -DCMAKE_VERBOSE_MAKEFILE=ON                  \
+            -DAMReX_PARTICLES=ON                         \
+            -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN_INTERFACES=ON \
+            -DAMReX_EB=ON                 \
+            -DAMReX_GPU_BACKEND=CUDA                     \
+            -DCMAKE_C_COMPILER=$(which gcc)              \
+            -DCMAKE_CXX_COMPILER=$(which g++)            \
+            -DCMAKE_CUDA_HOST_COMPILER=$(which g++)      \
+            -DCMAKE_Fortran_COMPILER=$(which gfortran)   \
+            -DCMAKE_CUDA_STANDARD=17                     \
+            -DCMAKE_CXX_STANDARD=17                      \
+            -DAMReX_CUDA_ARCH=8.0                        \
+            -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
+            -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
+
+        cmake --build build -j 2
+
+  tutorials-dpcpp:
+    name: DPCPP GFortran@7.5 C++17 [tutorials]
+    runs-on: ubuntu-20.04
+    env: {CXXFLAGS: "-fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies_dpcpp.sh
+    - name: Build & Install
+      run: |
+        set +e
+        source /opt/intel/oneapi/setvars.sh
+        set -e
+        cmake -S . -B build                                \
+            -DCMAKE_CXX_COMPILER_ID="Clang"                \
+            -DCMAKE_CXX_COMPILER_VERSION=12.0              \
+            -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
+            -DCMAKE_VERBOSE_MAKEFILE=ON                    \
+            -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN_INTERFACES=ON \
+            -DAMReX_EB=ON                 \
+            -DAMReX_PARTICLES=ON                           \
+            -DAMReX_GPU_BACKEND=SYCL                       \
+            -DCMAKE_C_COMPILER=$(which clang)              \
+            -DCMAKE_CXX_COMPILER=$(which dpcpp)            \
+            -DCMAKE_Fortran_COMPILER=$(which gfortran)
+        cmake --build build --parallel 2
+    # note: setting the CXX compiler ID is a work-around for
+    # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
+    # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
+
+  tutorials-hip:
+    name: HIP ROCm@3.8 GFortran@9.3 C++17 [tutorials]
+    runs-on: ubuntu-20.04
+    env: {CXXFLAGS: "-fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies_hip.sh
+    - name: Build & Install
+      run: |
+        source /etc/profile.d/rocm.sh
+        hipcc --version
+        mkdir build
+        cd build
+        cmake ..                                           \
+            -DCMAKE_VERBOSE_MAKEFILE=ON                    \
+            -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN_INTERFACES=ON \
+            -DAMReX_EB=ON                 \
+            -DAMReX_PARTICLES=ON                          \
+            -DAMReX_FORTRAN=ON                            \
+            -DAMReX_LINEAR_SOLVERS=ON                     \
+            -DAMReX_GPU_BACKEND=HIP                       \
+            -DAMReX_AMD_ARCH=gfx900                        \
+            -DCMAKE_C_COMPILER=$(which hipcc)              \
+            -DCMAKE_CXX_COMPILER=$(which hipcc)            \
+            -DCMAKE_Fortran_COMPILER=$(which gfortran)
+        make -j 2
