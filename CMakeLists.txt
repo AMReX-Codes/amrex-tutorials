@@ -24,7 +24,20 @@ FetchContent_Declare(
   GIT_TAG        ${AMReX_GIT_BRANCH}
   )
 
-FetchContent_MakeAvailable(amrex)
+if(NOT ${amrex}_POPULATED)
+  FetchContent_Populate(amrex)
+
+  # Load amrex options here so that they are
+  # available to the entire project
+  include(${amrex_SOURCE_DIR}/Tools/CMake/AMReXOptions.cmake)
+
+  # Bring the populated content into the build
+  add_subdirectory(${amrex_SOURCE_DIR} ${amrex_BINARY_DIR})
+endif()
+
+if (AMReX_FORTRAN)
+   enable_language(Fortran)
+endif ()
 
 #
 # List of subdirectories to search for CMakeLists.
