@@ -21,6 +21,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug    \
             -DCMAKE_VERBOSE_MAKEFILE=ON \
             -DAMReX_LINEAR_SOLVERS=ON   \
+            -DAMReX_FORTRAN=ON          \
             -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON                \
             -DAMReX_PARTICLES=ON
@@ -45,6 +46,7 @@ jobs:
             -DAMReX_OMP=ON              \
             -DAMReX_PARTICLES=ON        \
             -DAMReX_LINEAR_SOLVERS=ON   \
+            -DAMReX_FORTRAN=ON          \
             -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON                \
             -DCMAKE_CXX_STANDARD=20     \
@@ -71,6 +73,7 @@ jobs:
             -DAMReX_MPI=OFF                           \
             -DAMReX_PARTICLES=ON                      \
             -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN=ON          \
             -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON                 \
             -DAMReX_PRECISION=DOUBLE                  \
@@ -99,6 +102,7 @@ jobs:
             -DCMAKE_VERBOSE_MAKEFILE=ON \
             -DAMReX_MPI=OFF             \
             -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN=ON          \
             -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON                 \
             -DAMReX_PARTICLES=ON
@@ -145,6 +149,7 @@ jobs:
         cmake ..                                           \
             -DCMAKE_VERBOSE_MAKEFILE=ON                    \
             -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN=ON          \
             -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON                 \
             -DAMReX_PARTICLES=ON                           \
@@ -176,6 +181,7 @@ jobs:
             -DCMAKE_VERBOSE_MAKEFILE=ON                  \
             -DAMReX_PARTICLES=ON                         \
             -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN=ON          \
             -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON                 \
             -DAMReX_GPU_BACKEND=CUDA                     \
@@ -210,6 +216,7 @@ jobs:
             -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
             -DCMAKE_VERBOSE_MAKEFILE=ON                    \
             -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN=ON          \
             -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON                 \
             -DAMReX_PARTICLES=ON                           \
@@ -239,6 +246,7 @@ jobs:
         cmake ..                                           \
             -DCMAKE_VERBOSE_MAKEFILE=ON                    \
             -DAMReX_LINEAR_SOLVERS=ON     \
+            -DAMReX_FORTRAN=ON          \
             -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON                 \
             -DAMReX_PARTICLES=ON                          \
