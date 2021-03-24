@@ -1,7 +1,8 @@
+#include <AMReX_SPACE.H>
+
 module evolve_module
 
   use amrex_amr_module
-  use amrex_fort_module
   use amrex_octree_module
 
   implicit none

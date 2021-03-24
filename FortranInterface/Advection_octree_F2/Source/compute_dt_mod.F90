@@ -1,7 +1,8 @@
+#include <AMReX_SPACE.H>
+
 module compute_dt_module
 
   use amrex_amr_module
-  use amrex_fort_module
 
   implicit none
   private
