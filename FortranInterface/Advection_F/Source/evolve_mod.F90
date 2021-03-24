@@ -1,6 +1,7 @@
 module evolve_module
 
   use amrex_amr_module
+  use amrex_fort_module
 
   use amrex_particlecontainer_module, only : amrex_particle
 
