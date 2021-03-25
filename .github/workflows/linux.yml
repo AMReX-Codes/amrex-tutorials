@@ -253,7 +253,7 @@ jobs:
             -DAMReX_LINEAR_SOLVERS=ON                     \
             -DAMReX_GPU_BACKEND=HIP                       \
             -DAMReX_AMD_ARCH=gfx900                        \
-            -DCMAKE_C_COMPILER=$(which hipcc)              \
+            -DCMAKE_C_COMPILER=$(which clang)              \
             -DCMAKE_CXX_COMPILER=$(which hipcc)            \
             -DCMAKE_Fortran_COMPILER=$(which gfortran)
         make -j 2
