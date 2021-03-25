@@ -1,5 +1,5 @@
 AMREX_HOME := ../../../../../amrex
-TOP := $(AMREX_HOME)/Tutorials/EB/CNS
+TOP := ../../
 
 EBASE := CNS
 

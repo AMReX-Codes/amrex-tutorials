@@ -22,7 +22,7 @@ void ElectrostaticParticleContainer::InitParticles() {
         p.pos(2) =  0.0;
 #endif
 
-        std::array<Real,PIdx::nattribs> attribs;
+        std::array<ParticleReal,PIdx::nattribs> attribs;
         attribs[PIdx::w]  = 1.0;
         attribs[PIdx::vx] = 0.0;
         attribs[PIdx::vy] = 0.0;

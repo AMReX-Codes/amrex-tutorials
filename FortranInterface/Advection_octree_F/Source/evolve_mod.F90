@@ -1,3 +1,5 @@
+#include <AMReX_SPACE.H>
+
 module evolve_module
 
   use amrex_amr_module

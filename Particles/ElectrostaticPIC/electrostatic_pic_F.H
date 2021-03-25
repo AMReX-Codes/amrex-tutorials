@@ -27,17 +27,17 @@ extern "C"
 #endif
                           const amrex::Real* dx);
 
-    void deposit_cic(const amrex::Real* particles, int ns, int np,
-                     const amrex::Real* weights,
+    void deposit_cic(const amrex::ParticleReal* particles, int ns, int np,
+                     const amrex::ParticleReal* weights,
                      const amrex::Real* charge,
                      amrex::Real* rho, const int* lo, const int* hi,
                      const amrex::Real* plo, const amrex::Real* dx,
                      const int* ng);
 
-    void interpolate_cic_two_levels(const amrex::Real* particles, int ns, int np,
-                                    amrex::Real* Ex_p, amrex::Real* Ey_p,
+    void interpolate_cic_two_levels(const amrex::ParticleReal* particles, int ns, int np,
+                                    amrex::ParticleReal* Ex_p, amrex::ParticleReal* Ey_p,
 #if BL_SPACEDIM == 3
-                                    amrex::Real* Ez_p,
+                                    amrex::ParticleReal* Ez_p,
 #endif
                                     const amrex::Real* Ex, const amrex::Real* Ey,
 #if BL_SPACEDIM == 3
@@ -52,10 +52,10 @@ extern "C"
                                     const int* clo, const int* chi, const amrex::Real* cdx,
                                     const amrex::Real* plo, const int* ng, const int* lev);
 
-    void interpolate_cic(const amrex::Real* particles, int ns, int np,
-                         amrex::Real* Ex_p, amrex::Real* Ey_p,
+    void interpolate_cic(const amrex::ParticleReal* particles, int ns, int np,
+                         amrex::ParticleReal* Ex_p, amrex::ParticleReal* Ey_p,
 #if BL_SPACEDIM == 3
-                                    amrex::Real* Ez_p,
+                         amrex::ParticleReal* Ez_p,
 #endif
                          const amrex::Real* Ex, const amrex::Real* Ey,
 #if BL_SPACEDIM == 3
@@ -65,22 +65,22 @@ extern "C"
                          const amrex::Real* plo, const amrex::Real* dx,
                          const int* ng);
 
-    void push_leapfrog(amrex::Real* particles, int ns, int np,
-                       amrex::Real* vx_p, amrex::Real* vy_p,
+    void push_leapfrog(amrex::ParticleReal* particles, int ns, int np,
+                       amrex::ParticleReal* vx_p, amrex::ParticleReal* vy_p,
 #if BL_SPACEDIM == 3
-                         amrex::Real* vz_p,
+                       amrex::ParticleReal* vz_p,
 #endif
-                       const amrex::Real* Ex_p, const amrex::Real* Ey_p,
+                       const amrex::ParticleReal* Ex_p, const amrex::ParticleReal* Ey_p,
 #if BL_SPACEDIM == 3
-                         const amrex::Real* Ez_p,
+                       const amrex::ParticleReal* Ez_p,
 #endif
                        const amrex::Real* charge, const amrex::Real* mass, const amrex::Real* dt,
                        const amrex::Real* prob_lo, const amrex::Real* prob_hi);
 
-    void push_leapfrog_positions(amrex::Real* particles, int ns, int np,
-                                 amrex::Real* vx_p, amrex::Real* vy_p,
+    void push_leapfrog_positions(amrex::ParticleReal* particles, int ns, int np,
+                                 amrex::ParticleReal* vx_p, amrex::ParticleReal* vy_p,
 #if BL_SPACEDIM == 3
-                                 amrex::Real* vz_p,
+                                 amrex::ParticleReal* vz_p,
 #endif
                                  const amrex::Real* dt, const amrex::Real* prob_lo,
                                  const amrex::Real* prob_hi);
