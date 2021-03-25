@@ -45,4 +45,3 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)
         cmake --build build --parallel 2
 
-        cmake --build build --target install
