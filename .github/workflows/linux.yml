@@ -52,7 +52,7 @@ jobs:
             -DCMAKE_CXX_STANDARD=20     \
             -DCMAKE_C_COMPILER=$(which gcc-10)              \
             -DCMAKE_CXX_COMPILER=$(which g++-10)            \
-            -DCMAKE_Fortran_COMPILER=$(which gfortran-10)
+            -DCMAKE_Fortran_COMPILER=$(which mpif90)
         make -j 2
 
   tutorials_clang:
