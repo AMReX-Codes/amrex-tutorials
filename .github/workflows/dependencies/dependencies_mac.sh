@@ -8,8 +8,7 @@
 set -eu -o pipefail
 
 brew update
-brew install gfortran || true
-which gfortran
+brew reinstall gcc || true
 brew install libomp || true
 brew install open-mpi || true
 brew install ccache || true
