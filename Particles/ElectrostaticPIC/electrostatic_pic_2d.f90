@@ -1,7 +1,7 @@
 module electrostatic_pic_module
 
   use iso_c_binding
-  use amrex_fort_module, only : amrex_real
+  use amrex_fort_module, only : amrex_real, amrex_particle_real
 
   implicit none
 
@@ -143,7 +143,7 @@ contains
                          ng)                                    &
        bind(c,name='deposit_cic')
     integer, value,   intent(in)     :: ns, np
-    real(amrex_real), intent(in)     :: particles(ns,np)
+    real(amrex_particle_real), intent(in)     :: particles(ns,np)
     real(amrex_real), intent(in)     :: weights(np)
     real(amrex_real), intent(in)     :: charge
     integer,          intent(in)     :: lo(2)
@@ -212,7 +212,7 @@ contains
                              lo, hi, plo, dx, ng)    &
        bind(c,name='interpolate_cic')
     integer, value,   intent(in)     :: ns, np
-    real(amrex_real), intent(in)     :: particles(ns,np)
+    real(amrex_particle_real), intent(in)     :: particles(ns,np)
     real(amrex_real), intent(inout)  :: Ex_p(np), Ey_p(np)
     integer,          intent(in)     :: ng
     integer,          intent(in)     :: lo(2)
@@ -265,7 +265,7 @@ contains
                                         plo,  ng,   lev)        &
        bind(c,name='interpolate_cic_two_levels')
     integer, value,   intent(in)     :: ns, np
-    real(amrex_real), intent(in)     :: particles(ns,np)
+    real(amrex_particle_real), intent(in)     :: particles(ns,np)
     real(amrex_real), intent(inout)  :: Ex_p(np), Ey_p(np)
     integer,          intent(in)     :: ng, lev
     integer,          intent(in)     :: lo(2), hi(2)
@@ -372,7 +372,7 @@ contains
                            prob_lo, prob_hi)       &
        bind(c,name='push_leapfrog')
     integer, value,   intent(in)     :: ns, np
-    real(amrex_real), intent(inout)  :: particles(ns,np)
+    real(amrex_particle_real), intent(inout)  :: particles(ns,np)
     real(amrex_real), intent(inout)  :: vx_p(np), vy_p(np)
     real(amrex_real), intent(in)     :: Ex_p(np), Ey_p(np)
     real(amrex_real), intent(in)     :: charge
@@ -438,7 +438,7 @@ contains
                                      prob_lo, prob_hi)       &
        bind(c,name='push_leapfrog_positions')
     integer, value,   intent(in)    :: ns, np
-    real(amrex_real), intent(inout) :: particles(ns,np)
+    real(amrex_particle_real), intent(inout) :: particles(ns,np)
     real(amrex_real), intent(inout) :: vx_p(np), vy_p(np)
     real(amrex_real), intent(in)    :: dt
     real(amrex_real), intent(in)    :: prob_lo(2), prob_hi(2)

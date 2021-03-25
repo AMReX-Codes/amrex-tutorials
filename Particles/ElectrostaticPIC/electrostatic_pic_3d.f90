@@ -1,7 +1,7 @@
 module electrostatic_pic_module
 
   use iso_c_binding
-  use amrex_fort_module, only : amrex_real
+  use amrex_fort_module, only : amrex_real, amrex_particle_real
 
   implicit none
 
@@ -166,7 +166,7 @@ contains
                          ng)                                    &
        bind(c,name='deposit_cic')
     integer, value,   intent(in)     :: ns, np
-    real(amrex_real), intent(in)     :: particles(ns,np)
+    real(amrex_particle_real), intent(in)     :: particles(ns,np)
     real(amrex_real), intent(in)     :: weights(np)
     real(amrex_real), intent(in)     :: charge
     integer,          intent(in)     :: lo(3)
