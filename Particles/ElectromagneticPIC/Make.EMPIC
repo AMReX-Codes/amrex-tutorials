@@ -1,4 +1,4 @@
-EMPIC_DIR  ?= $(AMREX_HOME)/Tutorials/Particles/ElectromagneticPIC
+EMPIC_DIR  ?= ../../../ElectromagneticPIC
 
 TOP := $(EMPIC_DIR)
 
