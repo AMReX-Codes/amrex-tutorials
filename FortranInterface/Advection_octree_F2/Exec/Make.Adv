@@ -1,5 +1,5 @@
 AMREX_HOME ?= ../../../../../amrex
-TOP := $(AMREX_HOME)/Tutorials/FortranInterface/Advection_octree_F2
+TOP := ../../../Advection_octree_F2
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
