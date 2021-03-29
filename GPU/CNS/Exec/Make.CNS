@@ -1,5 +1,5 @@
 AMREX_HOME := ../../../../../amrex
-TOP := $(AMREX_HOME)/Tutorials/GPU/CNS
+TOP := ../../../CNS
 
 EBASE := CNS
 
