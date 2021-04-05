@@ -229,7 +229,7 @@ jobs:
     # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
 
   tutorials-hip:
-    name: HIP ROCm@3.8 GFortran@9.3 C++17 [tutorials]
+    name: HIP ROCm GFortran@9.3 C++17 [tutorials]
     runs-on: ubuntu-20.04
     env: {CXXFLAGS: "-fno-operator-names"}
     steps:
