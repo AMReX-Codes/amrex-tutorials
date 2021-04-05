@@ -15,7 +15,7 @@ void advance (MultiFab& phi_old,
     // Fill the ghost cells of each grid from the other grids
     // includes periodic domain boundaries
     phi_old.FillBoundary(geom.periodicity());
-
+    // There are physical boundaries to fill.
     FillDomainBoundary(phi_old, geom, BoundaryCondition);
 
     const BCRec& bc = BoundaryCondition[0];
@@ -27,13 +27,15 @@ void advance (MultiFab& phi_old,
     //
     // =======================================================
 
-    const Real dxinv = geom.InvCellSize(0);
-    const Real dyinv = geom.InvCellSize(1);
-    const Real dzinv = geom.InvCellSize(2);
+    // This example supports both 2D and 3D.  Otherwise,
+    // we would not need to use AMREX_D_TERM.
+    AMREX_D_TERM(const Real dxinv = geom.InvCellSize(0);,
+                 const Real dyinv = geom.InvCellSize(1);,
+                 const Real dzinv = geom.InvCellSize(2););
 
     const Box& domain_bx = geom.Domain();
-    const Dim3 dom_lo = lbound(domain_bx);
-    const Dim3 dom_hi = ubound(domain_bx);
+    const auto dom_lo = lbound(domain_bx);
+    const auto dom_hi = ubound(domain_bx);
 
     // Compute fluxes one grid at a time
     for ( MFIter mfi(phi_old); mfi.isValid(); ++mfi )
@@ -47,8 +49,8 @@ void advance (MultiFab& phi_old,
         auto const& fluxz = flux[2].array(mfi);
 #endif
         const Box& bx = mfi.validbox();
-        const Dim3 lo = lbound(bx);
-        const Dim3 hi = ubound(bx);
+        const auto lo = lbound(bx);
+        const auto hi = ubound(bx);
 
         auto const& phi = phi_old.array(mfi);
 
@@ -81,14 +83,19 @@ void advance (MultiFab& phi_old,
         const Box& vbx = mfi.validbox();
         auto const& fluxx = flux[0].array(mfi);
         auto const& fluxy = flux[1].array(mfi);
+#if (AMREX_SPACEDIM > 2)
         auto const& fluxz = flux[2].array(mfi);
+#endif
         auto const& phiOld = phi_old.array(mfi);
         auto const& phiNew = phi_new.array(mfi);
 
         amrex::ParallelFor(vbx,
         [=] AMREX_GPU_DEVICE (int i, int j, int k)
         {
-            update_phi(i,j,k,phiOld,phiNew,fluxx,fluxy,fluxz,dt,dxinv,dyinv,dzinv);
+            update_phi(i,j,k,phiOld,phiNew,
+                       AMREX_D_DECL(fluxx,fluxy,fluxz),
+                       dt,
+                       AMREX_D_DECL(dxinv,dyinv,dzinv));
         });
     }
 }
@@ -104,7 +111,8 @@ void init_phi(amrex::MultiFab& phi_new, amrex::Geometry const& geom){
     {
         const Box& vbx = mfi.validbox();
         auto const& phiNew = phi_new.array(mfi);
-        AMREX_FOR_3D ( vbx, i, j, k,
+        amrex::ParallelFor(vbx,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
             init_phi(i,j,k,phiNew,dx,prob_lo);
         });
