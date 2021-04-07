@@ -1,6 +1,7 @@
 #ifndef _AmrLevelAdv_H_
 #define _AmrLevelAdv_H_
 
+#define AMREX_PARTICLES 
 #ifdef AMREX_PARTICLES
 #include <AMReX_AmrParticles.H>
 #endif

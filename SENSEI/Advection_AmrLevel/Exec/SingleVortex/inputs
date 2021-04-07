@@ -44,10 +44,15 @@ adv.do_tracers = 0
 # SENSEI in situ
 # enable and choose the configuration based on your build
 sensei.enabled = 1
-sensei.config = sensei/histogram_python.xml
+#sensei.config = sensei/histogram_python.xml
 #sensei.config = sensei/render_iso_catalyst_2d.xml
 #sensei.config = sensei/write_vtk.xml
 #sensei.config = sensei/render_iso_catalyst_3d.xml
 #sensei.config = sensei/render_iso_libsim_2d.xml
 #sensei.config = sensei/render_iso_libsim_3d.xml
+
+# postHocIO outputs vtk files which ParaView can ingest. 
+# ParaView tools can then be used to generate catalyst python scripts for in situ visualization
+sensei.config = sensei/write_pvd_m.xml
+
 sensei.frequency = 2

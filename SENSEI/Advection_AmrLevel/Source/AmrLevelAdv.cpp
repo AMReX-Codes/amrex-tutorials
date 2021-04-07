@@ -16,7 +16,7 @@ int      AmrLevelAdv::NUM_GROW        = 3;  // number of ghost cells
 
 #ifdef AMREX_PARTICLES
 std::unique_ptr<AmrTracerParticleContainer> AmrLevelAdv::TracerPC =  nullptr;
-int AmrLevelAdv::do_tracers                       =  0;
+int AmrLevelAdv::do_tracers = 0;
 #endif
 
 //

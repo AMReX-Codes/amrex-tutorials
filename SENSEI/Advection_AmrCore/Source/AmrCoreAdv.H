@@ -12,6 +12,7 @@
 #include <AMReX_AmrCore.H>
 #include <AMReX_FluxRegister.H>
 #include <AMReX_BCRec.H>
+#include "AmrCoreAdv_F.H"
 #if defined(BL_USE_SENSEI_INSITU)
 namespace amrex {
 class AmrMeshInSituBridge;

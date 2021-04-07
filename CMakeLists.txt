@@ -8,34 +8,43 @@ project( AMReX-Tutorials
    )
 
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake )
+set(CMAKE_CXX_STANDARD 14)
+enable_language(Fortran)
 
 #
-# Fetch amrex repo
+# enable building against an existing AMReX library.
+# Default to downloading and rebuilding the library here
 #
-set(AMReX_GIT_BRANCH "development" CACHE STRING "The AMReX branch to checkout")
-set(AMReX_INSTALL  "NO" CACHE INTERNAL "Disable install target for amrex")
+option(AMReX_USE_LOCAL_BUILD "Use an existing build of the AMReX library" ON)
 
-include(FetchContent)
-set(FETCHCONTENT_QUIET OFF)  # Verbose ON
+if( NOT ${AMReX_USE_LOCAL_BUILD})
+   #
+   # Fetch amrex repo
+   #
+   set(AMReX_GIT_BRANCH "development" CACHE STRING "The AMReX branch to checkout")
+   set(AMReX_INSTALL  "NO" CACHE INTERNAL "Disable install target for amrex")
 
-FetchContent_Declare(
-  amrex
-  GIT_REPOSITORY https://github.com/AMReX-Codes/amrex.git/
-  GIT_TAG        ${AMReX_GIT_BRANCH}
-  )
+   include(FetchContent)
+   set(FETCHCONTENT_QUIET OFF)  # Verbose ON
 
-if(NOT ${amrex}_POPULATED)
-  FetchContent_Populate(amrex)
+   FetchContent_Declare(
+   amrex
+   GIT_REPOSITORY https://github.com/AMReX-Codes/amrex.git/
+   GIT_TAG        ${AMReX_GIT_BRANCH}
+   )
 
-  list(APPEND CMAKE_MODULE_PATH ${amrex_SOURCE_DIR}/Tools/CMake)
+   if(NOT ${amrex}_POPULATED)
+   FetchContent_Populate(amrex)
 
-  # Load amrex options here so that they are
-  # available to the entire project
-  include(AMReXOptions)
+   list(APPEND CMAKE_MODULE_PATH ${amrex_SOURCE_DIR}/Tools/CMake)
 
-  if (AMReX_FORTRAN)
-     enable_language(Fortran)
-  endif ()
+   # Load amrex options here so that they are
+   # available to the entire project
+   include(AMReXOptions)
+
+   if (AMReX_FORTRAN)
+      enable_language(Fortran)
+   endif ()
 
   if (AMReX_GPU_BACKEND STREQUAL "CUDA")
      enable_language(CUDA)
@@ -46,15 +55,22 @@ if(NOT ${amrex}_POPULATED)
   endif ()
 
 
-  # Bring the populated content into the build
-  add_subdirectory(${amrex_SOURCE_DIR} ${amrex_BINARY_DIR})
+   # Bring the populated content into the build
+   add_subdirectory(${amrex_SOURCE_DIR} ${amrex_BINARY_DIR})
+   endif()
+else()
+   message("using existing AMReX library")
+   find_package(AMReX REQUIRED)
 endif()
-
 #
 # List of subdirectories to search for CMakeLists.
 # For now, we do not include MUI, SDC, SWFFT
 #
 set( AMREX_TUTORIALS_SUBDIRS Amr Basic ForkJoin)
+
+if(AMReX_SENSEI)
+   list(APPEND AMREX_TUTORIALS_SUBDIRS SENSEI)
+endif()
 
 if (AMReX_ASCENT)
    list(APPEND AMREX_TUTORIALS_SUBDIRS Blueprint)

@@ -1,0 +1,7 @@
+ <sensei>
+  <analysis type="PosthocIO" file_name="output" mode="paraview" output_dir="./output_p" enabled="1">
+    <mesh name="particles">
+      <point_arrays> u </point_arrays>
+    </mesh>
+  </analysis>
+ </sensei>
