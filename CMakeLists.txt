@@ -13,9 +13,9 @@ set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake )
 # enable building against an existing AMReX library.
 # Default to downloading and rebuilding the library here
 #
-option(AMReX_USE_LOCAL_BUILD "Use an existing build of the AMReX library" OFF)
+option( AMReX_USE_LOCAL_BUILD "Use an existing build of the AMReX library" OFF )
 
-if( NOT ${AMReX_USE_LOCAL_BUILD})
+if( NOT ${AMReX_USE_LOCAL_BUILD} )
    #
    # Fetch amrex repo
    #
@@ -25,35 +25,31 @@ if( NOT ${AMReX_USE_LOCAL_BUILD})
    include(FetchContent)
    set(FETCHCONTENT_QUIET OFF)  # Verbose ON
 
-   FetchContent_Declare(
-   amrex
-   GIT_REPOSITORY https://github.com/AMReX-Codes/amrex.git/
-   GIT_TAG        ${AMReX_GIT_BRANCH}
-   )
+   FetchContent_Declare( amrex
+       GIT_REPOSITORY https://github.com/AMReX-Codes/amrex.git/
+       GIT_TAG        ${AMReX_GIT_BRANCH}
+       )
 
    if(NOT ${amrex}_POPULATED)
-   FetchContent_Populate(amrex)
+       FetchContent_Populate(amrex)
 
-   list(APPEND CMAKE_MODULE_PATH ${amrex_SOURCE_DIR}/Tools/CMake)
+       list(APPEND CMAKE_MODULE_PATH ${amrex_SOURCE_DIR}/Tools/CMake)
 
-   # Load amrex options here so that they are
-   # available to the entire project
-   include(AMReXOptions)
+       # Load amrex options here so that they are
+       # available to the entire project
+       include(AMReXOptions)
 
-   if (AMReX_FORTRAN)
-      enable_language(Fortran)
-   endif ()
+       if (AMReX_FORTRAN)
+          enable_language(Fortran)
+       endif ()
 
-  if (AMReX_GPU_BACKEND STREQUAL "CUDA")
-     enable_language(CUDA)
-     # AMReX 21.06+ supports CUDA_ARCHITECTURES
-     if (CMAKE_VERSION VERSION_LESS 3.20)
-         include(AMReX_SetupCUDA)
-     endif ()
-  endif ()
+       if (AMReX_GPU_BACKEND STREQUAL "CUDA")
+          enable_language(CUDA)
+          include(AMReX_SetupCUDA)
+       endif ()
 
-   # Bring the populated content into the build
-   add_subdirectory(${amrex_SOURCE_DIR} ${amrex_BINARY_DIR})
+       # Bring the populated content into the build
+       add_subdirectory(${amrex_SOURCE_DIR} ${amrex_BINARY_DIR})
    endif()
 else()
    message(STATUS "Using existing AMReX library")
@@ -64,7 +60,7 @@ else()
    if (AMReX_GPU_BACKEND STREQUAL "CUDA")
       enable_language(CUDA)
       include(AMReX_SetupCUDA)
-   endif ()
+   endif()
 endif()
 
 #
