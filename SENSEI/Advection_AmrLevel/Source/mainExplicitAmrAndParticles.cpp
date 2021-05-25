@@ -1,22 +1,25 @@
-
 #include <new>
 #include <iostream>
 #include <iomanip>
 
+#include <AMReX_Config.H>
 #include <AMReX_Amr.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_AmrLevel.H>
 #include "AmrLevelAdv.H"
 
-#ifdef BL_USE_SENSEI_INSITU
-#ifndef AMREX_USE_SENSEI_AUTO
-#include <AMReX_AmrInSituBridge.H>
-#ifdef AMREX_PARTICLES
+#if !defined(AMREX_PARTICLES) || !defined(AMREX_NO_SENSEI_AMR_INST)
+#error Incompatible AMReX library configuration! This tutorial requires AMREX_PARTICLES and AMREX_NO_SENSEI_AMR_INST
+#endif
 #include <AMReX_AmrParticleMeshInSituBridge.H>
-#endif
-#endif
-#endif
+
+/**
+ * This tutorial illustrates in situ processing in a simulation that computes
+ * both particle and mesh based data. In this case the mesh based data is
+ * provided by an instance of amrex::Amr and the particle based data is
+ * provided by an instance of amrex::ParticleContainer
+ */
 
 amrex::LevelBld* getLevelBld();
 
@@ -26,15 +29,6 @@ int main (int argc, char* argv[])
 {
     amrex::Initialize(argc,argv);
 
-#ifdef BL_USE_SENSEI_INSITU
-#ifndef AMREX_USE_SENSEI_AUTO
-#ifdef AMREX_PARTICLES
-    AmrParticleMeshInSituBridge<3,0,0,0>* insitu_bridge = nullptr;
-#else
-    AmrInSituBridge* insitu_bridge = nullptr;
-#endif
-#endif
-#endif
 
     Real dRunTime1 = amrex::second();
 
@@ -63,62 +57,48 @@ int main (int argc, char* argv[])
     }
 
     {
-#ifdef BL_USE_SENSEI_INSITU
-#ifndef AMREX_USE_SENSEI_AUTO
-#ifdef AMREX_PARTICLES
-        insitu_bridge = new AmrParticleMeshInSituBridge<3,0,0,0>;
+        //
+        // setup for in situ processing
+        //
+        auto *insitu_bridge = new AmrParticleMeshInSituBridge<3,0,0,0>;
+
+        if (insitu_bridge->initialize()) {
+            amrex::ErrorStream() << "Failed to initialize the in situ bridge." << std::endl;
+            amrex::Abort();
+        }
 
         // define specifications for fields on particles
         std::map<std::string, std::vector<int>> rStructs = {{"u", {0,1,2}}};
         std::map<std::string, int> iStructs;
         std::map<std::string, std::vector<int>> rArrays;
         std::map<std::string, int> iArrays;
-#else
-        insitu_bridge = new AmrInSituBridge;
-#endif
-        if (insitu_bridge->initialize())
-        {
-            amrex::ErrorStream() << "AmrInSituBridge::initialize : Failed to initialize." << std::endl;
-            amrex::Abort();
-        }
-#endif
-#endif
 
         Amr amr(getLevelBld());
 
         amr.init(strt_time,stop_time);
 
-        while ( amr.okToContinue() &&
-                 (amr.levelSteps(0) < max_step || max_step < 0) &&
-               (amr.cumTime() < stop_time || stop_time < 0.0) )
-
+        while ( amr.okToContinue() && (amr.levelSteps(0) < max_step || max_step < 0) &&
+              (amr.cumTime() < stop_time || stop_time < 0.0) )
         {
             //
             // Do a coarse timestep.  Recursively calls timeStep()
             //
             amr.coarseTimeStep(stop_time);
-#ifdef BL_USE_SENSEI_INSITU
-#ifndef AMREX_USE_SENSEI_AUTO
-#ifdef AMREX_PARTICLES
+
+            //
+            // Invoke in situ processing
+            //
             auto theTracer = AmrLevelAdv::theTracerPC();
             auto tracers = static_cast<amrex::ParticleContainer<AMREX_SPACEDIM,0,0,0> *>(theTracer);
-            if (insitu_bridge && insitu_bridge->update(&amr, tracers, rStructs))
-            {
-                amrex::ErrorStream() << "AmrParticleMeshInSituBridge::update : Failed to update." << std::endl;
+            if (insitu_bridge->update(&amr, tracers, rStructs)) {
+                amrex::ErrorStream() << "Failed to update the in situ bridge." << std::endl;
                 amrex::Abort();
             }
-#else
-            if (insitu_bridge && insitu_bridge->update(&amr))
-            {
-                amrex::ErrorStream() << "AmrInSituBridge::update : Failed to update." << std::endl;
-                amrex::Abort();
-            }
-#endif
-#endif
-#endif
         }
 
+        //
         // Write final checkpoint and plotfile
+        //
         if (amr.stepOfLastCheckPoint() < amr.levelSteps(0)) {
             amr.checkPoint();
         }
@@ -126,18 +106,15 @@ int main (int argc, char* argv[])
         if (amr.stepOfLastPlotFile() < amr.levelSteps(0)) {
             amr.writePlotFile();
         }
-#ifdef BL_USE_SENSEI_INSITU
-#ifndef AMREX_USE_SENSEI_AUTO
-        if (insitu_bridge)
-        {
-            if (insitu_bridge->finalize())
-                amrex::ErrorStream() << "AmrInSituBridge::finalizeInSitu : Failed to finalize." << std::endl;
 
-            delete insitu_bridge;
-            insitu_bridge = nullptr;
+        //
+        // shut down and clean up in situ processing
+        //
+        if (insitu_bridge->finalize()) {
+            amrex::ErrorStream() << "Failed to finalize the in situ bridge." << std::endl;
         }
-#endif
-#endif
+
+        delete insitu_bridge;
     }
 
     Real dRunTime2 = amrex::second() - dRunTime1;
@@ -145,7 +122,6 @@ int main (int argc, char* argv[])
     ParallelDescriptor::ReduceRealMax(dRunTime2, ParallelDescriptor::IOProcessorNumber());
 
     amrex::Print() << "Run time = " << dRunTime2 << std::endl;
-
 
 
     amrex::Finalize();
