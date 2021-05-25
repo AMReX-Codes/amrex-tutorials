@@ -16,7 +16,7 @@ int      AmrLevelAdv::NUM_GROW        = 3;  // number of ghost cells
 
 #ifdef AMREX_PARTICLES
 std::unique_ptr<AmrTracerParticleContainer> AmrLevelAdv::TracerPC =  nullptr;
-int AmrLevelAdv::do_tracers = 0;
+int AmrLevelAdv::do_tracers           = 0;
 #endif
 
 //
@@ -75,7 +75,7 @@ AmrLevelAdv::checkPoint (const std::string& dir,
 {
   AmrLevel::checkPoint(dir, os, how, dump_old);
 #ifdef AMREX_PARTICLES
-  if (do_tracers and level == 0) {
+  if (do_tracers && level == 0) {
     TracerPC->Checkpoint(dir, "Tracer", true);
   }
 #endif
@@ -93,7 +93,7 @@ AmrLevelAdv::writePlotFile (const std::string& dir,
     AmrLevel::writePlotFile (dir,os,how);
 
 #ifdef AMREX_PARTICLES
-    if (do_tracers and level == 0) {
+    if (do_tracers && level == 0) {
       TracerPC->Checkpoint(dir, "Tracer", true);
     }
 #endif
@@ -286,7 +286,7 @@ AmrLevelAdv::advance (Real time,
       Umac[i].define(ba, dmap, 1, iteration);
     }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
@@ -368,7 +368,7 @@ AmrLevelAdv::estTimeStep (Real)
     const Real cur_time = state[Phi_Type].curTime();
     const MultiFab& S_new = get_new_data(Phi_Type);
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel reduction(min:dt_est)
 #endif
     {
@@ -600,7 +600,7 @@ void
 AmrLevelAdv::post_restart()
 {
 #ifdef AMREX_PARTICLES
-    if (do_tracers and level == 0) {
+    if (do_tracers && level == 0) {
       BL_ASSERT(TracerPC == 0);
       TracerPC.reset(new AmrTracerParticleContainer(parent));
       TracerPC->Restart(parent->theRestartFile(), "Tracer");
@@ -646,7 +646,7 @@ AmrLevelAdv::errorEst (TagBoxArray& tags,
 
     MultiFab& S_new = get_new_data(Phi_Type);
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
@@ -780,7 +780,7 @@ AmrLevelAdv::avgDown (int state_indx)
 void
 AmrLevelAdv::init_particles ()
 {
-  if (do_tracers and level == 0)
+  if (do_tracers && level == 0)
     {
       BL_ASSERT(TracerPC == nullptr);
 
