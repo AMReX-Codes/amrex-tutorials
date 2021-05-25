@@ -8,8 +8,6 @@ project( AMReX-Tutorials
    )
 
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake )
-set(CMAKE_CXX_STANDARD 14)
-enable_language(Fortran)
 
 #
 # enable building against an existing AMReX library.
@@ -54,21 +52,28 @@ if( NOT ${AMReX_USE_LOCAL_BUILD})
      endif ()
   endif ()
 
-
    # Bring the populated content into the build
    add_subdirectory(${amrex_SOURCE_DIR} ${amrex_BINARY_DIR})
    endif()
 else()
-   message("using existing AMReX library")
+   message(STATUS "Using existing AMReX library")
+
+   enable_language(Fortran)
    find_package(AMReX REQUIRED)
+
+   if (AMReX_GPU_BACKEND STREQUAL "CUDA")
+      enable_language(CUDA)
+      include(AMReX_SetupCUDA)
+   endif ()
 endif()
+
 #
 # List of subdirectories to search for CMakeLists.
 # For now, we do not include MUI, SDC, SWFFT
 #
 set( AMREX_TUTORIALS_SUBDIRS Amr Basic ForkJoin)
 
-if(AMReX_SENSEI)
+if (AMReX_SENSEI)
    list(APPEND AMREX_TUTORIALS_SUBDIRS SENSEI)
 endif()
 
