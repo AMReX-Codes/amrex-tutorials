@@ -5,20 +5,20 @@ stop_time = 2.0
 # PROBLEM SIZE & GEOMETRY
 geometry.is_periodic =  1  1  1
 geometry.coord_sys   =  0       # 0 => cart
-geometry.prob_lo     =  0.0  0.0  0.0 
+geometry.prob_lo     =  0.0  0.0  0.0
 geometry.prob_hi     =  1.0  1.0  1.0
 amr.n_cell           =  64   64   64
 
 # TIME STEP CONTROL
 adv.cfl            = 0.7     # cfl number for hyperbolic system
                              # In this test problem, the velocity is
-			     # time-dependent.  We could use 0.9 in
-			     # the 3D test, but need to use 0.7 in 2D
-			     # to satisfy CFL condition.
+                             # time-dependent.  We could use 0.9 in
+                             # the 3D test, but need to use 0.7 in 2D
+                             # to satisfy CFL condition.
 # VERBOSITY
 adv.v              = 1       # verbosity in Adv
 amr.v              = 1       # verbosity in Amr
-#amr.grid_log         = grdlog  # name of grid logging file
+#amr.grid_log      = grdlog  # name of grid logging file
 
 # REFINEMENT / REGRIDDING
 amr.max_level       = 2       # maximum level number allowed
@@ -46,10 +46,8 @@ adv.do_tracers = 1
 # SENSEI in situ
 # enable and choose the configuration based on your build
 sensei.enabled = 1
-sensei.frequency = 1
-
-# postHocIO outputs vtk files which ParaView can ingest. 
-# ParaView tools can then be used to generate catalyst python scripts for in situ visualization
+sensei.frequency = 3
+#sensei.config = sensei/render_particles_catalyst_3d.xml
 #sensei.config = sensei/write_pvd_m.xml
 #sensei.config = sensei/write_pvd_p.xml
-sensei.config = sensei/write_pvd_pm.xml
+#sensei.config = sensei/write_pvd_pm.xml
