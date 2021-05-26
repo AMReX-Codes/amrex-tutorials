@@ -1,8 +1,11 @@
 #ifndef _AmrLevelAdv_H_
 #define _AmrLevelAdv_H_
 
+#include <AMReX_Config.H>
+
 #ifdef AMREX_PARTICLES
 #include <AMReX_AmrParticles.H>
+#include <AMReX_TracerParticles.H>
 #endif
 
 #include <AMReX_AmrLevel.H>
@@ -11,7 +14,7 @@
 #include <memory>
 #include <iostream>
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #include <omp.h>
 #endif
 
