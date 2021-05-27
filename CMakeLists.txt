@@ -10,15 +10,19 @@ project( AMReX-Tutorials
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake )
 
 #
-# enable building against an existing AMReX library.
-# Default to downloading and rebuilding the library here
+# Fetch and compile AMReX or link to an existing CMake build install of libamrex.
+# If AMReX_DIR is passed then we link to the library found there. Otherwise
+# the sources are fetched and compiled from the repo pointed to by AMReX_GIT_REPO
 #
-option( AMReX_USE_LOCAL_BUILD "Use an existing build of the AMReX library" OFF )
+set ( AMReX_GIT_REPO "https://github.com/AMReX-Codes/amrex.git/"
+    CACHE STRING "The URL identifying the repo to fetchg AMReX from" )
 
-if( NOT ${AMReX_USE_LOCAL_BUILD} )
+if( NOT DEFINED AMReX_DIR )
    #
    # Fetch amrex repo
    #
+   message(STATUS "Fetching from ${AMReX_GIT_REPO} branch ${AMReX_GIT_BRANCH}" )
+
    set(AMReX_GIT_BRANCH "development" CACHE STRING "The AMReX branch to checkout")
    set(AMReX_INSTALL  "NO" CACHE INTERNAL "Disable install target for amrex")
 
@@ -26,7 +30,7 @@ if( NOT ${AMReX_USE_LOCAL_BUILD} )
    set(FETCHCONTENT_QUIET OFF)  # Verbose ON
 
    FetchContent_Declare( amrex
-       GIT_REPOSITORY https://github.com/AMReX-Codes/amrex.git/
+       GIT_REPOSITORY ${AMReX_GIT_REPO}
        GIT_TAG        ${AMReX_GIT_BRANCH}
        )
 
