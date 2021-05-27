@@ -35,7 +35,7 @@ end subroutine amrex_probinit
 subroutine cns_initdata(level, time, lo, hi, u, ulo, uhi, dx, prob_lo) bind(C, name="cns_initdata")
   use amrex_fort_module, only : rt => amrex_real
   use cns_physics_module, only : gamma, cv
-  use cns_module, only : center, nvar, urho, umx, umy, umz, ueden, ueint, utemp
+  use cns_module, only : nvar, urho, umx, umy, umz, ueden, ueint, utemp
   use probdata_module, only : p0,p1,rho0,rho1,v0,v1,x1
   implicit none
   integer, intent(in) :: level, lo(3), hi(3), ulo(3), uhi(3)
