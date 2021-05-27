@@ -109,7 +109,7 @@ ElectrostaticParticleContainer::DepositCharge(ScalarMeshData& rho) {
                                    (*rho[lev+1])[mfi].dataPtr(), fine_box.loVect(), fine_box.hiVect());
         }
 
-        rho[lev]->copy(coarsened_fine_data, m_gdb->Geom(lev).periodicity(), FabArrayBase::ADD);
+        rho[lev]->ParallelCopy(coarsened_fine_data, m_gdb->Geom(lev).periodicity(), FabArrayBase::ADD);
     }
 
     for (int lev = 0; lev < num_levels; ++lev) {
@@ -189,10 +189,10 @@ FieldGather(const VectorMeshData& E,
     MultiFab coarse_Ez(coarsened_fine_BA, fine_dm, 1, 1);
 #endif
 
-    coarse_Ex.copy(*E[0][0], 0, 0, 1, 1, 1);
-    coarse_Ey.copy(*E[0][1], 0, 0, 1, 1, 1);
+    coarse_Ex.ParallelCopy(*E[0][0], 0, 0, 1, 1, 1);
+    coarse_Ey.ParallelCopy(*E[0][1], 0, 0, 1, 1, 1);
 #if BL_SPACEDIM == 3
-    coarse_Ez.copy(*E[0][2], 0, 0, 1, 1, 1);
+    coarse_Ez.ParallelCopy(*E[0][2], 0, 0, 1, 1, 1);
 #endif
 
     for (int lev = 0; lev < num_levels; ++lev) {
