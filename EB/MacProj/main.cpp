@@ -88,7 +88,7 @@ int main (int argc, char* argv[])
         MultiFab divu(grids, dmap, 1, 0, MFInfo(), factory);
         EB_computeDivergence(divu, amrex::GetArrOfConstPtrs(vel), geom, false);
         amrex::Print() << "\nmax-norm of divu before projection is " << divu.norm0() << "\n" << std::endl;
-        plotfile_mf.copy(divu,0,AMREX_SPACEDIM,1);
+        plotfile_mf.ParallelCopy(divu,0,AMREX_SPACEDIM,1);
 
         MacProjector macproj({amrex::GetArrOfPtrs(vel)},       // mac velocity
                              MLMG::Location::FaceCenter,
@@ -124,7 +124,7 @@ int main (int argc, char* argv[])
         // compute and output divergence, then copy into plofile
         EB_computeDivergence(divu, amrex::GetArrOfConstPtrs(vel), geom, false);
         amrex::Print() << "\nmax-norm of divu after projection is " << divu.norm0() << "\n" << std::endl;
-        plotfile_mf.copy(divu,0,2*AMREX_SPACEDIM+1,1);
+        plotfile_mf.ParallelCopy(divu,0,2*AMREX_SPACEDIM+1,1);
 
         EB_WriteSingleLevelPlotfile("plt", plotfile_mf,
                                     {"before-vx", "before-vy",
