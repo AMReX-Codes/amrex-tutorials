@@ -151,7 +151,7 @@ contains
 
 
   subroutine finalize ()
-    integer :: ilev, idim
+    integer :: ilev
     do ilev = 0, max_level
        call amrex_geometry_destroy(geom(ilev))
        call amrex_boxarray_destroy(ba(ilev))

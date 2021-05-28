@@ -148,7 +148,7 @@ void sumFineToCrseNodal(const MultiFab& fine, MultiFab& crse,
                                fine[mfi].dataPtr(), fine_box.loVect(), fine_box.hiVect());
     }
 
-    crse.copy(coarsened_fine_data, cgeom.periodicity(), FabArrayBase::ADD);
+    crse.ParallelCopy(coarsened_fine_data, cgeom.periodicity(), FabArrayBase::ADD);
 }
 
 void fixRHSForSolve(Vector<std::unique_ptr<MultiFab> >& rhs,
