@@ -60,7 +60,7 @@ int main (int argc, char* argv[])
         //
         // setup for in situ processing
         //
-        auto *insitu_bridge = new AmrParticleMeshInSituBridge<3,0,0,0>;
+        auto *insitu_bridge = new AmrParticleMeshInSituBridge;
 
         if (insitu_bridge->initialize()) {
             amrex::ErrorStream() << "Failed to initialize the in situ bridge." << std::endl;
