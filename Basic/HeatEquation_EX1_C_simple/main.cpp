@@ -1,8 +1,5 @@
-#include <AMReX_Gpu.H>
-#include <AMReX_Utility.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
-#include <AMReX_Print.H>
 
 #include "myfunc.H"
 
