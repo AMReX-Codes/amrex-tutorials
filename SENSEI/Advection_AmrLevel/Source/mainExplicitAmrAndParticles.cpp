@@ -12,7 +12,7 @@
 #if !defined(AMREX_PARTICLES) || !defined(AMREX_NO_SENSEI_AMR_INST)
 #error Incompatible AMReX library configuration! This tutorial requires AMREX_PARTICLES and AMREX_NO_SENSEI_AMR_INST
 #endif
-#include <AMReX_AmrParticleMeshInSituBridge.H>
+#include <AMReX_AmrParticleInSituBridge.H>
 
 /**
  * This tutorial illustrates in situ processing in a simulation that computes
@@ -60,7 +60,7 @@ int main (int argc, char* argv[])
         //
         // setup for in situ processing
         //
-        auto *insitu_bridge = new AmrParticleMeshInSituBridge;
+        auto *insitu_bridge = new AmrParticleInSituBridge;
 
         if (insitu_bridge->initialize()) {
             amrex::ErrorStream() << "Failed to initialize the in situ bridge." << std::endl;
