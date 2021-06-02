@@ -67,9 +67,13 @@ void main_main ()
     // SIMULATION SETUP
 
     // make BoxArray and Geometry
+    // ba will contain a list of boxes that cover the domain
+    // geom contains information such as the physical domain size,
+    //               number of points in the domain, and periodicity
     BoxArray ba;
     Geometry geom;
 
+    // AMREX_D_DECL means "do the first X of these, where X is the dimensionality of the simulation"
     IntVect dom_lo(AMREX_D_DECL(       0,        0,        0));
     IntVect dom_hi(AMREX_D_DECL(n_cell-1, n_cell-1, n_cell-1));
 
