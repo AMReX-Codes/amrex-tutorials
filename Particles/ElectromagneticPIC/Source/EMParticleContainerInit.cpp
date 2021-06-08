@@ -20,10 +20,11 @@ namespace
         r[2] = (0.5+iz_part)/nz;
     }
 
-    AMREX_GPU_HOST_DEVICE void get_gaussian_random_momentum(Real* u, Real u_mean, Real u_std) {
-        Real ux_th = amrex::RandomNormal(0.0, u_std);
-        Real uy_th = amrex::RandomNormal(0.0, u_std);
-        Real uz_th = amrex::RandomNormal(0.0, u_std);
+    AMREX_GPU_HOST_DEVICE void get_gaussian_random_momentum(Real* u, Real u_mean, Real u_std,
+                                                            amrex::RandomEngine const& engine) {
+        Real ux_th = amrex::RandomNormal(0.0, u_std, engine);
+        Real uy_th = amrex::RandomNormal(0.0, u_std, engine);
+        Real uz_th = amrex::RandomNormal(0.0, u_std, engine);
 
         u[0] = u_mean + ux_th;
         u[1] = u_mean + uy_th;
@@ -126,7 +127,7 @@ InitParticles(const IntVect& a_num_particles_per_cell,
         int procID = ParallelDescriptor::MyProc();
 
         amrex::ParallelFor(tile_box,
-        [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+        [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             int ix = i - lo.x;
             int iy = j - lo.y;
@@ -154,7 +155,8 @@ InitParticles(const IntVect& a_num_particles_per_cell,
 
                 if (a_problem == 0) {
                     get_gaussian_random_momentum(u, a_thermal_momentum_mean,
-                                                 a_thermal_momentum_std);
+                                                 a_thermal_momentum_std,
+                                                 engine);
                 }
                 else if (a_problem == 1 ) {
                     u[0] = 0.01;
