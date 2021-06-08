@@ -20,7 +20,7 @@ void main_main ()
 
     // **********************************
     // SIMULATION PARAMETERS
-    
+
     // number of cells on each side of the domain
     int n_cell;
 
@@ -82,7 +82,7 @@ void main_main ()
 
     // Initialize the boxarray "ba" from the single box "domain"
     ba.define(domain);
-        
+
     // Break up boxarray "ba" into chunks no larger than "max_grid_size" along a direction
     ba.maxSize(max_grid_size);
 
@@ -98,7 +98,7 @@ void main_main ()
 
     // extract dx from the geometry object
     GpuArray<Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
-    
+
     // Nghost = number of ghost cells for each array
     int Nghost = 1;
 
@@ -114,10 +114,10 @@ void main_main ()
 
     // time = starting time in the simulation
     Real time = 0.0;
-    
+
     // **********************************
     // INITIALIZE DATA
-        
+
     // loop over boxes
     for (MFIter mfi(phi_old); mfi.isValid(); ++mfi)
     {
@@ -152,7 +152,7 @@ void main_main ()
     {
         // fill periodic ghost cells
         phi_old.FillBoundary(geom.periodicity());
-        
+
         // new_phi = old_phi + dt * Laplacian(old_phi)
         // loop over boxes
         for ( MFIter mfi(phi_old); mfi.isValid(); ++mfi )
@@ -191,5 +191,4 @@ void main_main ()
             WriteSingleLevelPlotfile(pltfile, phi_new, {"phi"}, geom, time, step);
         }
     }
-    
 }
