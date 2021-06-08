@@ -126,7 +126,7 @@ InitParticles(const IntVect& a_num_particles_per_cell,
 
         int procID = ParallelDescriptor::MyProc();
 
-        amrex::ParallelFor(tile_box,
+        amrex::ParallelForRNG(tile_box,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             int ix = i - lo.x;
