@@ -39,7 +39,10 @@ if(NOT ${amrex}_POPULATED)
 
   if (AMReX_GPU_BACKEND STREQUAL "CUDA")
      enable_language(CUDA)
-     include(AMReX_SetupCUDA)
+     # AMReX 21.06+ supports CUDA_ARCHITECTURES
+     if (CMAKE_VERSION VERSION_LESS 3.20)
+         include(AMReX_SetupCUDA)
+     endif ()
   endif ()
 
 
