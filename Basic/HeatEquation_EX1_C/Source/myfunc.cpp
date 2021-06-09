@@ -11,7 +11,7 @@ void advance (MultiFab& phi_old,
               Geometry const& geom)
 {
     BL_PROFILE("advance");
-    
+
     // Fill the ghost cells of each grid from the other grids
     // includes periodic domain boundaries.
     // There are no physical domain boundaries to fill in this example.
