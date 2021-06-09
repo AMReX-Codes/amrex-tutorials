@@ -51,7 +51,7 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
                 {
                     out(i,j,k,n) += dcoeff[ncomp*n + m] *
                     ( AMREX_D_TERM(- (in(i-1,j,k,m) - 2.0 * in(i,j,k,m) + in(i+1,j,k,m)) / DX[0] / DX[0],
-                                     - (in(i,j-1,k,m) - 2.0 * in(i,j,k,m) + in(i,j+1,k,m)) / DX[1] / DX[1],
+                                   - (in(i,j-1,k,m) - 2.0 * in(i,j,k,m) + in(i,j+1,k,m)) / DX[1] / DX[1],
                                      - (in(i,j,k-1,m) - 2.0 * in(i,j,k,m) + in(i,j,k+1,m)) / DX[2] / DX[2])) ;
                 }
 
