@@ -25,6 +25,8 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
 {
     BL_PROFILE("MCNodalLinOp::Fapply()");
 
+    int buffer = std::max(0,getNGrow(amrlev)-1);
+    
     a_out.setVal(0.0);
     amrex::Box domain(m_geom[amrlev][mglev].Domain());
     domain.convert(amrex::IntVect::TheNodeVector());
@@ -38,7 +40,8 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
     for (MFIter mfi(a_out, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         Box bx = mfi.tilebox();
-        bx.grow(1);        // Expand to cover first layer of ghost nodes
+//        bx.grow(1);        // Expand to cover first layer of ghost nodes
+        bx.grow(buffer);        // Expand to cover first layer of ghost nodes
         bx = bx & domain;  // Take intersection of box and the problem domain
 
         amrex::Array4<const amrex::Real> const& in  = a_in.array(mfi);
@@ -60,6 +63,7 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
 }
 void MCNodalLinOp::Diag (int amrlev, int mglev, MultiFab& a_diag)
 {
+    int buffer = std::max(0,this->getNGrow(amrlev)-1);
     a_diag.setVal(1.0);
     amrex::Box domain(m_geom[amrlev][mglev].Domain());
     domain.convert(amrex::IntVect::TheNodeVector());
@@ -73,7 +77,8 @@ void MCNodalLinOp::Diag (int amrlev, int mglev, MultiFab& a_diag)
     for (MFIter mfi(a_diag, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         Box bx = mfi.tilebox();
-        bx.grow(1);        // Expand to cover first layer of ghost nodes
+//        bx.grow(1);        // Expand to cover first layer of ghost nodes
+        bx.grow(buffer);        // Expand to cover first layer of ghost nodes
         bx = bx & domain;  // Take intersection of box and the problem domain
 
         amrex::Array4<amrex::Real> const& diag  = a_diag.array(mfi);
@@ -111,7 +116,9 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
     domain.grow(-1); // Shrink domain so we don't operate on any boundaries
 
     //int ncomp  = getNComp();
-    int nghost = getNGrow();
+//    int nghost = getNGrow();
+    int nghost = getNGrow(amrlev);
+    int buffer = std::max(0,nghost-1);
 
     Real omega = 2./3.; // Damping factor (very important!)
 
@@ -139,7 +146,8 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
         {
             //Box bx = mfi.tilebox();
             Box bx = mfi.validbox();
-            bx.grow(1);        // Expand to cover first layer of ghost nodes
+//            bx.grow(1);        // Expand to cover first layer of ghost nodes
+            bx.grow(buffer);        // Expand to cover first layer of ghost nodes
             bx = bx & domain;  // Take intersection of box and the problem domain
 
             amrex::Array4<amrex::Real>       const& x  = a_x.array(mfi);
@@ -172,10 +180,13 @@ void MCNodalLinOp::normalize (int amrlev, int mglev, MultiFab& a_x) const
 void MCNodalLinOp::define (const Vector<Geometry>& a_geom,
                const Vector<BoxArray>& a_grids,
                const Vector<DistributionMapping>& a_dmap,
+               Vector<int> a_ref_ratio,
                const LPInfo& a_info,
                const Vector<FabFactory<FArrayBox> const*>& a_factory)
 {
     BL_PROFILE("MCNodalLinOp::~Operator()");
+
+//    m_defined = true;
 
      // This makes sure grids are node-centered;
      Vector<BoxArray> cc_grids = a_grids;
@@ -183,13 +194,17 @@ void MCNodalLinOp::define (const Vector<Geometry>& a_geom,
          ba.enclosedCells();
      }
 
+     m_amr_ref_ratio = a_ref_ratio;
+
      MLNodeLinOp::define(a_geom, a_grids, a_dmap, a_info, a_factory);
 
-     int nghost = 2;
+//     int nghost = 2;
+     //
      // Resize the multifab containing the operator diagonal
      m_diag.resize(m_num_amr_levels);
      for (int amrlev = 0; amrlev < m_num_amr_levels; ++amrlev)
      {
+         int nghost = getNGrow(amrlev);
          m_diag[amrlev].resize(m_num_mg_levels[amrlev]);
 
          for (int mglev = 0; mglev < m_num_mg_levels[amrlev]; ++mglev)
@@ -271,7 +286,8 @@ void MCNodalLinOp::buildMasks ()
 
         const Box& ccdom = m_geom[amrlev][0].Domain();
 
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(AMRRefRatio(amrlev) == 2, "ref_ratio != 0 not supported");
+//        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(AMRRefRatio(amrlev) == 2, "ref_ratio != 0 not supported");
+        // remove above
 
         cc_mask.setVal(0);  // coarse by default
 
@@ -373,6 +389,9 @@ void MCNodalLinOp::prepareForSolve ()
 void MCNodalLinOp::restriction (int amrlev, int cmglev, MultiFab& crse, MultiFab& fine) const
 {
     BL_PROFILE("MCNodalLinOp::restriction()");
+    //std::cout<<"RESTRICTING"<<std::endl;
+    //std::cout << "amrlev = " << amrlev << " cmglev = "<< cmglev << std::endl;
+    int nghost = getNGrow(amrlev);
 
     applyBC(amrlev, cmglev-1, fine, BCMode::Homogeneous, StateMode::Solution);
 
@@ -405,12 +424,38 @@ void MCNodalLinOp::restriction (int amrlev, int cmglev, MultiFab& crse, MultiFab
             amrex::ParallelFor (bx,[=] AMREX_GPU_DEVICE(int I, int J, int K) {
                     int i=2*I, j=2*J, k=2*K;
 #if AMREX_SPACEDIM == 2
+//                        if (nghost == 2)
+//                        {
                         cdata(I,J,K,n) =
                             (fdata(i-1,j-1,k,n) + fdata(i-1,j+1,k,n) + fdata(i+1,j-1,k,n) + fdata(i+1,j+1,k,n)) / 16.0
                             +
                             (fdata(i-1,j,k,n)   + fdata(i,j-1,k,n)   + fdata(i+1,j,k,n)   + fdata(i,j+1,k,n)) / 8.0
                             +
                             fdata(i,j,k,n) / 4.0;
+//                        }
+//                        else if (nghost == 4)
+//                        {
+//                            cdata(I,J,K,n) =
+//                                ((fdata(i-3,j-3,k,n) + fdata(i-3,j+3,k,n) + fdata(i+3,j-3,k,n) + fdata(i+3,j+3,k,n))
+//                                + 
+//                                (fdata(i-3,j-2,k,n) + fdata(i-3,j+2,k,n) + fdata(i-2,j-3,k,n) + fdata(i-2,j+3,k,n) + fdata(i+2,j-3,k,n) + fdata(i+2,j+3,k,n) + fdata(i+3,j-2,k,n) + fdata(i+3,j+2,k,n)   ) * 2.
+//                                +
+//                                (fdata(i-3,j-1,k,n) + fdata(i-3,j+1,k,n) + fdata(i-1,j-3,k,n) + fdata(i-1,j+3,k,n) + fdata(i+1,j-3,k,n) + fdata(i+1,j+3,k,n) + fdata(i+3,j-1,k,n) + fdata(i+3,j+1,k,n)   ) * 3.
+//                                +
+//                                (fdata(i-3,j+0,k,n) + fdata(i-2,j-2,k,n) + fdata(i-2,j+2,k,n) + fdata(i+0,j-3,k,n) + fdata(i+0,j+3,k,n) + fdata(i+2,j-2,k,n) + fdata(i+2,j+2,k,n) + fdata(i+3,j+0,k,n)   ) * 4.
+//                                +
+//                                (fdata(i-2,j-1,k,n) + fdata(i-2,j+1,k,n) + fdata(i-1,j-2,k,n) + fdata(i-1,j+2,k,n) + fdata(i+1,j-2,k,n) + fdata(i+1,j+2,k,n) + fdata(i+2,j-1,k,n) + fdata(i+2,j+1,k,n)   ) * 6.
+//                                +
+//                                (fdata(i-2,j+0,k,n) + fdata(i+0,j-2,k,n) + fdata(i+0,j+2,k,n) + fdata(i+2,j+0,k,n)   ) * 8.
+//                                +
+//                                (fdata(i-1,j-1,k,n) + fdata(i-1,j+1,k,n) + fdata(i+1,j-1,k,n) + fdata(i+1,j+1,k,n)   ) * 9.
+//                                +
+//                                (fdata(i-1,j+0,k,n) + fdata(i+0,j-1,k,n) + fdata(i+0,j+1,k,n) + fdata(i+1,j+0,k,n)   ) * 12.
+//                                + 
+//                                fdata(i+0,j+0,k,n) * 16.
+//                                ) / 256.;
+//                        }
+//
 #elif AMREX_SPACEDIM == 3
                         cdata(I,J,K,n) =
                             (fdata(i-1,j-1,k-1,n) + fdata(i-1,j-1,k+1,n) + fdata(i-1,j+1,k-1,n) + fdata(i-1,j+1,k+1,n) +
@@ -443,6 +488,8 @@ void MCNodalLinOp::interpolation (int amrlev, int fmglev, MultiFab& fine, const 
 {
     BL_PROFILE("MCNodalLinOp::interpolation()");
     amrex::Box fdomain = m_geom[amrlev][fmglev].Domain(); fdomain.convert(amrex::IntVect::TheNodeVector());
+    
+    int nghost = getNGrow(amrlev);
 
     bool need_parallel_copy = !amrex::isMFIterSafe(crse, fine);
     MultiFab cfine;
@@ -475,6 +522,8 @@ void MCNodalLinOp::interpolation (int amrlev, int fmglev, MultiFab& fine, const 
 
                     int I=i/2, J=j/2, K=k/2;
 
+//                    if (nghost == 2)
+//                    {                    
                     if (i%2 == 0 && j%2 == 0 && k%2 ==0) // Coincident
                         fdata(i,j,k,n) = cdata(I,J,K,n);
                     else if (j%2 == 0 && k%2 == 0) // X Edge
@@ -497,6 +546,25 @@ void MCNodalLinOp::interpolation (int amrlev, int fmglev, MultiFab& fine, const 
                                       cdata(I+1,J,K,n)   + cdata(I,J+1,K,n)   + cdata(I,J,K+1,n) +
                                       cdata(I,J+1,K+1,n) + cdata(I+1,J,K+1,n) + cdata(I+1,J+1,K,n) +
                                       cdata(I+1,J+1,K+1,n));
+//                    }
+//                    else if (nghost == 4)
+//                    {
+//                        amrex::Real fracx_hi = (amrex::Real)(i%nghost) / (amrex::Real)nghost;
+//                        amrex::Real fracx_lo = 1.0 - fracx_hi;
+//                        amrex::Real fracy_hi = (amrex::Real)(j%nghost) / (amrex::Real)nghost;
+//                        amrex::Real fracy_lo = 1.0 - fracy_hi;
+//
+//                        fdata(i,j,k,n) = 
+//                            fracx_lo * fracy_lo * cdata(I,J,K,n) +
+//                            fracx_lo * fracy_hi * cdata(I,J+1,K,n) + 
+//                            fracx_hi * fracy_lo * cdata(I+1,J,K,n) +
+//                            fracx_hi * fracy_hi * cdata(I+1,J+1,K,n);
+//                        
+//                        //if (i%2 == 0 && j%2 == 0) // Coincident
+//                        //    fdata(i,j,k,n) = cdata(I,J,K,n);
+//                        
+//
+//                    }
                 });
         }
         fine[mfi].plus<RunOn::Host>(tmpfab,fine_bx,fine_bx,0,0,fine.nComp());
@@ -530,6 +598,9 @@ void MCNodalLinOp::reflux (int crse_amrlev,
 {
     BL_PROFILE("MCNodalLinOp::reflux()");
 
+    int nghost = getNGrow(crse_amrlev+1);
+//    std::cout << "nghost = "<< nghost << "crse amrlev = " << crse_amrlev << std::endl;
+
     amrex::Box cdomain(m_geom[crse_amrlev][0].Domain());
     cdomain.convert(amrex::IntVect::TheNodeVector());
 
@@ -538,7 +609,8 @@ void MCNodalLinOp::reflux (int crse_amrlev,
      const BoxArray&            fba = fine_res.boxArray();
      const DistributionMapping& fdm = fine_res.DistributionMap();
 
-     MultiFab fine_res_for_coarse(amrex::coarsen(fba, 2), fdm, ncomp, 2);
+//     MultiFab fine_res_for_coarse(amrex::coarsen(fba, 2), fdm, ncomp, 2);
+     MultiFab fine_res_for_coarse(amrex::coarsen(fba, nghost), fdm, ncomp, nghost);
     fine_res_for_coarse.ParallelCopy(res,0,0,ncomp,0,0,cgeom.periodicity());
 
      applyBC(crse_amrlev+1, 0, fine_res, BCMode::Inhomogeneous, StateMode::Solution);
@@ -546,10 +618,12 @@ void MCNodalLinOp::reflux (int crse_amrlev,
     const int coarse_fine_node = 1;
     const int fine_fine_node = 2;
 
-    amrex::iMultiFab nodemask(amrex::coarsen(fba,2), fdm, 1, 2);
+//    amrex::iMultiFab nodemask(amrex::coarsen(fba,2), fdm, 1, 2);
+    amrex::iMultiFab nodemask(amrex::coarsen(fba,nghost), fdm, 1, nghost);
     nodemask.ParallelCopy(*m_nd_fine_mask[crse_amrlev],0,0,1,0,0,cgeom.periodicity());
 
-    amrex::iMultiFab cellmask(amrex::convert(amrex::coarsen(fba,2),amrex::IntVect::TheCellVector()), fdm, 1, 2);
+//    amrex::iMultiFab cellmask(amrex::convert(amrex::coarsen(fba,2),amrex::IntVect::TheCellVector()), fdm, 1, 2);
+    amrex::iMultiFab cellmask(amrex::convert(amrex::coarsen(fba,nghost),amrex::IntVect::TheCellVector()), fdm, 1, nghost);
     cellmask.ParallelCopy(*m_cc_fine_mask[crse_amrlev],0,0,1,1,1,cgeom.periodicity());
 
     for (MFIter mfi(fine_res_for_coarse, false); mfi.isValid(); ++mfi)
@@ -562,12 +636,13 @@ void MCNodalLinOp::reflux (int crse_amrlev,
 
         const Dim3 lo= amrex::lbound(cdomain), hi = amrex::ubound(cdomain);
 
-        for (int n = 0; n < fine_res.nComp(); n++)
+       for (int n = 0; n < fine_res.nComp(); n++)
         {
             // I,J,K == coarse coordinates
             // i,j,k == fine coordinates
             amrex::ParallelFor (bx,[=] AMREX_GPU_DEVICE(int I, int J, int K) {
-                    int i=I*2, j=J*2, k=K*2;
+//                    int i=I*2, j=J*2, k=K*2;
+                    int i=I*nghost, j=J*nghost, k=K*nghost;
 
                     if (nmask(I,J,K) == fine_fine_node || nmask(I,J,K) == coarse_fine_node)
                         {
@@ -577,29 +652,92 @@ void MCNodalLinOp::reflux (int crse_amrlev,
                                 cdata(I,J,K,n) = fdata(i,j,k,n);
                             else if ((J == lo.y || J == hi.y) &&
                                  (K == lo.z || K == hi.z)) // X edge
+                            {
+                                if (nghost == 2)
+                                {
                                 cdata(I,J,K,n) = 0.25*fdata(i-1,j,k,n) + 0.5*fdata(i,j,k,n) + 0.25*fdata(i+1,j,k,n);
+                				}
+                                else if (nghost == 4)
+                                {
+                                    cdata(I,J,K,n) = (
+                                    (fdata(i-3,j+0,k+0,n) + fdata(i+3,j+0,k+0,n))*1.0 +
+                                    (fdata(i-2,j+0,k+0,n) + fdata(i+2,j+0,k+0,n))*2.0 +
+                                    (fdata(i-1,j+0,k+0,n) + fdata(i+1,j+0,k+0,n))*3.0 +
+                                    (fdata(i+0,j+0,k+0,n))*4.0
+                                    )/16.0;
+                                }
+                            }
                             else if ((K == lo.z || K == hi.z) &&
                                  (I == lo.x || I == hi.x)) // Y edge
+                            {
+                                if (nghost == 2) 
+                                {
                                 cdata(I,J,K,n) = 0.25*fdata(i,j-1,k,n) + 0.5*fdata(i,j,k,n) + 0.25*fdata(i,j+1,k,n);
+                                }
+                                else if (nghost == 4)
+                                {
+                                    cdata(I,J,K,n) = (
+                                    (fdata(i+0,j-3,k+0,n) + fdata(i+0,j+3,k+0,n))*1.0 +
+                                    (fdata(i+0,j-2,k+0,n) + fdata(i+0,j+2,k+0,n))*2.0 +
+                                    (fdata(i+0,j-1,k+0,n) + fdata(i+0,j+1,k+0,n))*3.0 +
+                                    (fdata(i+0,j+0,k+0,n))*4.0
+                                    )/16.0;
+                                }
+                            }
                             else if ((I == lo.x || I == hi.x) &&
                                  (J == lo.y || J == hi.y)) // Z edge
+                            {
+                                if (nghost == 2)
+                                {
                                 cdata(I,J,K,n) = 0.25*fdata(i,j,k-1,n) + 0.5*fdata(i,j,k,n) + 0.25*fdata(i,j,k+1,n);
+                                }
+                                else if (nghost == 4)
+                                {
+
+                                }
+                            }
                             else if (I == lo.x || I == hi.x) // X face
+                            {
                                 cdata(I,J,K,n) =
                                     (+     fdata(i,j-1,k-1,n) + 2.0*fdata(i,j,k-1,n) +     fdata(i,j+1,k-1,n)
                                      + 2.0*fdata(i,j-1,k  ,n) + 4.0*fdata(i,j,k  ,n) + 2.0*fdata(i,j+1,k  ,n)
                                      +     fdata(i,j-1,k+1,n) + 2.0*fdata(i,j,k+1,n) +     fdata(i,j+1,k+1,n))/16.0;
+                            }
                             else if (J == lo.y || J == hi.y) // Y face
+                            {
                                 cdata(I,J,K,n) =
                                     (+     fdata(i-1,j,k-1,n) + 2.0*fdata(i-1,j,k,n) +     fdata(i-1,j,k+1,n)
                                      + 2.0*fdata(i  ,j,k-1,n) + 4.0*fdata(i  ,j,k,n) + 2.0*fdata(i  ,j,k+1,n)
                                      +     fdata(i+1,j,k-1,n) + 2.0*fdata(i+1,j,k,n) +     fdata(i+1,j,k+1,n))/16.0;
+                            }
                             else if (K == lo.z || K == hi.z) // Z face
+                            {
+                            {
+                                if (nghost == 2)
+                                {
                                 cdata(I,J,K,n) =
                                     (+     fdata(i-1,j-1,k,n) + 2.0*fdata(i,j-1,k,n) +     fdata(i+1,j-1,k,n)
                                      + 2.0*fdata(i-1,j  ,k,n) + 4.0*fdata(i,j  ,k,n) + 2.0*fdata(i+1,j  ,k,n)
                                      +     fdata(i-1,j+1,k,n) + 2.0*fdata(i,j+1,k,n) +     fdata(i+1,j+1,k,n))/16.0;
+                                }
+                                else if (nghost == 4)
+                                {
+                                    cdata(I,J,K,n) =
+                                        ((fdata(i-3,j-3,k,n) + fdata(i-3,j+3,k,n) + fdata(i+3,j-3,k,n) + fdata(i+3,j+3,k,n)) + 
+                                        (fdata(i-3,j-2,k,n) + fdata(i-3,j+2,k,n) + fdata(i-2,j-3,k,n) + fdata(i-2,j+3,k,n) + fdata(i+2,j-3,k,n) + fdata(i+2,j+3,k,n) + fdata(i+3,j-2,k,n) + fdata(i+3,j+2,k,n)   ) * 2. +
+                                        (fdata(i-3,j-1,k,n) + fdata(i-3,j+1,k,n) + fdata(i-1,j-3,k,n) + fdata(i-1,j+3,k,n) + fdata(i+1,j-3,k,n) + fdata(i+1,j+3,k,n) + fdata(i+3,j-1,k,n) + fdata(i+3,j+1,k,n)   ) * 3. +
+                                        (fdata(i-3,j+0,k,n) + fdata(i-2,j-2,k,n) + fdata(i-2,j+2,k,n) + fdata(i+0,j-3,k,n) + fdata(i+0,j+3,k,n) + fdata(i+2,j-2,k,n) + fdata(i+2,j+2,k,n) + fdata(i+3,j+0,k,n)   ) * 4. +
+                                        (fdata(i-2,j-1,k,n) + fdata(i-2,j+1,k,n) + fdata(i-1,j-2,k,n) + fdata(i-1,j+2,k,n) + fdata(i+1,j-2,k,n) + fdata(i+1,j+2,k,n) + fdata(i+2,j-1,k,n) + fdata(i+2,j+1,k,n)   ) * 6. +
+                                        (fdata(i-2,j+0,k,n) + fdata(i+0,j-2,k,n) + fdata(i+0,j+2,k,n) + fdata(i+2,j+0,k,n)   ) * 8. +
+                                        (fdata(i-1,j-1,k,n) + fdata(i-1,j+1,k,n) + fdata(i+1,j-1,k,n) + fdata(i+1,j+1,k,n)   ) * 9. +
+                                        (fdata(i-1,j+0,k,n) + fdata(i+0,j-1,k,n) + fdata(i+0,j+1,k,n) + fdata(i+1,j+0,k,n)   ) * 12. + 
+                                        fdata(i+0,j+0,k,n) * 16.
+                                        ) / 256.;
+                                }
+                            }
+                            }
                             else // Interior
+                            {
                                 cdata(I,J,K,n) =
                                     (fdata(i-1,j-1,k-1,n) + fdata(i-1,j-1,k+1,n) + fdata(i-1,j+1,k-1,n) + fdata(i-1,j+1,k+1,n) +
                                      fdata(i+1,j-1,k-1,n) + fdata(i+1,j-1,k+1,n) + fdata(i+1,j+1,k-1,n) + fdata(i+1,j+1,k+1,n)) / 64.0
@@ -612,6 +750,7 @@ void MCNodalLinOp::reflux (int crse_amrlev,
                                      fdata(i+1,j,k,n) + fdata(i,j+1,k,n) + fdata(i,j,k+1,n)) / 16.0
                                     +
                                     fdata(i,j,k,n) / 8.0;
+                            }
                         }
 
                 });

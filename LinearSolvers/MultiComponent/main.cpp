@@ -43,12 +43,15 @@ int main (int argc, char* argv[])
         int nlevels = 3;
         int nnodes = 32;
         int max_grid_size = 10000000;
+        Vector<int> ref_ratio = {4};
     } mesh;
     {
         ParmParse pp("mesh");
         pp.query("nlevels",mesh.nlevels);
         pp.query("nnodes",mesh.nnodes);
         pp.query("max_grid_size",mesh.max_grid_size);
+        pp.queryarr("ref_ratio",mesh.ref_ratio);
+        //if (mesh.ref_ratio.size() == 1) mesh.ref_ratio.reset(mesh.nlevels-1, mesh.ref_ratio[0]);
     }
 
     //
@@ -121,7 +124,7 @@ int main (int argc, char* argv[])
      for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
          {
              geom[ilev].define(domain);
-             domain.refine(2);
+             if (ilev < mesh.nlevels-1) domain.refine(mesh.ref_ratio[ilev]);
          }
     Box cdomain = CDomain;
      for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
@@ -129,7 +132,8 @@ int main (int argc, char* argv[])
         cgrids[ilev].define(cdomain);
         cgrids[ilev].maxSize(mesh.max_grid_size); // TODO
         cdomain.grow(-mesh.nnodes/4);
-        cdomain.refine(2);
+        //std::cout << "refining ... " << mesh.ref_ratio[ilev] << std::endl;
+        if (ilev < mesh.nlevels-1) cdomain.refine(mesh.ref_ratio[ilev]);
         ngrids[ilev] = cgrids[ilev];
         ngrids[ilev].convert(IntVect::TheNodeVector());
     }
@@ -144,6 +148,7 @@ int main (int argc, char* argv[])
     int nghost = 2;
      for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
      {
+         if (ilev > 0) nghost = mesh.ref_ratio[ilev-1];
          dmap   [ilev].define(cgrids[ilev]);
          solution[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         solution[ilev].setVal(0.0);
@@ -164,7 +169,8 @@ int main (int argc, char* argv[])
         for (MFIter mfi(solution[ilev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
             Box bx = mfi.tilebox();
-            bx.grow(1);        // Expand to cover first layer of ghost nodes
+//            bx.grow(1);        // Expand to cover first layer of ghost nodes
+            bx.grow(nghost-1);        // Expand to cover first layer of ghost nodes
             bx = bx & domain;  // Take intersection of box and the problem domain
 
             Array4<Real> const& RHS  = rhs[ilev].array(mfi);
@@ -190,6 +196,7 @@ int main (int argc, char* argv[])
     LPInfo info;
     if (mlmg.agglomeration >= 0)        info.setAgglomeration(mlmg.agglomeration);
     if (mlmg.consolidation >= 0)        info.setConsolidation(mlmg.consolidation);
+//    std::cout << "MAX CRS LEVEL = " << mlmg.max_coarsening_level << std::endl;
     if (mlmg.max_coarsening_level >= 0) info.setMaxCoarseningLevel(mlmg.max_coarsening_level);
 
     //
@@ -199,7 +206,8 @@ int main (int argc, char* argv[])
     MCNodalLinOp linop;
     linop.setNComp(op.ncomp);
     linop.setCoeff(op.coeff);
-    linop.define(geom,cgrids,dmap,info);
+//    linop.define(geom,cgrids,dmap,info);
+    linop.define(geom,cgrids,dmap,mesh.ref_ratio,info);
     linop.setDomainBC({AMREX_D_DECL(amrex::MLLinOp::BCType::Dirichlet,amrex::MLLinOp::BCType::Dirichlet,amrex::MLLinOp::BCType::Dirichlet)},
                       {AMREX_D_DECL(amrex::MLLinOp::BCType::Dirichlet,amrex::MLLinOp::BCType::Dirichlet,amrex::MLLinOp::BCType::Dirichlet)});
     for (int ilev = 0; ilev < mesh.nlevels; ++ilev) linop.setLevelBC(ilev,&solution[ilev]);

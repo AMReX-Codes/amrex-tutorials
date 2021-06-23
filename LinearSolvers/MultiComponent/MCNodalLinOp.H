@@ -33,6 +33,7 @@ public :
     virtual ~MCNodalLinOp ();
     void define (const Vector<Geometry>& a_geom, const Vector<BoxArray>& a_grids,
              const Vector<DistributionMapping>& a_dmap,
+             Vector<int> a_ref_ratio,
              const LPInfo& a_info = LPInfo(),
              const Vector<FabFactory<FArrayBox> const*>& a_factory = {});
 
@@ -85,7 +86,14 @@ protected:
 public:
     // Return the number of ghost cells
     // Note: MUST return 2!
-    virtual int getNGrow() const override final {return 2;}
+//    virtual int getNGrow() const override final {return 2;}
+
+    virtual int getNGrow(int a_lev = 0) const override final 
+    {
+        //return 2;
+        if (a_lev == 0) return 2; // TODO this should actually be 0?
+        else return m_amr_ref_ratio[a_lev-1];
+    }
     // Return the number of components
     virtual int getNComp() const override final {return ncomp;}
     // Overrides solutionResidual to add call to realFillBoundary
