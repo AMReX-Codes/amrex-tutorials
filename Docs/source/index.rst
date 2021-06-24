@@ -39,6 +39,7 @@ The amrex/Tutorials directory is broken into the following categories:
    SDC_Tutorial
    SENSEI_Tutorial
    SWFFT_Tutorial
+   Demo_Tutorial
 
 Indices and tables
 ==================
