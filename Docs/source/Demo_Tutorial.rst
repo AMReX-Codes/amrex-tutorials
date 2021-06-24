@@ -21,24 +21,28 @@ environment.
 https://gitpod.io/#https://github.com/atmyers/ecp-tutorials
 
 
+To download and build AMReX yourself see:
+https://amrex-codes.github.io/amrex/docs_html/GettingStarted.html
+and
+https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX_Chapter.html
 
 Code Walkthrough
 ~~~~~~~~~~~~~~~~
 
 
 
-Finish by compiling onle more. kk
+[Note to self: HeatEquation_EX0: main.cpp could be further simplified.]
 
 
-
-
-
+For more information on the basic components of AMReX, please see
+https://amrex-codes.github.io/amrex/docs_html/Basics.html
 
 
 
 
 Compiling Heat Equation EX0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 You can make the example by 
 
