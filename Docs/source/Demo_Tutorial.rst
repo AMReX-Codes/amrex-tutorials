@@ -26,18 +26,29 @@ environment.
 https://gitpod.io/#https://github.com/atmyers/ecp-tutorials
 
 
-To download and build AMReX yourself see:
-https://amrex-codes.github.io/amrex/docs_html/GettingStarted.html
-and
-https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX_Chapter.html
+..
+    To download and build AMReX yourself see:
+    https://amrex-codes.github.io/amrex/docs_html/GettingStarted.html
+    and
+    https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX_Chapter.html
 
 
 Compiling the Code 
 ~~~~~~~~~~~~~~~~~~
 
-The examples here depend on the files in amrex. So first we wil download and
-install it. Then we need to tell GNUMake where to find the files. This is
-done by either setting the 
+We will use CMake to build the project. Navigate to the director 
+
+
+and type
+
+
+.. code-block:: 
+   
+   mdir Build
+   cd Build
+   cmake ..
+
+This will run CMake for all the tutorial directories.
 
 
 Navigate to the directory `03_HeatEquation`. At the prompt type `make` and
