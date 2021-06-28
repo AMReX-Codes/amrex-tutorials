@@ -2,6 +2,11 @@ Demo Tutorial
 =============
 
 
+*Questions*
+
+What do people need fingers on keys for. What are the core things to have them do.
+
+ 
 
 
 
@@ -25,6 +30,24 @@ To download and build AMReX yourself see:
 https://amrex-codes.github.io/amrex/docs_html/GettingStarted.html
 and
 https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX_Chapter.html
+
+
+Compiling the Code 
+~~~~~~~~~~~~~~~~~~
+
+The examples here depend on the files in amrex. So first we wil download and
+install it. Then we need to tell GNUMake where to find the files. This is
+done by either setting the 
+
+
+Navigate to the directory `03_HeatEquation`. At the prompt type `make` and
+GNUMake will compile the code and dependencies. 
+
+
+.. image:: path/filename.png
+
+When GNUMake finishes you should be left with an executable named 
+
 
 Code Walkthrough
 ~~~~~~~~~~~~~~~~
