@@ -85,14 +85,53 @@ the input parameters. Parsing of the information in the :code:`inputs` file is d
 :code:`ParmParse`. More details can be found at
 https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse
 
-Code Walkthrough
-~~~~~~~~~~~~~~~~
+Code Highlights
+~~~~~~~~~~~~~~~
 
 At this point we have built, compiled and ran the :code:`03_HeatEquation` code. Now
 we will walkthrough the code and explain some essential features of AMReX syntax.
 
+Basic Structure
+"""""""""""""""
+::
 
-[Note to self: HeatEquation_EX0: main.cpp could be further simplified.]
+   Main
+    |---- Declare Simulation Parameters
+    |---- Read Parameter Values From Input File
+    |---- Define Simulation Setup & Geometry
+    |---- Initialize Data Loop
+    |     |---- Set Values For Each Cell
+    |---- Write Initial Plot File
+    |---- Main Time Progression Loop
+          |---- Evolve Values For Each Cell
+          |---- Increment
+          |---- Write Plot File At Given Interval
+
+
+AMReX Namespace and Required Commands
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  
+
+The MultiFab Datastructure
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The :code:`MultiFab` is a data structure that can 
+be distributed among parallel processes. For 
+
+
+
+MFIter and ParallelFor
+^^^^^^^^^^^^^^^^^^^^^^
+
+These are the commands we use to iterate through
+the cells at each time step. The command MFIter
+will go iterate through ... 
+The command ParallelFor will automatically utilize
+parallel computation methods, such as MPI, OMP, GPUs
+or HIP, to iterate throught the multidimensional array. 
+
+
+
 
 
 For more information on the basic components of AMReX, please see
