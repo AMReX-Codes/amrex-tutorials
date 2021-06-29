@@ -1,22 +1,11 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
 
-#include "myfunc.H"
-
 using namespace amrex;
 
 int main (int argc, char* argv[])
 {
     amrex::Initialize(argc,argv);
-
-    main_main();
-
-    amrex::Finalize();
-    return 0;
-}
-
-void main_main ()
-{
 
     // **********************************
     // SIMULATION PARAMETERS
@@ -130,12 +119,8 @@ void main_main ()
         {
             Real x = (i+0.5) * dx[0];
             Real y = (j+0.5) * dx[1];
-#if (AMREX_SPACEDIM == 2)
-            Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5))/0.01;
-#elif (AMREX_SPACEDIM == 3)
             Real z= (k+0.5) * dx[2];
             Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;
-#endif
             phiOld(i,j,k) = 1. + std::exp(-rsquared);
         });
     }
@@ -168,9 +153,7 @@ void main_main ()
                 phiNew(i,j,k) = phiOld(i,j,k) + dt *
                     ( (phiOld(i+1,j,k) - 2.*phiOld(i,j,k) + phiOld(i-1,j,k)) / (dx[0]*dx[0])
                      +(phiOld(i,j+1,k) - 2.*phiOld(i,j,k) + phiOld(i,j-1,k)) / (dx[1]*dx[1])
-#if (AMREX_SPACEDIM == 3)
                      +(phiOld(i,j,k+1) - 2.*phiOld(i,j,k) + phiOld(i,j,k-1)) / (dx[2]*dx[2])
-#endif
                         );
             });
         }
@@ -191,4 +174,11 @@ void main_main ()
             WriteSingleLevelPlotfile(pltfile, phi_new, {"phi"}, geom, time, step);
         }
     }
+
+
+    amrex::Finalize();
+    printf("amrex::Finalize() already called.\n");
+    return 0;
 }
+
+
