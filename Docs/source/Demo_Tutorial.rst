@@ -192,14 +192,14 @@ to enter to the notebook.
 
 
 Once the notebook starts, find :code:`Visualization.ipynb` and open it. 
-In this file you will find some additional notes about the
-heat equation example, followed by several cells with use :code:`yt` 
+In this file there are additional notes about the
+heat equation example, followed by several cells that use :code:`yt` 
 commands to read AMReX output files.  
 
 yt
 ^^
 
-The following commands will import the :code:`yt` package and plot
+The following commands import the :code:`yt` package and plot
 a 2D slice of the output at from the 1000th time step. 
 
 .. code-block::
