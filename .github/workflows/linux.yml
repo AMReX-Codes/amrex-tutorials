@@ -245,10 +245,10 @@ jobs:
         cmake ..                                           \
             -DCMAKE_VERBOSE_MAKEFILE=ON                    \
             -DAMReX_LINEAR_SOLVERS=ON     \
-            -DAMReX_FORTRAN_INTERFACES=ON \
+            -DAMReX_FORTRAN_INTERFACES=OFF \
             -DAMReX_EB=ON                 \
             -DAMReX_PARTICLES=ON                          \
-            -DAMReX_FORTRAN=ON                            \
+            -DAMReX_FORTRAN=OFF                            \
             -DAMReX_LINEAR_SOLVERS=ON                     \
             -DAMReX_GPU_BACKEND=HIP                       \
             -DAMReX_AMD_ARCH=gfx900                        \
