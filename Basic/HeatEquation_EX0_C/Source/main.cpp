@@ -1,7 +1,9 @@
+#include <AMReX.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
 
-using namespace amrex;
+// Without the following line, we need to add the `amrex::` prefix to call amrex features. 
+//using namespace amrex; 
 
 int main (int argc, char* argv[])
 {
@@ -23,14 +25,14 @@ int main (int argc, char* argv[])
     int plot_int;
 
     // time step
-    Real dt;
+    amrex::Real dt;
 
     // inputs parameters
     {
         // ParmParse is way of reading inputs from the inputs file
         // pp.get means we require the inputs file to have it
         // pp.query means we optionally need the inputs file to have it - but we must supply a default here
-        ParmParse pp;
+        amrex::ParmParse pp;
 
         // We need to get n_cell from the inputs file - this is the number of cells on each side of
         //   a square (or cubic) domain.
@@ -59,15 +61,15 @@ int main (int argc, char* argv[])
     // ba will contain a list of boxes that cover the domain
     // geom contains information such as the physical domain size,
     //               number of points in the domain, and periodicity
-    BoxArray ba;
-    Geometry geom;
+    amrex::BoxArray ba;
+    amrex::Geometry geom;
 
     // AMREX_D_DECL means "do the first X of these, where X is the dimensionality of the simulation"
-    IntVect dom_lo(AMREX_D_DECL(       0,        0,        0));
-    IntVect dom_hi(AMREX_D_DECL(n_cell-1, n_cell-1, n_cell-1));
+    amrex::IntVect dom_lo(AMREX_D_DECL(       0,        0,        0));
+    amrex::IntVect dom_hi(AMREX_D_DECL(n_cell-1, n_cell-1, n_cell-1));
 
     // Make a single box that is the entire domain
-    Box domain(dom_lo, dom_hi);
+    amrex::Box domain(dom_lo, dom_hi);
 
     // Initialize the boxarray "ba" from the single box "domain"
     ba.define(domain);
@@ -76,17 +78,17 @@ int main (int argc, char* argv[])
     ba.maxSize(max_grid_size);
 
     // This defines the physical box, [0,1] in each direction.
-    RealBox real_box({AMREX_D_DECL( 0., 0., 0.)},
+    amrex::RealBox real_box({AMREX_D_DECL( 0., 0., 0.)},
                      {AMREX_D_DECL( 1., 1., 1.)});
 
     // periodic in all direction
-    Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
+    amrex::Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
 
     // This defines a Geometry object
-    geom.define(domain, real_box, CoordSys::cartesian, is_periodic);
+    geom.define(domain, real_box, amrex::CoordSys::cartesian, is_periodic);
 
     // extract dx from the geometry object
-    GpuArray<Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
+    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
 
     // Nghost = number of ghost cells for each array
     int Nghost = 1;
@@ -95,32 +97,32 @@ int main (int argc, char* argv[])
     int Ncomp = 1;
 
     // How Boxes are distrubuted among MPI processes
-    DistributionMapping dm(ba);
+    amrex::DistributionMapping dm(ba);
 
     // we allocate two phi multifabs; one will store the old state, the other the new.
-    MultiFab phi_old(ba, dm, Ncomp, Nghost);
-    MultiFab phi_new(ba, dm, Ncomp, Nghost);
+    amrex::MultiFab phi_old(ba, dm, Ncomp, Nghost);
+    amrex::MultiFab phi_new(ba, dm, Ncomp, Nghost);
 
     // time = starting time in the simulation
-    Real time = 0.0;
+    amrex::Real time = 0.0;
 
     // **********************************
     // INITIALIZE DATA
 
     // loop over boxes
-    for (MFIter mfi(phi_old); mfi.isValid(); ++mfi)
+    for (amrex::MFIter mfi(phi_old); mfi.isValid(); ++mfi)
     {
-        const Box& bx = mfi.validbox();
+        const amrex::Box& bx = mfi.validbox();
 
-        const Array4<Real>& phiOld = phi_old.array(mfi);
+        const amrex::Array4<amrex::Real>& phiOld = phi_old.array(mfi);
 
         // set phi = 1 + e^(-(r-0.5)^2)
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
-            Real x = (i+0.5) * dx[0];
-            Real y = (j+0.5) * dx[1];
-            Real z = (k+0.5) * dx[2];
-            Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;
+            amrex::Real x = (i+0.5) * dx[0];
+            amrex::Real y = (j+0.5) * dx[1];
+            amrex::Real z = (k+0.5) * dx[2];
+            amrex::Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;
             phiOld(i,j,k) = 1. + std::exp(-rsquared);
         });
     }
@@ -140,12 +142,12 @@ int main (int argc, char* argv[])
 
         // new_phi = old_phi + dt * Laplacian(old_phi)
         // loop over boxes
-        for ( MFIter mfi(phi_old); mfi.isValid(); ++mfi )
+        for ( amrex::MFIter mfi(phi_old); mfi.isValid(); ++mfi )
         {
-            const Box& bx = mfi.validbox();
+            const amrex::Box& bx = mfi.validbox();
 
-            const Array4<Real>& phiOld = phi_old.array(mfi);
-            const Array4<Real>& phiNew = phi_new.array(mfi);
+            const amrex::Array4<amrex::Real>& phiOld = phi_old.array(mfi);
+            const amrex::Array4<amrex::Real>& phiNew = phi_new.array(mfi);
 
             // advance the data by dt
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
@@ -162,7 +164,7 @@ int main (int argc, char* argv[])
         time = time + dt;
 
         // copy new solution into old solution
-        MultiFab::Copy(phi_old, phi_new, 0, 0, 1, 0);
+        amrex::MultiFab::Copy(phi_old, phi_new, 0, 0, 1, 0);
 
         // Tell the I/O Processor to write out which step we're doing
         amrex::Print() << "Advanced step " << step << "\n";
@@ -175,9 +177,13 @@ int main (int argc, char* argv[])
         }
     }
 
+    // destroy data objects
+    phi_old.~MultiFab();
+    phi_new.~MultiFab();
+    dm.~DistributionMapping();
+
 
     amrex::Finalize();
-    printf("amrex::Finalize() already called.\n");
     return 0;
 }
 

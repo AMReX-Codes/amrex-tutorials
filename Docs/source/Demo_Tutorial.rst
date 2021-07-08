@@ -45,7 +45,7 @@ environment.
 Building the Project 
 ~~~~~~~~~~~~~~~~~~~~
 
-In this example, will use CMake to build the project. Navigate to the directory
+This example will use CMake to build the project. Navigate to the directory
 :code:`/workspace/exp-tutorials`
 and type
 
@@ -112,14 +112,46 @@ Basic Structure
 
 AMReX Namespace and Required Commands
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  
+
+The AMReX namespace contains many useful features. They are accessed by including
+the necessary header files and using the
+prefix :code:`amrex::`. Each
+:code:`int main(...)` using AMReX should begin with :code:`amrex::Initialize()` 
+and end with :code:`amrex::Finalize()`. Other useful features include 
+:code:`amrex::Print()` which was written to handle print output during parallel 
+execution. 
+
+
+
 
 The MultiFab Data Structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :code:`MultiFab` is a data structure that can 
-be distributed among parallel processes. For 
+be distributed among parallel processes. In this Heat Equation example
+we use MultiFabs to hold the current and previous values of :math:`\phi`
+as defined `here`_.
 
+.. _`here` : https://amrex-codes.github.io/amrex/docs_html/GettingStarted.html#example-heat-equation-solver
+
+The declare the first  MultiFab for previous values of phi we use:
+
+.. code-block::
+
+  amrex::MultiFab phi_old(ba, dm, Ncomp, Nghost);
+
+Here :code:`ba` represents a `BoxArray`_ that stores a collection of boxes
+on a single level of mesh refinement. :code:`dm` is a `DistributionMapping`_ 
+that describes how to distribute processing across multiple cores and threads. 
+:code:`Ncomp` is the number of quantities of interest --in this case, 1 
+for the scalar :math:`\phi`. The value for :code:`Nghost` tells AMReX to 
+how many `ghost cells`_ to create outside the box's valid region. 
+
+.. _`BoxArray`: https://amrex-codes.github.io/amrex/docs_html/Basics.html#boxarray
+
+.. _`DistributionMapping`: https://amrex-codes.github.io/amrex/docs_html/Basics.html#distributionmapping
+
+.. _`ghost cells`: https://amrex-codes.github.io/amrex/docs_html/Basics.html#ghost-cells
 
 
 MFIter and ParallelFor
