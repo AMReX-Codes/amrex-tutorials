@@ -2,8 +2,6 @@
  * A simplified single file version of the HeatEquation_EX0_C exmaple.
  * This code is designed to be used with Demo_Tutorial.rst.
  *
- * TODO: remove macros AMREX_SPACEDIM, AMREX_D_DECL
- *
  */
 
 
@@ -11,15 +9,14 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
 
-// Without the following line, we need to add the `amrex::` prefix to call amrex features. 
-//using namespace amrex; 
 
 int main (int argc, char* argv[])
 {
     amrex::Initialize(argc,argv);
 
     // **********************************
-    // SIMULATION PARAMETERS
+    // DECLARE SIMULATION PARAMETERS
+    // **********************************
 
     // number of cells on each side of the domain
     int n_cell;
@@ -36,6 +33,9 @@ int main (int argc, char* argv[])
     // time step
     amrex::Real dt;
 
+    // **********************************
+    // READ PARAMETER VALUES FROM INPUT DATA
+    // **********************************
     // inputs parameters
     {
         // ParmParse is way of reading inputs from the inputs file
@@ -64,18 +64,19 @@ int main (int argc, char* argv[])
     }
 
     // **********************************
-    // SIMULATION SETUP
+    // DEFINE SIMULATION SETUP AND GEOMETRY
+    // **********************************
 
     // make BoxArray and Geometry
     // ba will contain a list of boxes that cover the domain
     // geom contains information such as the physical domain size,
-    //               number of points in the domain, and periodicity
+    // number of points in the domain, and periodicity
     amrex::BoxArray ba;
     amrex::Geometry geom;
 
-    // AMREX_D_DECL means "do the first X of these, where X is the dimensionality of the simulation"
-    amrex::IntVect dom_lo(AMREX_D_DECL(       0,        0,        0));
-    amrex::IntVect dom_hi(AMREX_D_DECL(n_cell-1, n_cell-1, n_cell-1));
+    // define lower and upper indices 
+    amrex::IntVect dom_lo(0,0,0);
+    amrex::IntVect dom_hi(n_cell-1, n_cell-1, n_cell-1);
 
     // Make a single box that is the entire domain
     amrex::Box domain(dom_lo, dom_hi);
@@ -87,17 +88,17 @@ int main (int argc, char* argv[])
     ba.maxSize(max_grid_size);
 
     // This defines the physical box, [0,1] in each direction.
-    amrex::RealBox real_box({AMREX_D_DECL( 0., 0., 0.)},
-                     {AMREX_D_DECL( 1., 1., 1.)});
+    amrex::RealBox real_box({ 0., 0., 0.},
+                     { 1., 1., 1.});
 
     // periodic in all direction
-    amrex::Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
+    amrex::Array<int,3> is_periodic{1,1,1};
 
     // This defines a Geometry object
     geom.define(domain, real_box, amrex::CoordSys::cartesian, is_periodic);
 
     // extract dx from the geometry object
-    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
+    amrex::GpuArray<amrex::Real,3> dx = geom.CellSizeArray();
 
     // Nghost = number of ghost cells for each array
     int Nghost = 1;
@@ -116,7 +117,8 @@ int main (int argc, char* argv[])
     amrex::Real time = 0.0;
 
     // **********************************
-    // INITIALIZE DATA
+    // INITIALIZE DATA LOOP
+    // **********************************
 
     // loop over boxes
     for (amrex::MFIter mfi(phi_old); mfi.isValid(); ++mfi)
@@ -128,6 +130,11 @@ int main (int argc, char* argv[])
         // set phi = 1 + e^(-(r-0.5)^2)
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
+
+            // **********************************
+            // SET VALUES FOR EACH CELL
+            // **********************************
+
             amrex::Real x = (i+0.5) * dx[0];
             amrex::Real y = (j+0.5) * dx[1];
             amrex::Real z = (k+0.5) * dx[2];
@@ -135,6 +142,10 @@ int main (int argc, char* argv[])
             phiOld(i,j,k) = 1. + std::exp(-rsquared);
         });
     }
+    
+    // **********************************
+    // WRITE INITIAL PLOT FILE
+    // **********************************
 
     // Write a plotfile of the initial data if plot_int > 0
     if (plot_int > 0)
@@ -143,6 +154,11 @@ int main (int argc, char* argv[])
         const std::string& pltfile = amrex::Concatenate("plt",step,5);
         WriteSingleLevelPlotfile(pltfile, phi_old, {"phi"}, geom, time, 0);
     }
+
+    
+    // **********************************
+    // MAIN TIME EVOLUTION LOOP
+    // **********************************
 
     for (int step = 1; step <= nsteps; ++step)
     {
@@ -161,6 +177,11 @@ int main (int argc, char* argv[])
             // advance the data by dt
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {
+
+                // **********************************
+                // EVOLVE VALUES FOR EACH CELL
+                // **********************************
+
                 phiNew(i,j,k) = phiOld(i,j,k) + dt *
                     ( (phiOld(i+1,j,k) - 2.*phiOld(i,j,k) + phiOld(i-1,j,k)) / (dx[0]*dx[0])
                      +(phiOld(i,j+1,k) - 2.*phiOld(i,j,k) + phiOld(i,j-1,k)) / (dx[1]*dx[1])
@@ -169,6 +190,10 @@ int main (int argc, char* argv[])
             });
         }
 
+        // **********************************
+        // INCREMENT
+        // **********************************
+        
         // update time
         time = time + dt;
 
@@ -177,6 +202,11 @@ int main (int argc, char* argv[])
 
         // Tell the I/O Processor to write out which step we're doing
         amrex::Print() << "Advanced step " << step << "\n";
+        
+        
+        // **********************************
+        // WRITE PLOTFILE AT GIVEN INTERVAL
+        // **********************************
 
         // Write a plotfile of the current data (plot_int was defined in the inputs file)
         if (plot_int > 0 && step%plot_int == 0)

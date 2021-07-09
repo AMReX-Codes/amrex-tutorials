@@ -14,7 +14,7 @@ Demo Tutorial
    - Generate and Visualize Output     
      
 
-In this tutorial you will take the steps needed to go from source download to
+In this tutorial we take the steps needed to go from source download to
 visualized output of an AMReX code. We will demonstrate basic building, 
 compiling and output generation. We will also examine several key AMReX features
 in a C++ code and plot the output with Python in a Jupyter notebook.
@@ -101,11 +101,11 @@ Basic Structure
     ├──── Define Simulation Setup & Geometry
     ├──── Initialize Data Loop
     │     └──── Set Values For Each Cell
-    ├──── Write Initial Plot File
-    └──── Main Time Progression Loop
+    ├──── Write Initial Plotfile
+    └──── Main Time Evolution Loop
           ├──── Evolve Values For Each Cell
           ├──── Increment
-          └──── Write Plot File At Given Interval
+          └──── Write Plotfile At Given Interval
 
 
 AMReX Namespace and Required Commands
