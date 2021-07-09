@@ -115,9 +115,13 @@ AMReX Namespace and Required Commands
 
 The AMReX namespace contains many useful features. They are accessed by including
 the necessary header files and using the
-prefix :code:`amrex::`. Each
+prefix :code:`amrex::`. Each 
 :code:`int main(...)` using AMReX should begin with :code:`amrex::Initialize()` 
-and end with :code:`amrex::Finalize()`. Other useful features include 
+and end with :code:`amrex::Finalize()`. Together these commands are responsible for 
+initializing the AMReX execution environment and proper release of resources. AMReX
+classes and features not located between the commands will not function properly.
+
+Other useful features include 
 :code:`amrex::Print()` which was written to handle print output during parallel 
 execution. 
 
@@ -127,24 +131,24 @@ execution.
 The MultiFab Data Structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :code:`MultiFab` is a data structure that can 
-be distributed among parallel processes. In this Heat Equation example
-we use MultiFabs to hold the current and previous values of :math:`\phi`
+A :code:`MultiFab` is a data structure that AMReX can 
+distribute among parallel processes. In this Heat Equation example
+we use two MultiFabs to hold the current and previous values of :math:`\phi`
 as defined `here`_.
 
 .. _`here` : https://amrex-codes.github.io/amrex/docs_html/GettingStarted.html#example-heat-equation-solver
 
-The declare the first  MultiFab for previous values of phi we use:
+The declare the first  MultiFab for previous values of :math:`\phi` we use:
 
 .. code-block::
 
   amrex::MultiFab phi_old(ba, dm, Ncomp, Nghost);
 
-Here :code:`ba` represents a `BoxArray`_ that stores a collection of boxes
+Here :code:`ba` is a `BoxArray`_ that stores a collection of boxes
 on a single level of mesh refinement. :code:`dm` is a `DistributionMapping`_ 
-that describes how to distribute processing across multiple cores and threads. 
-:code:`Ncomp` is the number of quantities of interest --in this case, 1 
-for the scalar :math:`\phi`. The value for :code:`Nghost` tells AMReX to 
+that describes how to distribute processing across multiple cpus and threads. 
+:code:`Ncomp` is the number of values stored for each cell of the mesh --in this case, 1 
+for the scalar :math:`\phi`. The value for :code:`Nghost` tells AMReX  
 how many `ghost cells`_ to create outside the box's valid region. 
 
 .. _`BoxArray`: https://amrex-codes.github.io/amrex/docs_html/Basics.html#boxarray
@@ -157,15 +161,93 @@ how many `ghost cells`_ to create outside the box's valid region.
 MFIter and ParallelFor
 ^^^^^^^^^^^^^^^^^^^^^^
 
-These are the commands we use to iterate through
-the cells at each time step. The command MFIter
-will go iterate through ... 
-The command ParallelFor will automatically utilize
-parallel computation methods, such as MPI, OMP, GPUs
-or HIP, to iterate through the multidimensional array. 
 
-For more information on the basic components of AMReX, please see
-https://amrex-codes.github.io/amrex/docs_html/Basics.html
+Now we will examine the main time evolution loop. In this section AMReX's :code:`MFIter` and 
+:code:ParallelFor constructs work in conjunction to provide efficient parallel exexcution.
+The code where this happens is: 
+
+.. code-block::
+
+   for (int step = 1; step <= nsteps; ++step){
+
+        phi_old.FillBoundary(geom.periodicity());
+
+        for ( amrex::MFIter mfi(phi_old); mfi.isValid(); ++mfi ){
+
+            const amrex::Box& bx = mfi.validbox();
+
+            const amrex::Array4<amrex::Real>& phiOld = phi_old.array(mfi);
+            const amrex::Array4<amrex::Real>& phiNew = phi_new.array(mfi);
+
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+                phiNew(i,j,k) = phiOld(i,j,k) + dt *
+                    ( (phiOld(i+1,j,k) - 2.*phiOld(i,j,k) + phiOld(i-1,j,k)) / (dx[0]*dx[0])
+                     +(phiOld(i,j+1,k) - 2.*phiOld(i,j,k) + phiOld(i,j-1,k)) / (dx[1]*dx[1])
+                     +(phiOld(i,j,k+1) - 2.*phiOld(i,j,k) + phiOld(i,j,k-1)) / (dx[2]*dx[2]) );
+
+            }); // end ParallelFor
+        }   
+                                                                                                                                    
+        time = time + dt; 
+        amrex::MultiFab::Copy(phi_old, phi_new, 0, 0, 1, 0); 
+        amrex::Print() << "Advanced step " << step << "\n";
+
+        if (plot_int > 0 && step%plot_int == 0){
+            const std::string& pltfile = amrex::Concatenate("plt",step,5);
+            WriteSingleLevelPlotfile(pltfile, phi_new, {"phi"}, geom, time, step);
+        }   
+    }   
+
+First note the outer :code:`for` loop that counts the time step in our simulation. At each step 
+we begin by calling :code:`phi_old.FillBoundary(geom.periodicity())`. This fills ghost cells 
+based on the previous state of :math:`\phi` with periodic boundary conditions. 
+
+
+MFIter
+""""""
+
+The next :code:`for` loop,
+
+.. code-block:: 
+   for ( amrex::MFIter mfi(phi_old); mfi.isValid(); ++mfi )
+
+uses the data object :code:`MFIter` to separate the mesh across processes for individual operations. Within this loop
+the active piece of the mesh is defined by :code:`mfi.validbox()` and is accessed via :code:`bx` on the line, 
+
+.. code-block::
+   const amrex::Box& bx = mfi.validbox();
+
+In the next lines, the part of :code:`MultiFab` data that pertains to the current active 
+piece of the mesh is converted to an `Array4`_ data type for i,j,k access:
+
+.. code-block::
+   const amrex::Array4<amrex::Real>& phiOld = phi_old.array(mfi);
+   const amrex::Array4<amrex::Real>& phiNew = phi_new.array(mfi);
+
+ParallelFor
+"""""""""""
+
+:code:`ParallelFor` provides parallel execution of i,j,k operations that would otherwise require
+three nested loops. This AMReX construct automatically adapts for efficient computation
+based on the available hardware, including CPU and CPU+GPU variations.
+In this example, it is here we compute the 
+forward Euler step (see `Heat 5Eqn`_) with the code:
+
+.. code-block::
+   amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+   phiNew(i,j,k) = phiOld(i,j,k) + dt *
+      ( (phiOld(i+1,j,k) - 2.*phiOld(i,j,k) + phiOld(i-1,j,k)) / (dx[0]*dx[0])
+      +(phiOld(i,j+1,k) - 2.*phiOld(i,j,k) + phiOld(i,j-1,k)) / (dx[1]*dx[1])
+      +(phiOld(i,j,k+1) - 2.*phiOld(i,j,k) + phiOld(i,j,k-1)) / (dx[2]*dx[2]) );
+
+   }); // end ParallelFor
+
+
+The rest of the code in the main time evolution loop updates the time and 
+:code:`MultiFab` data, prints a status update, and writes output to a plot file. 
+
 
 
 Visualizing Output
@@ -250,10 +332,32 @@ Once the run is complete, you will get the following plot.
 .. image:: ./images_tutorial/heat_eq_plot.png
 
 
+
+What's Next?
+============
+
+The code in this example simplified down to a single file. Other convenient features
+were removed for the sake of a straight-forward presentation. In the next example
+we'll put these pieces back into the code and write like an AMReX developer. 
+
+
+
 Tutorial Features
 ~~~~~~~~~~~~~~~~~
 
+**Main Goal**: Want someone who goes through this tutorial to feel that they are capable of 
+    understanding and using AMReX.
+
+Other Goals:
+  - sense of accomplishment 
+  - introduce basic workflow
+
+
+    
 Useful Features:
   - objectives and time listed at the beginning of the tutorial.
   - less explanations, more actions to follow. Longer explanations linked to. 
+    - aim for short explanations that tell 80% of the story without being incorrect (avoid "white lies").
   - frequent headings and short text blocks.
+
+
