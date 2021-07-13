@@ -74,7 +74,7 @@ int main (int argc, char* argv[])
     amrex::BoxArray ba;
     amrex::Geometry geom;
 
-    // define lower and upper indices 
+    // define lower and upper indices
     amrex::IntVect dom_lo(0,0,0);
     amrex::IntVect dom_hi(n_cell-1, n_cell-1, n_cell-1);
 
@@ -142,7 +142,7 @@ int main (int argc, char* argv[])
             phiOld(i,j,k) = 1. + std::exp(-rsquared);
         });
     }
-    
+
     // **********************************
     // WRITE INITIAL PLOT FILE
     // **********************************
@@ -155,7 +155,7 @@ int main (int argc, char* argv[])
         WriteSingleLevelPlotfile(pltfile, phi_old, {"phi"}, geom, time, 0);
     }
 
-    
+
     // **********************************
     // MAIN TIME EVOLUTION LOOP
     // **********************************
@@ -193,7 +193,7 @@ int main (int argc, char* argv[])
         // **********************************
         // INCREMENT
         // **********************************
-        
+
         // update time
         time = time + dt;
 
@@ -202,8 +202,8 @@ int main (int argc, char* argv[])
 
         // Tell the I/O Processor to write out which step we're doing
         amrex::Print() << "Advanced step " << step << "\n";
-        
-        
+
+
         // **********************************
         // WRITE PLOTFILE AT GIVEN INTERVAL
         // **********************************

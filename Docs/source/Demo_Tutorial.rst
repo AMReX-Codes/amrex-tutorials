@@ -5,17 +5,17 @@ Demo Tutorial
    Questions*
    What do people need fingers on keys for. What are the core things to have them do.
 
- 
+
 .. admonition:: **Time to Complete**: 20 mins
    :class: warning
 
-   - Compile an AMReX Code 
+   - Compile an AMReX Code
    - Introduce Basic AMReX Elements
-   - Generate and Visualize Output     
-     
+   - Generate and Visualize Output
+
 
 In this tutorial we take the steps needed to go from source download to
-visualized output of an AMReX code. We will demonstrate basic building, 
+visualized output of an AMReX code. We will demonstrate basic building,
 compiling and output generation. We will also examine several key AMReX features
 in a C++ code and plot the output with Python in a Jupyter notebook.
 
@@ -24,10 +24,10 @@ Setting Up Your Environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This tutorial recommends using Gitpod (Requires a GitHub account).  Gitpod
-provides an online terminal that is already preconfigured for our development 
+provides an online terminal that is already preconfigured for our development
 environment.
 
- Click |GitpodLink| to be taken to the Gitpod workspace. 
+ Click |GitpodLink| to be taken to the Gitpod workspace.
 
 .. |GitpodLink| raw:: html
 
@@ -40,15 +40,15 @@ environment.
     https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX_Chapter.html
 
 
-Building the Project 
+Building the Project
 ~~~~~~~~~~~~~~~~~~~~
 
 This example will use CMake to build the project. Navigate to the directory
 :code:`/workspace/exp-tutorials`
 and type
 
-.. code-block:: 
-   
+.. code-block::
+
    mkdir Build
    cd Build
    cmake ..
@@ -64,16 +64,16 @@ https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX_Chapter.html.
 Compiling the Code
 ~~~~~~~~~~~~~~~~~~
 
-After building the project, Navigate to the directory :code:`03_HeatEquation`. 
+After building the project, Navigate to the directory :code:`03_HeatEquation`.
 At the prompt type :code:`make` and
-CMake will compile the code and dependencies. The first time you call :code:`make`, 
+CMake will compile the code and dependencies. The first time you call :code:`make`,
 you should see a list of all the source AMReX files being compiled:
 
 .. image:: ./images_tutorial/Cmake_make.png
 
 |
 
-When CMake finishes you will be left with an executable named :code:`03_HeatEquation`. 
+When CMake finishes you will be left with an executable named :code:`03_HeatEquation`.
 To run the code type:
 
 .. code-block::
@@ -113,15 +113,15 @@ AMReX Namespace and Required Commands
 
 The AMReX namespace contains many useful features. They are accessed by including
 the necessary header files and using the
-prefix :code:`amrex::`. Each 
-:code:`int main(...)` using AMReX should begin with :code:`amrex::Initialize()` 
-and end with :code:`amrex::Finalize()`. Together these commands are responsible for 
+prefix :code:`amrex::`. Each
+:code:`int main(...)` using AMReX should begin with :code:`amrex::Initialize()`
+and end with :code:`amrex::Finalize()`. Together these commands are responsible for
 initializing the AMReX execution environment and proper release of resources. AMReX
 classes and features not located between the commands will not function properly.
 
-Other useful features include 
-:code:`amrex::Print()` which was written to handle print output during parallel 
-execution. 
+Other useful features include
+:code:`amrex::Print()` which was written to handle print output during parallel
+execution.
 
 
 
@@ -129,7 +129,7 @@ execution.
 The MultiFab Data Structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A :code:`MultiFab` is a data structure that AMReX can 
+A :code:`MultiFab` is a data structure that AMReX can
 distribute among parallel processes. In this Heat Equation example
 we use two MultiFabs to hold the current and previous values of :math:`\phi`
 as defined `here`_.
@@ -143,11 +143,11 @@ The declaration of the first MultiFab for the previous values of :math:`\phi` is
   amrex::MultiFab phi_old(ba, dm, Ncomp, Nghost);
 
 Here :code:`ba` is a `BoxArray`_ that stores a collection of boxes
-on a single level of mesh refinement. :code:`dm` is a `DistributionMapping`_ 
-that describes how to distribute processing across multiple CPUs and threads. 
-:code:`Ncomp` is the number of values stored for each cell of the mesh; in this case, 1 
-for the scalar :math:`\phi`. The value for :code:`Nghost` tells AMReX  
-how many `ghost cells`_ to create outside the box's valid region. 
+on a single level of mesh refinement. :code:`dm` is a `DistributionMapping`_
+that describes how to distribute processing across multiple CPUs and threads.
+:code:`Ncomp` is the number of values stored for each cell of the mesh; in this case, 1
+for the scalar :math:`\phi`. The value for :code:`Nghost` tells AMReX
+how many `ghost cells`_ to create outside the box's valid region.
 
 .. _`BoxArray`: https://amrex-codes.github.io/amrex/docs_html/Basics.html#boxarray
 
@@ -160,9 +160,9 @@ MFIter and ParallelFor
 ^^^^^^^^^^^^^^^^^^^^^^
 
 
-Now we will examine the main time evolution loop. In this section AMReX's :code:`MFIter` and 
+Now we will examine the main time evolution loop. In this section AMReX's :code:`MFIter` and
 :code:`ParallelFor` constructs work in conjunction to provide efficient parallel execution.
-The code where this happens is: 
+The code where this happens is:
 
 .. code-block::
 
@@ -185,21 +185,21 @@ The code where this happens is:
                      +(phiOld(i,j,k+1) - 2.*phiOld(i,j,k) + phiOld(i,j,k-1)) / (dx[2]*dx[2]) );
 
             }); // end ParallelFor
-        }   
-                                                                                                                                    
-        time = time + dt; 
-        amrex::MultiFab::Copy(phi_old, phi_new, 0, 0, 1, 0); 
+        }
+
+        time = time + dt;
+        amrex::MultiFab::Copy(phi_old, phi_new, 0, 0, 1, 0);
         amrex::Print() << "Advanced step " << step << "\n";
 
         if (plot_int > 0 && step%plot_int == 0){
             const std::string& pltfile = amrex::Concatenate("plt",step,5);
             WriteSingleLevelPlotfile(pltfile, phi_new, {"phi"}, geom, time, step);
-        }   
-    }   
+        }
+    }
 
-First note the outer :code:`for` loop that counts the time step in our simulation. At each step 
-we begin by calling :code:`phi_old.FillBoundary(geom.periodicity())`. This fills ghost cells 
-based on the previous state of :math:`\phi` with periodic boundary conditions. 
+First note the outer :code:`for` loop that counts the time step in our simulation. At each step
+we begin by calling :code:`phi_old.FillBoundary(geom.periodicity())`. This fills ghost cells
+based on the previous state of :math:`\phi` with periodic boundary conditions.
 
 
 MFIter
@@ -207,18 +207,18 @@ MFIter
 
 The next :code:`for` loop,
 
-.. code-block:: 
+.. code-block::
 
    for ( amrex::MFIter mfi(phi_old); mfi.isValid(); ++mfi )
 
 uses the data object :code:`MFIter` to separate the mesh across processes for individual operations. Within this loop
-the active piece of the mesh is defined by :code:`mfi.validbox()` and is accessed via :code:`bx` on the line, 
+the active piece of the mesh is defined by :code:`mfi.validbox()` and is accessed via :code:`bx` on the line,
 
 .. code-block::
 
    const amrex::Box& bx = mfi.validbox();
 
-In the next lines, the part of :code:`MultiFab` data that pertains to the current active 
+In the next lines, the part of :code:`MultiFab` data that pertains to the current active
 piece of the mesh is converted to an `Array4`_ data type for i,j,k access:
 
 .. _`Array4`: https://amrex-codes.github.io/amrex/docs_html/Basics.html?highlight=array4#basefab-farraybox-iarraybox-and-array4
@@ -234,7 +234,7 @@ ParallelFor
 :code:`ParallelFor` provides parallel execution of i,j,k operations that would otherwise require
 three nested loops. This AMReX construct automatically adapts for efficient computation
 based on the available hardware, including CPU and CPU+GPU variations.
-In this example, it is here we compute the 
+In this example, it is here we compute the
 forward Euler step (see `Heat Eqn`_) with the code:
 
 .. _`Heat Eqn`: https://amrex-codes.github.io/amrex/docs_html/GettingStarted.html#example-heat-equation-solver
@@ -251,9 +251,9 @@ forward Euler step (see `Heat Eqn`_) with the code:
    }); // end ParallelFor
 
 
-The rest of the code in the main time evolution loop updates the time and 
-:code:`MultiFab` data, prints a status update to terminal, and writes 
-output to a plot file that will be used for visualization. 
+The rest of the code in the main time evolution loop updates the time and
+:code:`MultiFab` data, prints a status update to terminal, and writes
+output to a plot file that will be used for visualization.
 
 
 
@@ -287,9 +287,9 @@ the main time progression loop.
    174             WriteSingleLevelPlotfile(pltfile, phi_new, {"phi"}, geom, time, step);
    175         }
 
-Each time we run the code it will create a series of directories which contain 
+Each time we run the code it will create a series of directories which contain
 data for visualization. Now run :code:`03_HeatEquation` with the :code:`inputs`
-file. After it finishes your directory should look like this. 
+file. After it finishes your directory should look like this.
 
 .. image:: ./images_tutorial/plot_dirs.png
 
@@ -297,7 +297,7 @@ file. After it finishes your directory should look like this.
 Visualization in Jupyter
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-We will use Python and the yt package in a Jupyter notebook to generate plots for the data 
+We will use Python and the yt package in a Jupyter notebook to generate plots for the data
 in the directories created in the previous step. First launch the Jupyter notebook
 with the command:
 
@@ -312,16 +312,16 @@ to enter to the notebook.
 .. image:: ./images_tutorial/token_hl.png
 
 
-Once the notebook starts, find :code:`Visualization.ipynb` and open it. 
+Once the notebook starts, find :code:`Visualization.ipynb` and open it.
 In this file there are additional notes about the
-heat equation example, followed by several cells that use :code:`yt` 
-commands to read AMReX output files.  
+heat equation example, followed by several cells that use :code:`yt`
+commands to read AMReX output files.
 
 yt
 ^^
 
 The following commands import the :code:`yt` package and plot
-a 2D slice of the output at from the 1000th time step. 
+a 2D slice of the output at from the 1000th time step.
 
 .. code-block::
 
@@ -344,30 +344,30 @@ What's Next?
 ~~~~~~~~~~~~
 
 The code in this example was simplified down to a single file. Other convenient features
-that require more complex syntax were removed for the sake of a 
+that require more complex syntax were removed for the sake of a
 straight-forward presentation. In the next example
-we'll put these pieces back and write code like an AMReX developer. 
+we'll put these pieces back and write code like an AMReX developer.
 
 
 
 Commentary: Tutorial Features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Main Goal**: 
-Want someone who goes through this tutorial to feel that they are capable of 
+**Main Goal**:
+Want someone who goes through this tutorial to feel that they are capable of
 understanding and using AMReX.
 
 Other Goals:
-  - sense of accomplishment 
+  - sense of accomplishment
   - introduce basic workflow: Download, Compile, Run, Visualize
-  - understand purpose of initialize/finalize, MultiFab, MFIter and ParallelFor    
+  - understand purpose of initialize/finalize, MultiFab, MFIter and ParallelFor
 
 
 
-    
+
 Useful Features:
   - objectives and time listed at the beginning of the tutorial.
-  - less explanations, more actions to follow. Longer explanations linked to. 
+  - less explanations, more actions to follow. Longer explanations linked to.
     - aim for short explanations that tell 80% of the story without being incorrect (avoid "white lies").
   - frequent headings and short text blocks.
 
