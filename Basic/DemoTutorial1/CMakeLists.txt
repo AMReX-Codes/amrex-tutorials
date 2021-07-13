@@ -3,7 +3,7 @@ if (AMReX_SPACEDIM EQUAL 1)
 endif ()
 
 # List of source files
-set(_sources main.cpp myfunc.H)
+set(_sources main.cpp)
 list(TRANSFORM _sources PREPEND "Source/")
 
 # List of input files
