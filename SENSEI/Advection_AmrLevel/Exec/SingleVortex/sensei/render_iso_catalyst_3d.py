@@ -1,233 +1,193 @@
+# script-version: 2.0
+# Catalyst state generated using paraview version 5.9.0
 
+#### import the simple module from the paraview
 from paraview.simple import *
-from paraview import coprocessing
+#### disable automatic camera reset on 'Show'
+paraview.simple._DisableFirstRenderCameraReset()
 
+# ----------------------------------------------------------------
+# setup views used in the visualization
+# ----------------------------------------------------------------
 
-#--------------------------------------------------------------
-# Code generated from cpstate.py to create the CoProcessor.
-# ParaView 5.4.1 64 bits
+# get the material library
+materialLibrary1 = GetMaterialLibrary()
 
-#--------------------------------------------------------------
-# Global screenshot output options
-imageFileNamePadding=5
-rescale_lookuptable=False
+# Create a new 'Render View'
+renderView1 = CreateView('RenderView')
+renderView1.ViewSize = [800, 800]
+renderView1.AxesGrid = 'GridAxes3DActor'
+renderView1.CenterOfRotation = [0.5, 0.5, 0.5]
+renderView1.StereoType = 'Crystal Eyes'
+renderView1.CameraPosition = [3.6901377539352986, 0.5341442836834782, 0.3594256077982131]
+renderView1.CameraFocalPoint = [0.34407253898406637, 0.5341442836834782, 0.3594256077982131]
+renderView1.CameraViewUp = [0.0, 0.0, 1.0]
+renderView1.CameraFocalDisk = 1.0
+renderView1.CameraParallelScale = 0.8660254037844386
+renderView1.BackEnd = 'OSPRay raycaster'
+renderView1.OSPRayMaterialLibrary = materialLibrary1
 
+SetActiveView(None)
 
-# ----------------------- CoProcessor definition -----------------------
+# ----------------------------------------------------------------
+# setup view layouts
+# ----------------------------------------------------------------
 
-def CreateCoProcessor():
-  def _CreatePipeline(coprocessor, datadescription):
-    class Pipeline:
-      # state file generated using paraview version 5.4.1
+# create new layout object 'Layout #1'
+layout1 = CreateLayout(name='Layout #1')
+layout1.AssignView(0, renderView1)
+layout1.SetSize(800, 800)
 
-      # ----------------------------------------------------------------
-      # setup views used in the visualization
-      # ----------------------------------------------------------------
+# ----------------------------------------------------------------
+# restore active view
+SetActiveView(renderView1)
+# ----------------------------------------------------------------
 
-      #### disable automatic camera reset on 'Show'
-      paraview.simple._DisableFirstRenderCameraReset()
+# ----------------------------------------------------------------
+# setup the data processing pipelines
+# ----------------------------------------------------------------
 
-      # Create a new 'Render View'
-      renderView1 = CreateView('RenderView')
-      renderView1.ViewSize = [1000, 700]
-      renderView1.AxesGrid = 'GridAxes3DActor'
-      renderView1.CenterOfRotation = [0.5, 0.5, 0.5]
-      renderView1.StereoType = 0
-      renderView1.CameraPosition = [0.5, 0.5, 3.2557533687070332]
-      renderView1.CameraFocalPoint = [0.5, 0.5, -0.09031184624419736]
-      renderView1.CameraParallelScale = 0.8660254037844386
-      renderView1.Background = [0.0, 0.0, 0.0]
+# create a new 'XML UniformGrid AMR Reader'
+mesh_000004vth = XMLUniformGridAMRReader(registrationName='mesh')
+mesh_000004vth.DefaultNumberOfLevels = 10
 
-      # register the view with coprocessor
-      # and provide it with information such as the filename to use,
-      # how frequently to write the images, etc.
-      coprocessor.RegisterView(renderView1,
-          filename='pv_image_3d_%t.png', freq=1, fittoscreen=0, magnification=1, width=1000, height=700, cinema={})
-      renderView1.ViewTime = datadescription.GetTime()
+# create a new 'Cell Data to Point Data'
+cellDatatoPointData1 = CellDatatoPointData(registrationName='CellDatatoPointData1', Input=mesh_000004vth)
+cellDatatoPointData1.CellDataArraytoprocess = ['phi']
 
-      # ----------------------------------------------------------------
-      # setup the data processing pipelines
-      # ----------------------------------------------------------------
+# create a new 'Slice'
+slice1 = Slice(registrationName='Slice1', Input=cellDatatoPointData1)
+slice1.SliceType = 'Plane'
+slice1.HyperTreeGridSlicer = 'Plane'
+slice1.SliceOffsetValues = [0.0]
 
-      # create a new 'XML UniformGrid AMR Reader'
-      # create a producer from a simulation input
-      mesh_000 = coprocessor.CreateProducer(datadescription, 'mesh')
+# init the 'Plane' selected for 'SliceType'
+slice1.SliceType.Origin = [0.5, 0.5, 0.5]
 
-      # create a new 'Cell Data to Point Data'
-      cellDatatoPointData1 = CellDatatoPointData(Input=mesh_000)
+# init the 'Plane' selected for 'HyperTreeGridSlicer'
+slice1.HyperTreeGridSlicer.Origin = [0.5, 0.5, 0.5]
 
-      # create a new 'Contour'
-      contour1 = Contour(Input=cellDatatoPointData1)
-      contour1.ContourBy = ['POINTS', 'phi']
-      contour1.ComputeScalars = 1
-      contour1.Isosurfaces = [0.99429, 1.1043655555555556, 1.214441111111111, 1.3245166666666668, 1.4345922222222223, 1.5446677777777778, 1.6547433333333332, 1.764818888888889, 1.8748944444444444, 1.98497]
-      contour1.PointMergeMethod = 'Uniform Binning'
+# ----------------------------------------------------------------
+# setup the visualization in view 'renderView1'
+# ----------------------------------------------------------------
 
-      # create a new 'Annotate Time'
-      annotateTime1 = AnnotateTime()
-      annotateTime1.Format = 't = %0.2f'
+# show data from cellDatatoPointData1
+cellDatatoPointData1Display = Show(cellDatatoPointData1, renderView1, 'AMRRepresentation')
 
-      # ----------------------------------------------------------------
-      # setup color maps and opacity mapes used in the visualization
-      # note: the Get..() functions create a new object, if needed
-      # ----------------------------------------------------------------
+# trace defaults for the display properties.
+cellDatatoPointData1Display.Representation = 'Outline'
+cellDatatoPointData1Display.ColorArrayName = [None, '']
+cellDatatoPointData1Display.LineWidth = 2.0
+cellDatatoPointData1Display.OSPRayScaleArray = 'phi'
+cellDatatoPointData1Display.OSPRayScaleFunction = 'PiecewiseFunction'
+cellDatatoPointData1Display.SelectOrientationVectors = 'phi'
+cellDatatoPointData1Display.ScaleFactor = 0.1
+cellDatatoPointData1Display.SelectScaleArray = 'phi'
+cellDatatoPointData1Display.GlyphType = 'Arrow'
+cellDatatoPointData1Display.GlyphTableIndexArray = 'phi'
+cellDatatoPointData1Display.GaussianRadius = 0.005
+cellDatatoPointData1Display.SetScaleArray = ['POINTS', 'phi']
+cellDatatoPointData1Display.ScaleTransferFunction = 'PiecewiseFunction'
+cellDatatoPointData1Display.OpacityArray = ['POINTS', 'phi']
+cellDatatoPointData1Display.OpacityTransferFunction = 'PiecewiseFunction'
+cellDatatoPointData1Display.DataAxesGrid = 'GridAxesRepresentation'
+cellDatatoPointData1Display.PolarAxes = 'PolarAxesRepresentation'
+cellDatatoPointData1Display.ScalarOpacityUnitDistance = 0.016960924803825335
 
-      # get color transfer function/color map for 'phi'
-      phiLUT = GetColorTransferFunction('phi')
-      phiLUT.RGBPoints = [0.99429, 0.278431372549, 0.278431372549, 0.858823529412, 1.13595724, 0.0, 0.0, 0.360784313725, 1.2766338000000002, 0.0, 1.0, 1.0, 1.41929172, 0.0, 0.501960784314, 0.0, 1.55996828, 1.0, 1.0, 0.0, 1.70163552, 1.0, 0.380392156863, 0.0, 1.84330276, 0.419607843137, 0.0, 0.0, 1.9849700000000001, 0.878431372549, 0.301960784314, 0.301960784314]
-      phiLUT.ColorSpace = 'RGB'
-      phiLUT.ScalarRangeInitialized = 1.0
+# init the 'PiecewiseFunction' selected for 'ScaleTransferFunction'
+cellDatatoPointData1Display.ScaleTransferFunction.Points = [0.0, 0.0, 0.5, 0.0, 8.0, 1.0, 0.5, 0.0]
 
-      # get opacity transfer function/opacity map for 'phi'
-      phiPWF = GetOpacityTransferFunction('phi')
-      phiPWF.Points = [0.99429, 0.0, 0.5, 0.0, 1.9849700000000001, 1.0, 0.5, 0.0]
-      phiPWF.ScalarRangeInitialized = 1
+# init the 'PiecewiseFunction' selected for 'OpacityTransferFunction'
+cellDatatoPointData1Display.OpacityTransferFunction.Points = [0.0, 0.0, 0.5, 0.0, 8.0, 1.0, 0.5, 0.0]
 
-      # ----------------------------------------------------------------
-      # setup the visualization in view 'renderView1'
-      # ----------------------------------------------------------------
+# show data from slice1
+slice1Display = Show(slice1, renderView1, 'GeometryRepresentation')
 
-      # show data from mesh_000
-      mesh_000Display = Show(mesh_000, renderView1)
-      # trace defaults for the display properties.
-      mesh_000Display.Representation = 'AMR Blocks'
-      mesh_000Display.ColorArrayName = [None, '']
-      mesh_000Display.DiffuseColor = [0.0, 0.0, 0.0]
-      mesh_000Display.OSPRayScaleArray = 'GhostType'
-      mesh_000Display.OSPRayScaleFunction = 'PiecewiseFunction'
-      mesh_000Display.SelectOrientationVectors = 'None'
-      mesh_000Display.ScaleFactor = 0.1
-      mesh_000Display.SelectScaleArray = 'None'
-      mesh_000Display.GlyphType = 'Arrow'
-      mesh_000Display.GlyphTableIndexArray = 'None'
-      mesh_000Display.DataAxesGrid = 'GridAxesRepresentation'
-      mesh_000Display.PolarAxes = 'PolarAxesRepresentation'
-      mesh_000Display.ScalarOpacityUnitDistance = 0.0174438098693218
+# get color transfer function/color map for 'phi'
+phiLUT = GetColorTransferFunction('phi')
+phiLUT.RGBPoints = [0.9998837073660926, 0.231373, 0.298039, 0.752941, 1.3647609434384869, 0.865003, 0.865003, 0.865003, 1.7296381795108813, 0.705882, 0.0156863, 0.14902]
+phiLUT.ScalarRangeInitialized = 1.0
 
-      # init the 'GridAxesRepresentation' selected for 'DataAxesGrid'
-      mesh_000Display.DataAxesGrid.XTitle = 'X'
-      mesh_000Display.DataAxesGrid.YTitle = 'Y'
-      mesh_000Display.DataAxesGrid.ZTitle = 'Z'
-      mesh_000Display.DataAxesGrid.XTitleBold = 1
-      mesh_000Display.DataAxesGrid.XTitleFontSize = 14
-      mesh_000Display.DataAxesGrid.YTitleBold = 1
-      mesh_000Display.DataAxesGrid.YTitleFontSize = 14
-      mesh_000Display.DataAxesGrid.ZTitleBold = 1
-      mesh_000Display.DataAxesGrid.ZTitleFontSize = 14
-      mesh_000Display.DataAxesGrid.XLabelBold = 1
-      mesh_000Display.DataAxesGrid.XLabelFontSize = 14
-      mesh_000Display.DataAxesGrid.YLabelBold = 1
-      mesh_000Display.DataAxesGrid.YLabelFontSize = 14
-      mesh_000Display.DataAxesGrid.ZLabelBold = 1
-      mesh_000Display.DataAxesGrid.ZLabelFontSize = 14
+# trace defaults for the display properties.
+slice1Display.Representation = 'Wireframe'
+slice1Display.ColorArrayName = ['POINTS', 'phi']
+slice1Display.LookupTable = phiLUT
+slice1Display.OSPRayScaleArray = 'phi'
+slice1Display.OSPRayScaleFunction = 'PiecewiseFunction'
+slice1Display.SelectOrientationVectors = 'phi'
+slice1Display.ScaleFactor = 0.1
+slice1Display.SelectScaleArray = 'phi'
+slice1Display.GlyphType = 'Arrow'
+slice1Display.GlyphTableIndexArray = 'phi'
+slice1Display.GaussianRadius = 0.005
+slice1Display.SetScaleArray = ['POINTS', 'phi']
+slice1Display.ScaleTransferFunction = 'PiecewiseFunction'
+slice1Display.OpacityArray = ['POINTS', 'phi']
+slice1Display.OpacityTransferFunction = 'PiecewiseFunction'
+slice1Display.DataAxesGrid = 'GridAxesRepresentation'
+slice1Display.PolarAxes = 'PolarAxesRepresentation'
 
-      # show data from contour1
-      contour1Display = Show(contour1, renderView1)
-      # trace defaults for the display properties.
-      contour1Display.Representation = 'Surface'
-      contour1Display.ColorArrayName = ['POINTS', 'phi']
-      contour1Display.LookupTable = phiLUT
-      contour1Display.OSPRayScaleArray = 'GhostType'
-      contour1Display.OSPRayScaleFunction = 'PiecewiseFunction'
-      contour1Display.SelectOrientationVectors = 'GhostType'
-      contour1Display.ScaleFactor = 0.0572519063949585
-      contour1Display.SelectScaleArray = 'GhostType'
-      contour1Display.GlyphType = 'Arrow'
-      contour1Display.GlyphTableIndexArray = 'GhostType'
-      contour1Display.DataAxesGrid = 'GridAxesRepresentation'
-      contour1Display.PolarAxes = 'PolarAxesRepresentation'
-      contour1Display.GaussianRadius = 0.02862595319747925
-      contour1Display.SetScaleArray = ['POINTS', 'GhostType']
-      contour1Display.ScaleTransferFunction = 'PiecewiseFunction'
-      contour1Display.OpacityArray = ['POINTS', 'GhostType']
-      contour1Display.OpacityTransferFunction = 'PiecewiseFunction'
+# init the 'PiecewiseFunction' selected for 'ScaleTransferFunction'
+slice1Display.ScaleTransferFunction.Points = [0.0, 0.0, 0.5, 0.0, 6.0, 1.0, 0.5, 0.0]
 
-      # show color legend
-      contour1Display.SetScalarBarVisibility(renderView1, True)
+# init the 'PiecewiseFunction' selected for 'OpacityTransferFunction'
+slice1Display.OpacityTransferFunction.Points = [0.0, 0.0, 0.5, 0.0, 6.0, 1.0, 0.5, 0.0]
 
-      # show data from annotateTime1
-      annotateTime1Display = Show(annotateTime1, renderView1)
-      # trace defaults for the display properties.
-      annotateTime1Display.Bold = 1
-      annotateTime1Display.FontSize = 12
-      annotateTime1Display.WindowLocation = 'LowerLeftCorner'
+# setup the color legend parameters for each legend in this view
 
-      # setup the color legend parameters for each legend in this view
+# get color legend/bar for phiLUT in view renderView1
+phiLUTColorBar = GetScalarBar(phiLUT, renderView1)
+phiLUTColorBar.Orientation = 'Horizontal'
+phiLUTColorBar.WindowLocation = 'AnyLocation'
+phiLUTColorBar.Position = [0.4079687499999999, 0.09624999999999999]
+phiLUTColorBar.Title = 'phi'
+phiLUTColorBar.ComponentTitle = ''
+phiLUTColorBar.ScalarBarLength = 0.33000000000000007
 
-      # get color legend/bar for phiLUT in view renderView1
-      phiLUTColorBar = GetScalarBar(phiLUT, renderView1)
-      phiLUTColorBar.WindowLocation = 'AnyLocation'
-      phiLUTColorBar.Position = [0.852, 0.07857142857142851]
-      phiLUTColorBar.Title = 'phi'
-      phiLUTColorBar.ComponentTitle = ''
-      phiLUTColorBar.TitleBold = 1
-      phiLUTColorBar.TitleFontSize = 24
-      phiLUTColorBar.LabelBold = 1
-      phiLUTColorBar.LabelFontSize = 18
-      phiLUTColorBar.ScalarBarThickness = 24
-      phiLUTColorBar.ScalarBarLength = 0.8357142857142857
+# set color bar visibility
+phiLUTColorBar.Visibility = 1
 
-      # ----------------------------------------------------------------
-      # finally, restore active source
-      SetActiveSource(mesh_000)
-      # ----------------------------------------------------------------
-    return Pipeline()
+# show color legend
+slice1Display.SetScalarBarVisibility(renderView1, True)
 
-  class CoProcessor(coprocessing.CoProcessor):
-    def CreatePipeline(self, datadescription):
-      self.Pipeline = _CreatePipeline(self, datadescription)
+# ----------------------------------------------------------------
+# setup color maps and opacity mapes used in the visualization
+# note: the Get..() functions create a new object, if needed
+# ----------------------------------------------------------------
 
-  coprocessor = CoProcessor()
-  # these are the frequencies at which the coprocessor updates.
-  freqs = {'mesh': [1, 1, 1]}
-  coprocessor.SetUpdateFrequencies(freqs)
-  return coprocessor
+# get opacity transfer function/opacity map for 'phi'
+phiPWF = GetOpacityTransferFunction('phi')
+phiPWF.Points = [0.9998837073660926, 0.0, 0.5, 0.0, 1.7296381795108813, 1.0, 0.5, 0.0]
+phiPWF.ScalarRangeInitialized = 1
 
+# ----------------------------------------------------------------
+# setup extractors
+# ----------------------------------------------------------------
 
-#--------------------------------------------------------------
-# Global variable that will hold the pipeline for each timestep
-# Creating the CoProcessor object, doesn't actually create the ParaView pipeline.
-# It will be automatically setup when coprocessor.UpdateProducers() is called the
-# first time.
-coprocessor = CreateCoProcessor()
+# create extractor
+pNG1 = CreateExtractor('PNG', renderView1, registrationName='PNG1')
+# trace defaults for the extractor.
+# init the 'PNG' selected for 'Writer'
+pNG1.Writer.FileName = 'pv_image_3d_%.6ts.png'
+pNG1.Writer.ImageResolution = [800, 800]
+pNG1.Writer.Format = 'PNG'
 
-#--------------------------------------------------------------
-# Enable Live-Visualizaton with ParaView and the update frequency
-coprocessor.EnableLiveVisualization(False, 1)
+# ----------------------------------------------------------------
+# restore active source
+SetActiveSource(pNG1)
+# ----------------------------------------------------------------
 
-# ---------------------- Data Selection method ----------------------
+# ------------------------------------------------------------------------------
+# Catalyst options
+from paraview import catalyst
+options = catalyst.Options()
+options.ExtractsOutputDirectory = './'
+options.GlobalTrigger = 'TimeStep'
+options.CatalystLiveTrigger = 'TimeStep'
 
-def RequestDataDescription(datadescription):
-    "Callback to populate the request for current timestep"
-    global coprocessor
-    if datadescription.GetForceOutput() == True:
-        # We are just going to request all fields and meshes from the simulation
-        # code/adaptor.
-        for i in range(datadescription.GetNumberOfInputDescriptions()):
-            datadescription.GetInputDescription(i).AllFieldsOn()
-            datadescription.GetInputDescription(i).GenerateMeshOn()
-        return
-
-    # setup requests for all inputs based on the requirements of the
-    # pipeline.
-    coprocessor.LoadRequestedData(datadescription)
-
-# ------------------------ Processing method ------------------------
-
-def DoCoProcessing(datadescription):
-    "Callback to do co-processing for current timestep"
-    global coprocessor
-
-    # Update the coprocessor by providing it the newly generated simulation data.
-    # If the pipeline hasn't been setup yet, this will setup the pipeline.
-    coprocessor.UpdateProducers(datadescription)
-
-    # Write output data, if appropriate.
-    coprocessor.WriteData(datadescription);
-
-    # Write image capture (Last arg: rescale lookup table), if appropriate.
-    coprocessor.WriteImages(datadescription, rescale_lookuptable=rescale_lookuptable,
-        image_quality=0, padding_amount=imageFileNamePadding)
-
-    # Live Visualization, if enabled.
-    coprocessor.DoLiveVisualization(datadescription, "localhost", 22222)
+# ------------------------------------------------------------------------------
+if __name__ == '__main__':
+    from paraview.simple import SaveExtractsUsingCatalystOptions
+    # Code for non in-situ environments; if executing in post-processing
+    # i.e. non-Catalyst mode, let's generate extracts using Catalyst options
+    SaveExtractsUsingCatalystOptions(options)

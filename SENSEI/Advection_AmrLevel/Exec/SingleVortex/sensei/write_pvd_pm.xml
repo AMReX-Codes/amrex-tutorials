@@ -1,0 +1,12 @@
+ <sensei>
+  <analysis type="VTKAmrWriter" mode="paraview" output_dir="./output_pm" enabled="1">
+    <mesh name="mesh">
+      <cell_arrays> phi </cell_arrays>
+    </mesh>
+  </analysis>
+  <analysis type="PosthocIO" file_name="output" mode="paraview" output_dir="./output_pm" enabled="1">
+    <mesh name="particles">
+      <point_arrays> u </point_arrays>
+    </mesh>
+  </analysis>
+ </sensei>

@@ -1,4 +1,3 @@
-
 #include <new>
 #include <iostream>
 #include <iomanip>
@@ -7,14 +6,27 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_AmrLevel.H>
+#include "AmrLevelAdv.H"
+
+#if defined(AMREX_NO_SENSEI_AMR_INST)
+#error Incompatible AMReX library configuration! AMREX_NO_SENSEI_AMR_INST must not be defined
+#endif
+
+/**
+ * This tutorial illustrates in situ processing in a simulation that computes
+ * mesh based data. In this case the mesh based data is provided by an instance
+ * of amrex::Amr. In situ processing is managed by an instrumentation built into
+ * amrex::Amr
+ */
+
+amrex::LevelBld* getLevelBld();
 
 using namespace amrex;
 
-int
-main (int   argc,
-      char* argv[])
+int main (int argc, char* argv[])
 {
     amrex::Initialize(argc,argv);
+
 
     Real dRunTime1 = amrex::second();
 
@@ -43,14 +55,12 @@ main (int   argc,
     }
 
     {
-        Amr amr;
+        Amr amr(getLevelBld());
 
         amr.init(strt_time,stop_time);
 
-        while ( amr.okToContinue() &&
-                 (amr.levelSteps(0) < max_step || max_step < 0) &&
-               (amr.cumTime() < stop_time || stop_time < 0.0) )
-
+        while ( amr.okToContinue() && (amr.levelSteps(0) < max_step || max_step < 0) &&
+                (amr.cumTime() < stop_time || stop_time < 0.0) )
         {
             //
             // Do a coarse timestep.  Recursively calls timeStep()
@@ -58,7 +68,9 @@ main (int   argc,
             amr.coarseTimeStep(stop_time);
         }
 
+        //
         // Write final checkpoint and plotfile
+        //
         if (amr.stepOfLastCheckPoint() < amr.levelSteps(0)) {
             amr.checkPoint();
         }
