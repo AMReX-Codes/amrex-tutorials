@@ -82,6 +82,8 @@ int main (int argc, char* argv[])
         int agglomeration = -1;
         int consolidation = -1;
         int max_coarsening_level = -1 ;
+        int pre_smooth = -1;
+        int post_smooth = -1;
     } mlmg;
     {
         ParmParse pp("mlmg");
@@ -93,6 +95,8 @@ int main (int argc, char* argv[])
         pp.query("consolidation",mlmg.consolidation);
         pp.query("max_coarsening_level",mlmg.max_coarsening_level);
         pp.query("fixed_iter",mlmg.fixed_iter);
+        pp.query("pre_smooth",mlmg.pre_smooth);
+        pp.query("post_smooth",mlmg.post_smooth);
     }
 
 
@@ -102,13 +106,19 @@ int main (int argc, char* argv[])
     Vector<Geometry> geom;
       Vector<BoxArray> cgrids, ngrids;
      Vector<DistributionMapping> dmap;
-      Vector<MultiFab> solution, rhs;
+      Vector<MultiFab> solution, solgn, rhs, rhsgn, res, resgn, b, bgn;
      geom.resize(mesh.nlevels);
      cgrids.resize(mesh.nlevels);
      ngrids.resize(mesh.nlevels);
      dmap.resize(mesh.nlevels);
      solution.resize(mesh.nlevels);
+     solgn.resize(mesh.nlevels);
      rhs.resize(mesh.nlevels);
+     rhsgn.resize(mesh.nlevels);
+     res.resize(mesh.nlevels);
+     resgn.resize(mesh.nlevels);
+     b.resize(mesh.nlevels);
+     bgn.resize(mesh.nlevels);
     RealBox rb({AMREX_D_DECL(-0.5,-0.5,-0.5)},
               {AMREX_D_DECL(0.5,0.5,0.5)});
     Geometry::Setup(&rb, 0);
@@ -131,7 +141,10 @@ int main (int argc, char* argv[])
     {
         cgrids[ilev].define(cdomain);
         cgrids[ilev].maxSize(mesh.max_grid_size); // TODO
-        cdomain.grow(-mesh.nnodes/4);
+
+        cdomain.grow(IntVect(-mesh.nnodes/4,-mesh.nnodes/4));
+        //cdomain.grow(IntVect(0,-mesh.nnodes/4));
+        
         //std::cout << "refining ... " << mesh.ref_ratio[ilev] << std::endl;
         if (ilev < mesh.nlevels-1) cdomain.refine(mesh.ref_ratio[ilev]);
         ngrids[ilev] = cgrids[ilev];
@@ -153,9 +166,24 @@ int main (int argc, char* argv[])
          solution[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         solution[ilev].setVal(0.0);
         solution[ilev].setMultiGhost(true);
+        b[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
+        b[ilev].setMultiGhost(true);
          rhs     [ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         rhs     [ilev].setVal(0.0);
         rhs     [ilev].setMultiGhost(true);
+        res     [ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
+        res     [ilev].setVal(0.0);
+        res     [ilev].setMultiGhost(true);
+        {
+            BoxArray grids = ngrids[ilev];
+            grids.grow(nghost);
+            solgn[ilev].define(grids,dmap[ilev],op.ncomp,0); solgn[ilev].setMultiGhost(true);
+            rhsgn[ilev].define(grids,dmap[ilev],op.ncomp,0); rhsgn[ilev].setMultiGhost(true);
+            resgn[ilev].define(grids,dmap[ilev],op.ncomp,0); resgn[ilev].setMultiGhost(true);
+            bgn[ilev].define(grids,dmap[ilev],op.ncomp,0); bgn[ilev].setMultiGhost(true);
+
+            ///bgn[ilev].define(grids,dmap[ilev],op.ncomp,0);
+        }
 
         Box domain(geom[ilev].Domain());
         const Real AMREX_D_DECL( dx = geom[ilev].CellSize()[0],
@@ -170,7 +198,8 @@ int main (int argc, char* argv[])
         {
             Box bx = mfi.tilebox();
 //            bx.grow(1);        // Expand to cover first layer of ghost nodes
-            bx.grow(nghost-1);        // Expand to cover first layer of ghost nodes
+            //bx.grow(nghost-1);        // Expand to cover first layer of ghost nodes
+            bx.grow(nghost);        // Expand to cover first layer of ghost nodes
             bx = bx & domain;  // Take intersection of box and the problem domain
 
             Array4<Real> const& RHS  = rhs[ilev].array(mfi);
@@ -221,6 +250,8 @@ int main (int argc, char* argv[])
     if (mlmg.fixed_iter >= 0)  solver.setFixedIter(mlmg.fixed_iter);
     if (mlmg.max_iter >= 0)    solver.setMaxIter(mlmg.max_iter);
     if (mlmg.max_fmg_iter >= 0)solver.setMaxFmgIter(mlmg.max_fmg_iter);
+    if (mlmg.pre_smooth >= 0) solver.setPreSmooth(mlmg.pre_smooth);
+    if (mlmg.post_smooth >= 0) solver.setPostSmooth(mlmg.post_smooth);
     // IMPORTANT! Use the "CFStrategy::ghostnodes" strategy to avoid
     // having to implement a complicated "reflux" routine!
     solver.setCFStrategy(MLMG::CFStrategy::ghostnodes);
@@ -230,11 +261,34 @@ int main (int argc, char* argv[])
     //
     Real tol_rel = 1E-8, tol_abs = 1E-8;
     solver.solve(GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs),tol_rel,tol_abs);
+    solver.compResidual(GetVecOfPtrs(res),GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs));
+    solver.apply(GetVecOfPtrs(b),GetVecOfPtrs(solution));
+
+//    for (int i = 0; i < resgn.size(); i++)
+//    {
+//        linop.solutionResidual(i,res[i],solution[i],rhs[i],nullptr);
+//        linop.Apply(i,0,b[i],solution[i]);
+//    }
 
     //
     // Write the output to ./solution
     //
     WriteMLMF ("solution",GetVecOfConstPtrs(solution),geom);
+    WriteMLMF ("residual",GetVecOfConstPtrs(res),geom);
+
+    for (int i = 0; i < resgn.size(); i++)
+    {
+        amrex::MultiFab::Copy(solgn[i],solution[i],0,0,op.ncomp,0); // Dx = x
+        amrex::MultiFab::Copy(rhsgn[i],rhs[i],0,0,op.ncomp,0); // Dx = x
+        amrex::MultiFab::Copy(resgn[i],res[i],0,0,op.ncomp,0); // Dx = x
+        amrex::MultiFab::Copy(bgn[i],b[i],0,0,op.ncomp,0); // Dx = x
+        
+        //resgn[i].copy();
+    }
+    WriteMLMF ("solgn",GetVecOfConstPtrs(solgn),geom);
+    WriteMLMF ("rhsgn",GetVecOfConstPtrs(rhsgn),geom);
+    WriteMLMF ("residualgn",GetVecOfConstPtrs(resgn),geom);
+    WriteMLMF ("bgn",GetVecOfConstPtrs(bgn),geom);    
 
     }
     Finalize();
