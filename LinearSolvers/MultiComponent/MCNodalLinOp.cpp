@@ -27,7 +27,7 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
     //std::cout << "amrlev=" << amrlev << " mglev=" <<mglev << std::endl;
     //if (amrlev ==1 && mglev == 1) amrex::Abort();
 
-    int buffer = std::max(0,getNGrow(amrlev)-1);
+    int buffer = std::max(0,getNGrow(amrlev,mglev)-1);
     
     a_out.setVal(0.0);
     amrex::Box domain(m_geom[amrlev][mglev].Domain());
@@ -65,7 +65,7 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
 }
 void MCNodalLinOp::Diag (int amrlev, int mglev, MultiFab& a_diag)
 {
-    int buffer = std::max(0,this->getNGrow(amrlev)-1);
+    int buffer = std::max(0,this->getNGrow(amrlev,mglev)-1);
     a_diag.setVal(1.0);
     amrex::Box domain(m_geom[amrlev][mglev].Domain());
     domain.convert(amrex::IntVect::TheNodeVector());
@@ -119,9 +119,9 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
 
     //int ncomp  = getNComp();
 //    int nghost = getNGrow();
-    int nghost = getNGrow(amrlev);
-    int buffer = std::max(0,nghost-1);
-    //std::cout << "amrlev = "<< amrlev << " BUFFER = " << buffer << " nghost = " << nghost << std::endl;
+    int nghost = getNGrow(amrlev,mglev);
+    int buffer = nghost - 1; //std::max(0,nghost-1);
+    //std::cout << "amrlev = "<< amrlev << " mglev = " << mglev << " nghost = " << nghost << std::endl;
 
     Real omega = 2./3.; // Damping factor (very important!)
 
@@ -230,7 +230,7 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
 void MCNodalLinOp::normalize (int amrlev, int mglev, MultiFab& a_x) const
 {
     BL_PROFILE("MCNodalLinOp::normalize()");
-    int nghost = 1;
+    int nghost = getNGrow(amrlev,mglev);
     amrex::MultiFab::Divide(a_x,*m_diag[amrlev][mglev],0,0,ncomp,nghost); // Dx *= diag  (Dx = x*diag)
 }
 
@@ -263,12 +263,12 @@ void MCNodalLinOp::define (const Vector<Geometry>& a_geom,
      m_diag.resize(m_num_amr_levels);
      for (int amrlev = 0; amrlev < m_num_amr_levels; ++amrlev)
      {
-         int nghost = getNGrow(amrlev);
          m_diag[amrlev].resize(m_num_mg_levels[amrlev]);
 
          for (int mglev = 0; mglev < m_num_mg_levels[amrlev]; ++mglev)
          {
-              m_diag[amrlev][mglev].reset(new MultiFab(amrex::convert(m_grids[amrlev][mglev], amrex::IntVect::TheNodeVector()),
+            int nghost = getNGrow(amrlev,mglev);
+            m_diag[amrlev][mglev].reset(new MultiFab(amrex::convert(m_grids[amrlev][mglev], amrex::IntVect::TheNodeVector()),
                                    m_dmap[amrlev][mglev], getNComp(), nghost));
          }
      }
@@ -451,7 +451,9 @@ void MCNodalLinOp::restriction (int amrlev, int cmglev, MultiFab& crse, MultiFab
     //std::cout<<"RESTRICTING"<<std::endl;
     //std::cout << "amrlev = " << amrlev << " cmglev = "<< cmglev << std::endl;
     //if (amrlev == 1 && cmglev == 1) amrex::Abort(); // amrlev=mglev=1 gets called by vCycle
-    int nghost = getNGrow(amrlev);
+    //std::cout << "   crse ngrow = " << crse.nGrow() << std::endl;
+    //std::cout << "   fine ngrow = " << fine.nGrow() << std::endl;
+    int nghost = getNGrow(amrlev,cmglev);
 
     applyBC(amrlev, cmglev-1, fine, BCMode::Homogeneous, StateMode::Solution);
 
@@ -524,7 +526,7 @@ void MCNodalLinOp::interpolation (int amrlev, int fmglev, MultiFab& fine, const 
     BL_PROFILE("MCNodalLinOp::interpolation()");
     amrex::Box fdomain = m_geom[amrlev][fmglev].Domain(); fdomain.convert(amrex::IntVect::TheNodeVector());
     
-    int nghost = getNGrow(amrlev);
+    int nghost = getNGrow(amrlev,fmglev);
 
     bool need_parallel_copy = !amrex::isMFIterSafe(crse, fine);
     MultiFab cfine;
@@ -635,7 +637,7 @@ void MCNodalLinOp::reflux (int crse_amrlev,
 {
     BL_PROFILE("MCNodalLinOp::reflux()");
 
-    int nghost = getNGrow(crse_amrlev+1);
+    int nghost = getNGrow(crse_amrlev+1,0);
 
     amrex::Box cdomain(m_geom[crse_amrlev][0].Domain());
     cdomain.convert(amrex::IntVect::TheNodeVector());
@@ -778,19 +780,42 @@ void MCNodalLinOp::reflux (int crse_amrlev,
                             }
                             else // Interior
                             {
-                                amrex::Abort("Not implemented yet");
-                                cdata(I,J,K,n) =
-                                    (fdata(i-1,j-1,k-1,n) + fdata(i-1,j-1,k+1,n) + fdata(i-1,j+1,k-1,n) + fdata(i-1,j+1,k+1,n) +
-                                     fdata(i+1,j-1,k-1,n) + fdata(i+1,j-1,k+1,n) + fdata(i+1,j+1,k-1,n) + fdata(i+1,j+1,k+1,n)) / 64.0
-                                    +
-                                    (fdata(i,j-1,k-1,n) + fdata(i,j-1,k+1,n) + fdata(i,j+1,k-1,n) + fdata(i,j+1,k+1,n) +
-                                     fdata(i-1,j,k-1,n) + fdata(i+1,j,k-1,n) + fdata(i-1,j,k+1,n) + fdata(i+1,j,k+1,n) +
-                                     fdata(i-1,j-1,k,n) + fdata(i-1,j+1,k,n) + fdata(i+1,j-1,k,n) + fdata(i+1,j+1,k,n)) / 32.0
-                                    +
-                                    (fdata(i-1,j,k,n) + fdata(i,j-1,k,n) + fdata(i,j,k-1,n) +
-                                     fdata(i+1,j,k,n) + fdata(i,j+1,k,n) + fdata(i,j,k+1,n)) / 16.0
-                                    +
-                                    fdata(i,j,k,n) / 8.0;
+                                if (nghost == 2)
+                                {
+                                    cdata(I,J,K,n) =
+                                        (fdata(i-1,j-1,k-1,n) + fdata(i-1,j-1,k+1,n) + fdata(i-1,j+1,k-1,n) + fdata(i-1,j+1,k+1,n) +
+                                         fdata(i+1,j-1,k-1,n) + fdata(i+1,j-1,k+1,n) + fdata(i+1,j+1,k-1,n) + fdata(i+1,j+1,k+1,n)) / 64.0
+                                        +
+                                        (fdata(i,j-1,k-1,n) + fdata(i,j-1,k+1,n) + fdata(i,j+1,k-1,n) + fdata(i,j+1,k+1,n) +
+                                         fdata(i-1,j,k-1,n) + fdata(i+1,j,k-1,n) + fdata(i-1,j,k+1,n) + fdata(i+1,j,k+1,n) +
+                                         fdata(i-1,j-1,k,n) + fdata(i-1,j+1,k,n) + fdata(i+1,j-1,k,n) + fdata(i+1,j+1,k,n)) / 32.0
+                                        +
+                                        (fdata(i-1,j,k,n) + fdata(i,j-1,k,n) + fdata(i,j,k-1,n) +
+                                         fdata(i+1,j,k,n) + fdata(i,j+1,k,n) + fdata(i,j,k+1,n)) / 16.0
+                                        +
+                                        fdata(i,j,k,n) / 8.0;
+                                }
+                                else if (nghost == 4)
+                                {
+                                    cdata(I,J,K,n) = (
+                                    (fdata(i-3,j-3,k-3,n) + fdata(i-3,j-3,k+3,n) + fdata(i-3,j+3,k-3,n) + fdata(i-3,j+3,k+3,n) + fdata(i+3,j-3,k-3,n) + fdata(i+3,j-3,k+3,n) + fdata(i+3,j+3,k-3,n) + fdata(i+3,j+3,k+3,n))*1.0 +
+                                    (fdata(i-3,j-3,k-2,n) + fdata(i-3,j-3,k+2,n) + fdata(i-3,j-2,k-3,n) + fdata(i-3,j-2,k+3,n) + fdata(i-3,j+2,k-3,n) + fdata(i-3,j+2,k+3,n) + fdata(i-3,j+3,k-2,n) + fdata(i-3,j+3,k+2,n) + fdata(i-2,j-3,k-3,n) + fdata(i-2,j-3,k+3,n) + fdata(i-2,j+3,k-3,n) + fdata(i-2,j+3,k+3,n) + fdata(i+2,j-3,k-3,n) + fdata(i+2,j-3,k+3,n) + fdata(i+2,j+3,k-3,n) + fdata(i+2,j+3,k+3,n) + fdata(i+3,j-3,k-2,n) + fdata(i+3,j-3,k+2,n) + fdata(i+3,j-2,k-3,n) + fdata(i+3,j-2,k+3,n) + fdata(i+3,j+2,k-3,n) + fdata(i+3,j+2,k+3,n) + fdata(i+3,j+3,k-2,n) + fdata(i+3,j+3,k+2,n))*2.0 +
+                                    (fdata(i-3,j-3,k-1,n) + fdata(i-3,j-3,k+1,n) + fdata(i-3,j-1,k-3,n) + fdata(i-3,j-1,k+3,n) + fdata(i-3,j+1,k-3,n) + fdata(i-3,j+1,k+3,n) + fdata(i-3,j+3,k-1,n) + fdata(i-3,j+3,k+1,n) + fdata(i-1,j-3,k-3,n) + fdata(i-1,j-3,k+3,n) + fdata(i-1,j+3,k-3,n) + fdata(i-1,j+3,k+3,n) + fdata(i+1,j-3,k-3,n) + fdata(i+1,j-3,k+3,n) + fdata(i+1,j+3,k-3,n) + fdata(i+1,j+3,k+3,n) + fdata(i+3,j-3,k-1,n) + fdata(i+3,j-3,k+1,n) + fdata(i+3,j-1,k-3,n) + fdata(i+3,j-1,k+3,n) + fdata(i+3,j+1,k-3,n) + fdata(i+3,j+1,k+3,n) + fdata(i+3,j+3,k-1,n) + fdata(i+3,j+3,k+1,n))*3.0 +
+                                    (fdata(i-3,j-3,k+0,n) + fdata(i-3,j-2,k-2,n) + fdata(i-3,j-2,k+2,n) + fdata(i-3,j+0,k-3,n) + fdata(i-3,j+0,k+3,n) + fdata(i-3,j+2,k-2,n) + fdata(i-3,j+2,k+2,n) + fdata(i-3,j+3,k+0,n) + fdata(i-2,j-3,k-2,n) + fdata(i-2,j-3,k+2,n) + fdata(i-2,j-2,k-3,n) + fdata(i-2,j-2,k+3,n) + fdata(i-2,j+2,k-3,n) + fdata(i-2,j+2,k+3,n) + fdata(i-2,j+3,k-2,n) + fdata(i-2,j+3,k+2,n) + fdata(i+0,j-3,k-3,n) + fdata(i+0,j-3,k+3,n) + fdata(i+0,j+3,k-3,n) + fdata(i+0,j+3,k+3,n) + fdata(i+2,j-3,k-2,n) + fdata(i+2,j-3,k+2,n) + fdata(i+2,j-2,k-3,n) + fdata(i+2,j-2,k+3,n) + fdata(i+2,j+2,k-3,n) + fdata(i+2,j+2,k+3,n) + fdata(i+2,j+3,k-2,n) + fdata(i+2,j+3,k+2,n) + fdata(i+3,j-3,k+0,n) + fdata(i+3,j-2,k-2,n) + fdata(i+3,j-2,k+2,n) + fdata(i+3,j+0,k-3,n) + fdata(i+3,j+0,k+3,n) + fdata(i+3,j+2,k-2,n) + fdata(i+3,j+2,k+2,n) + fdata(i+3,j+3,k+0,n))*4.0 +
+                                    (fdata(i-3,j-2,k-1,n) + fdata(i-3,j-2,k+1,n) + fdata(i-3,j-1,k-2,n) + fdata(i-3,j-1,k+2,n) + fdata(i-3,j+1,k-2,n) + fdata(i-3,j+1,k+2,n) + fdata(i-3,j+2,k-1,n) + fdata(i-3,j+2,k+1,n) + fdata(i-2,j-3,k-1,n) + fdata(i-2,j-3,k+1,n) + fdata(i-2,j-1,k-3,n) + fdata(i-2,j-1,k+3,n) + fdata(i-2,j+1,k-3,n) + fdata(i-2,j+1,k+3,n) + fdata(i-2,j+3,k-1,n) + fdata(i-2,j+3,k+1,n) + fdata(i-1,j-3,k-2,n) + fdata(i-1,j-3,k+2,n) + fdata(i-1,j-2,k-3,n) + fdata(i-1,j-2,k+3,n) + fdata(i-1,j+2,k-3,n) + fdata(i-1,j+2,k+3,n) + fdata(i-1,j+3,k-2,n) + fdata(i-1,j+3,k+2,n) + fdata(i+1,j-3,k-2,n) + fdata(i+1,j-3,k+2,n) + fdata(i+1,j-2,k-3,n) + fdata(i+1,j-2,k+3,n) + fdata(i+1,j+2,k-3,n) + fdata(i+1,j+2,k+3,n) + fdata(i+1,j+3,k-2,n) + fdata(i+1,j+3,k+2,n) + fdata(i+2,j-3,k-1,n) + fdata(i+2,j-3,k+1,n) + fdata(i+2,j-1,k-3,n) + fdata(i+2,j-1,k+3,n) + fdata(i+2,j+1,k-3,n) + fdata(i+2,j+1,k+3,n) + fdata(i+2,j+3,k-1,n) + fdata(i+2,j+3,k+1,n) + fdata(i+3,j-2,k-1,n) + fdata(i+3,j-2,k+1,n) + fdata(i+3,j-1,k-2,n) + fdata(i+3,j-1,k+2,n) + fdata(i+3,j+1,k-2,n) + fdata(i+3,j+1,k+2,n) + fdata(i+3,j+2,k-1,n) + fdata(i+3,j+2,k+1,n))*6.0 +
+                                    (fdata(i-3,j-2,k+0,n) + fdata(i-3,j+0,k-2,n) + fdata(i-3,j+0,k+2,n) + fdata(i-3,j+2,k+0,n) + fdata(i-2,j-3,k+0,n) + fdata(i-2,j-2,k-2,n) + fdata(i-2,j-2,k+2,n) + fdata(i-2,j+0,k-3,n) + fdata(i-2,j+0,k+3,n) + fdata(i-2,j+2,k-2,n) + fdata(i-2,j+2,k+2,n) + fdata(i-2,j+3,k+0,n) + fdata(i+0,j-3,k-2,n) + fdata(i+0,j-3,k+2,n) + fdata(i+0,j-2,k-3,n) + fdata(i+0,j-2,k+3,n) + fdata(i+0,j+2,k-3,n) + fdata(i+0,j+2,k+3,n) + fdata(i+0,j+3,k-2,n) + fdata(i+0,j+3,k+2,n) + fdata(i+2,j-3,k+0,n) + fdata(i+2,j-2,k-2,n) + fdata(i+2,j-2,k+2,n) + fdata(i+2,j+0,k-3,n) + fdata(i+2,j+0,k+3,n) + fdata(i+2,j+2,k-2,n) + fdata(i+2,j+2,k+2,n) + fdata(i+2,j+3,k+0,n) + fdata(i+3,j-2,k+0,n) + fdata(i+3,j+0,k-2,n) + fdata(i+3,j+0,k+2,n) + fdata(i+3,j+2,k+0,n))*8.0 +
+                                    (fdata(i-3,j-1,k-1,n) + fdata(i-3,j-1,k+1,n) + fdata(i-3,j+1,k-1,n) + fdata(i-3,j+1,k+1,n) + fdata(i-1,j-3,k-1,n) + fdata(i-1,j-3,k+1,n) + fdata(i-1,j-1,k-3,n) + fdata(i-1,j-1,k+3,n) + fdata(i-1,j+1,k-3,n) + fdata(i-1,j+1,k+3,n) + fdata(i-1,j+3,k-1,n) + fdata(i-1,j+3,k+1,n) + fdata(i+1,j-3,k-1,n) + fdata(i+1,j-3,k+1,n) + fdata(i+1,j-1,k-3,n) + fdata(i+1,j-1,k+3,n) + fdata(i+1,j+1,k-3,n) + fdata(i+1,j+1,k+3,n) + fdata(i+1,j+3,k-1,n) + fdata(i+1,j+3,k+1,n) + fdata(i+3,j-1,k-1,n) + fdata(i+3,j-1,k+1,n) + fdata(i+3,j+1,k-1,n) + fdata(i+3,j+1,k+1,n))*9.0 +
+                                    (fdata(i-3,j-1,k+0,n) + fdata(i-3,j+0,k-1,n) + fdata(i-3,j+0,k+1,n) + fdata(i-3,j+1,k+0,n) + fdata(i-2,j-2,k-1,n) + fdata(i-2,j-2,k+1,n) + fdata(i-2,j-1,k-2,n) + fdata(i-2,j-1,k+2,n) + fdata(i-2,j+1,k-2,n) + fdata(i-2,j+1,k+2,n) + fdata(i-2,j+2,k-1,n) + fdata(i-2,j+2,k+1,n) + fdata(i-1,j-3,k+0,n) + fdata(i-1,j-2,k-2,n) + fdata(i-1,j-2,k+2,n) + fdata(i-1,j+0,k-3,n) + fdata(i-1,j+0,k+3,n) + fdata(i-1,j+2,k-2,n) + fdata(i-1,j+2,k+2,n) + fdata(i-1,j+3,k+0,n) + fdata(i+0,j-3,k-1,n) + fdata(i+0,j-3,k+1,n) + fdata(i+0,j-1,k-3,n) + fdata(i+0,j-1,k+3,n) + fdata(i+0,j+1,k-3,n) + fdata(i+0,j+1,k+3,n) + fdata(i+0,j+3,k-1,n) + fdata(i+0,j+3,k+1,n) + fdata(i+1,j-3,k+0,n) + fdata(i+1,j-2,k-2,n) + fdata(i+1,j-2,k+2,n) + fdata(i+1,j+0,k-3,n) + fdata(i+1,j+0,k+3,n) + fdata(i+1,j+2,k-2,n) + fdata(i+1,j+2,k+2,n) + fdata(i+1,j+3,k+0,n) + fdata(i+2,j-2,k-1,n) + fdata(i+2,j-2,k+1,n) + fdata(i+2,j-1,k-2,n) + fdata(i+2,j-1,k+2,n) + fdata(i+2,j+1,k-2,n) + fdata(i+2,j+1,k+2,n) + fdata(i+2,j+2,k-1,n) + fdata(i+2,j+2,k+1,n) + fdata(i+3,j-1,k+0,n) + fdata(i+3,j+0,k-1,n) + fdata(i+3,j+0,k+1,n) + fdata(i+3,j+1,k+0,n))*12.0 +
+                                    (fdata(i-3,j+0,k+0,n) + fdata(i-2,j-2,k+0,n) + fdata(i-2,j+0,k-2,n) + fdata(i-2,j+0,k+2,n) + fdata(i-2,j+2,k+0,n) + fdata(i+0,j-3,k+0,n) + fdata(i+0,j-2,k-2,n) + fdata(i+0,j-2,k+2,n) + fdata(i+0,j+0,k-3,n) + fdata(i+0,j+0,k+3,n) + fdata(i+0,j+2,k-2,n) + fdata(i+0,j+2,k+2,n) + fdata(i+0,j+3,k+0,n) + fdata(i+2,j-2,k+0,n) + fdata(i+2,j+0,k-2,n) + fdata(i+2,j+0,k+2,n) + fdata(i+2,j+2,k+0,n) + fdata(i+3,j+0,k+0,n))*16.0 +
+                                    (fdata(i-2,j-1,k-1,n) + fdata(i-2,j-1,k+1,n) + fdata(i-2,j+1,k-1,n) + fdata(i-2,j+1,k+1,n) + fdata(i-1,j-2,k-1,n) + fdata(i-1,j-2,k+1,n) + fdata(i-1,j-1,k-2,n) + fdata(i-1,j-1,k+2,n) + fdata(i-1,j+1,k-2,n) + fdata(i-1,j+1,k+2,n) + fdata(i-1,j+2,k-1,n) + fdata(i-1,j+2,k+1,n) + fdata(i+1,j-2,k-1,n) + fdata(i+1,j-2,k+1,n) + fdata(i+1,j-1,k-2,n) + fdata(i+1,j-1,k+2,n) + fdata(i+1,j+1,k-2,n) + fdata(i+1,j+1,k+2,n) + fdata(i+1,j+2,k-1,n) + fdata(i+1,j+2,k+1,n) + fdata(i+2,j-1,k-1,n) + fdata(i+2,j-1,k+1,n) + fdata(i+2,j+1,k-1,n) + fdata(i+2,j+1,k+1,n))*18.0 +
+                                    (fdata(i-2,j-1,k+0,n) + fdata(i-2,j+0,k-1,n) + fdata(i-2,j+0,k+1,n) + fdata(i-2,j+1,k+0,n) + fdata(i-1,j-2,k+0,n) + fdata(i-1,j+0,k-2,n) + fdata(i-1,j+0,k+2,n) + fdata(i-1,j+2,k+0,n) + fdata(i+0,j-2,k-1,n) + fdata(i+0,j-2,k+1,n) + fdata(i+0,j-1,k-2,n) + fdata(i+0,j-1,k+2,n) + fdata(i+0,j+1,k-2,n) + fdata(i+0,j+1,k+2,n) + fdata(i+0,j+2,k-1,n) + fdata(i+0,j+2,k+1,n) + fdata(i+1,j-2,k+0,n) + fdata(i+1,j+0,k-2,n) + fdata(i+1,j+0,k+2,n) + fdata(i+1,j+2,k+0,n) + fdata(i+2,j-1,k+0,n) + fdata(i+2,j+0,k-1,n) + fdata(i+2,j+0,k+1,n) + fdata(i+2,j+1,k+0,n))*24.0 +
+                                    (fdata(i-1,j-1,k-1,n) + fdata(i-1,j-1,k+1,n) + fdata(i-1,j+1,k-1,n) + fdata(i-1,j+1,k+1,n) + fdata(i+1,j-1,k-1,n) + fdata(i+1,j-1,k+1,n) + fdata(i+1,j+1,k-1,n) + fdata(i+1,j+1,k+1,n))*27.0 +
+                                    (fdata(i-2,j+0,k+0,n) + fdata(i+0,j-2,k+0,n) + fdata(i+0,j+0,k-2,n) + fdata(i+0,j+0,k+2,n) + fdata(i+0,j+2,k+0,n) + fdata(i+2,j+0,k+0,n))*32.0 +
+                                    (fdata(i-1,j-1,k+0,n) + fdata(i-1,j+0,k-1,n) + fdata(i-1,j+0,k+1,n) + fdata(i-1,j+1,k+0,n) + fdata(i+0,j-1,k-1,n) + fdata(i+0,j-1,k+1,n) + fdata(i+0,j+1,k-1,n) + fdata(i+0,j+1,k+1,n) + fdata(i+1,j-1,k+0,n) + fdata(i+1,j+0,k-1,n) + fdata(i+1,j+0,k+1,n) + fdata(i+1,j+1,k+0,n))*36.0 +
+                                    (fdata(i-1,j+0,k+0,n) + fdata(i+0,j-1,k+0,n) + fdata(i+0,j+0,k-1,n) + fdata(i+0,j+0,k+1,n) + fdata(i+0,j+1,k+0,n) + fdata(i+1,j+0,k+0,n))*48.0 +
+                                    (fdata(i+0,j+0,k+0,n))*64.0
+                                    )/4096.0;
+                                }
                             }
                         }
 
@@ -817,7 +842,7 @@ MCNodalLinOp::solutionResidual (int amrlev, MultiFab& resid, MultiFab& x, const 
 {
     const int mglev = 0;
     apply(amrlev, mglev, resid, x, BCMode::Inhomogeneous, StateMode::Solution);
-    MultiFab::Xpay(resid, -1.0, b, 0, 0, ncomp, getNGrow(amrlev));
+    MultiFab::Xpay(resid, -1.0, b, 0, 0, ncomp, getNGrow(amrlev,0));
     amrex::Geometry geom = m_geom[amrlev][mglev];
     resid.setMultiGhost(true);
     resid.FillBoundary();
@@ -829,7 +854,7 @@ MCNodalLinOp::correctionResidual (int amrlev, int mglev, MultiFab& resid, MultiF
 {
     resid.setVal(0.0);
     apply(amrlev, mglev, resid, x, BCMode::Homogeneous, StateMode::Correction);
-    MultiFab::Xpay(resid, -1.0, b, 0, 0, ncomp, getNGrow(amrlev));
+    MultiFab::Xpay(resid, -1.0, b, 0, 0, ncomp, getNGrow(amrlev,mglev));
     amrex::Geometry geom = m_geom[amrlev][mglev];
     resid.setMultiGhost(true);
     resid.FillBoundary();

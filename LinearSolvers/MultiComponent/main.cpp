@@ -142,8 +142,8 @@ int main (int argc, char* argv[])
         cgrids[ilev].define(cdomain);
         cgrids[ilev].maxSize(mesh.max_grid_size); // TODO
 
-        cdomain.grow(IntVect(-mesh.nnodes/4,-mesh.nnodes/4));
-        //cdomain.grow(IntVect(0,-mesh.nnodes/4));
+        //cdomain.grow(-mesh.nnodes/4);
+        cdomain.grow(IntVect(0,-mesh.nnodes/4));
         
         //std::cout << "refining ... " << mesh.ref_ratio[ilev] << std::endl;
         if (ilev < mesh.nlevels-1) cdomain.refine(mesh.ref_ratio[ilev]);
@@ -158,17 +158,17 @@ int main (int argc, char* argv[])
     //    RHS[1] = 0
     //    RHS[2] = 0 ... etc
     //
-    int nghost = 2;
-     for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
-     {
-         if (ilev > 0) nghost = mesh.ref_ratio[ilev-1];
-         dmap   [ilev].define(cgrids[ilev]);
-         solution[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
+    int nghost = 0;
+    for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
+    {
+        if (ilev > 0) nghost = mesh.ref_ratio[ilev-1];
+        dmap   [ilev].define(cgrids[ilev]);
+        solution[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         solution[ilev].setVal(0.0);
         solution[ilev].setMultiGhost(true);
         b[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         b[ilev].setMultiGhost(true);
-         rhs     [ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
+        rhs     [ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         rhs     [ilev].setVal(0.0);
         rhs     [ilev].setMultiGhost(true);
         res     [ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);

@@ -91,11 +91,12 @@ public:
     // Note: MUST return 2!
 //    virtual int getNGrow() const override final {return 2;}
 
-    virtual int getNGrow(int a_lev = 0) const override final 
+    virtual int getNGrow(int a_lev, int mg_lev) const override final 
     {
-        //return 2;
-        if (a_lev == 0) return 2; // TODO this should actually be 0?
-        else return m_amr_ref_ratio[a_lev-1];
+        if (a_lev == 0) return 0;
+        int gntmp = m_amr_ref_ratio[a_lev-1];
+        for (int i = 0; i < mg_lev; i++) gntmp = gntmp/2;
+        return gntmp;
     }
     // Return the number of components
     virtual int getNComp() const override final {return ncomp;}
