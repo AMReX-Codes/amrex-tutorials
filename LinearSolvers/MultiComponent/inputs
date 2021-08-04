@@ -2,7 +2,7 @@
 mesh.nlevels = 2                # Number of AMR levels
 #mesh.nnodes = 64                # Number of nodes in each direction
 mesh.nnodes = 16                # Number of nodes in each direction
-#mesh.max_grid_size = 32         # Maximum grid size (default = very large --> no parallelism)
+mesh.max_grid_size = 8         # Maximum grid size (default = very large --> no parallelism)
 mesh.ref_ratio = 4
 
 mlmg.fixed_iter = 2000          # Number of iterations before exiting gracefully

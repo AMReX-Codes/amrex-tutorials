@@ -158,7 +158,7 @@ int main (int argc, char* argv[])
     //    RHS[1] = 0
     //    RHS[2] = 0 ... etc
     //
-    int nghost = 0;
+    int nghost = 2;
     for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
     {
         if (ilev > 0) nghost = mesh.ref_ratio[ilev-1];

@@ -93,7 +93,7 @@ public:
 
     virtual int getNGrow(int a_lev, int mg_lev) const override final 
     {
-        if (a_lev == 0) return 0;
+        if (a_lev == 0) return 2;
         int gntmp = m_amr_ref_ratio[a_lev-1];
         for (int i = 0; i < mg_lev; i++) gntmp = gntmp/2;
         return gntmp;

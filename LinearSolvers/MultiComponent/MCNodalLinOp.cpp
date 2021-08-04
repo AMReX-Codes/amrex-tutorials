@@ -24,7 +24,7 @@ using namespace amrex;
 void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab& a_in) const
 {
     BL_PROFILE("MCNodalLinOp::Fapply()");
-    //std::cout << "amrlev=" << amrlev << " mglev=" <<mglev << std::endl;
+    //std::cout << "amrlev=" << amrlev << " mglev=" <<mglev << " nghost = " << getNGrow(amrlev,mglev) << std::endl;
     //if (amrlev ==1 && mglev == 1) amrex::Abort();
 
     int buffer = std::max(0,getNGrow(amrlev,mglev)-1);
@@ -41,9 +41,11 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
 
     for (MFIter mfi(a_out, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        Box bx = mfi.tilebox();
-//        bx.grow(1);        // Expand to cover first layer of ghost nodes
-        bx.grow(buffer);        // Expand to cover first layer of ghost nodes
+        //Box bx = mfi.tilebox();
+        Box bx = mfi.validbox();
+        //Box bx = mfi.growntilebox(IntVect(buffer));
+        bx.grow(1);        // Expand to cover first layer of ghost nodes
+//        bx.grow(buffer);        // Expand to cover first layer of ghost nodes
         bx = bx & domain;  // Take intersection of box and the problem domain
 
         amrex::Array4<const amrex::Real> const& in  = a_in.array(mfi);
@@ -136,6 +138,7 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
     //myfile << "Writing this to a file.\n";
 
 
+    /*
     // Perform smoothing operation on the C/F boudnary
     if (amrlev==1 && mglev == 0)
     {
@@ -182,7 +185,8 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
         }
         //std::cout << std::endl << std::endl << std::endl;
     }
-    
+    */
+
     //myfile.close();
     //amrex::Abort();
 
