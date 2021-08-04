@@ -1,21 +1,22 @@
 #mesh.nlevels = 3                # Number of AMR levels
 mesh.nlevels = 2                # Number of AMR levels
-#mesh.nnodes = 64                # Number of nodes in each direction
-mesh.nnodes = 16                # Number of nodes in each direction
-mesh.max_grid_size = 8         # Maximum grid size (default = very large --> no parallelism)
-mesh.ref_ratio = 4
+mesh.nnodes = 64                # Number of nodes in each direction
+#mesh.nnodes = 16                # Number of nodes in each direction
+mesh.max_grid_size = 32         # Maximum grid size (default = very large --> no parallelism)
+#mesh.max_grid_size = 16         # Maximum grid size (default = very large --> no parallelism)
+mesh.ref_ratio = 2
 
 mlmg.fixed_iter = 2000          # Number of iterations before exiting gracefully
 #mlmg.fixed_iter = 1          # Number of iterations before exiting gracefully
 mlmg.verbose = 2                # Verbosity of MLMG
 mlmg.bottom_verbose = 0         # Verbosity of bottom solve
-mlmg.max_iter = 1000             # Max number of iterations before error
-#mlmg.max_fmg_iter = 1000         # Number of F-cycles 
+mlmg.max_iter = 100             # Max number of iterations before error
+mlmg.max_fmg_iter = 1000         # Number of F-cycles 
 mlmg.agglomeration = 1          # Do agglomeration 
 mlmg.consolidation = 1          # Do consolidation
 #mlmg.max_coarsening_level = 0
-mlmg.pre_smooth = 2
-mlmg.post_smooth = 2
+#mlmg.pre_smooth = 2
+#mlmg.post_smooth = 2
 
 op.ncomp = 2                    # Number of components in the solution / RHS
 op.coeff = 1.0 0.0 0.5 1.0      # Matrix of coefficients - must be equal to op.ncomp^2

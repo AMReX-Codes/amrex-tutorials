@@ -89,8 +89,6 @@ protected:
 public:
     // Return the number of ghost cells
     // Note: MUST return 2!
-//    virtual int getNGrow() const override final {return 2;}
-
     virtual int getNGrow(int a_lev, int mg_lev) const override final 
     {
         if (a_lev == 0) return 2;

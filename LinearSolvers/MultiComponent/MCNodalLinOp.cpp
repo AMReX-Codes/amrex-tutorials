@@ -24,8 +24,6 @@ using namespace amrex;
 void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab& a_in) const
 {
     BL_PROFILE("MCNodalLinOp::Fapply()");
-    //std::cout << "amrlev=" << amrlev << " mglev=" <<mglev << " nghost = " << getNGrow(amrlev,mglev) << std::endl;
-    //if (amrlev ==1 && mglev == 1) amrex::Abort();
 
     int buffer = std::max(0,getNGrow(amrlev,mglev)-1);
     
@@ -41,9 +39,7 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
 
     for (MFIter mfi(a_out, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        //Box bx = mfi.tilebox();
-        Box bx = mfi.validbox();
-        //Box bx = mfi.growntilebox(IntVect(buffer));
+        Box bx = mfi.tilebox();
         bx.grow(1);        // Expand to cover first layer of ghost nodes
 //        bx.grow(buffer);        // Expand to cover first layer of ghost nodes
         bx = bx & domain;  // Take intersection of box and the problem domain
@@ -120,10 +116,8 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
     domain.grow(-1); // Shrink domain so we don't operate on any boundaries
 
     //int ncomp  = getNComp();
-//    int nghost = getNGrow();
     int nghost = getNGrow(amrlev,mglev);
-    int buffer = nghost - 1; //std::max(0,nghost-1);
-    //std::cout << "amrlev = "<< amrlev << " mglev = " << mglev << " nghost = " << nghost << std::endl;
+    int buffer = std::max(0,nghost-1);
 
     Real omega = 2./3.; // Damping factor (very important!)
 
@@ -132,63 +126,6 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
     MultiFab _Rx(a_x.boxArray(), a_x.DistributionMap(), ncomp, nghost);
 
     if (!m_diagonal_computed) amrex::Abort("MCNodalLinOp::Diagonal() must be called before using Fsmooth");
-
-    //std::ofstream myfile;
-    //myfile.open ("example.txt");
-    //myfile << "Writing this to a file.\n";
-
-
-    /*
-    // Perform smoothing operation on the C/F boudnary
-    if (amrlev==1 && mglev == 0)
-    {
-        for (int ctr = 0; ctr < 1; ctr++)
-        {
-            for (MFIter mfi(a_x, false); mfi.isValid(); ++mfi)
-            {
-                //Box bx = mfi.tilebox();
-                Box bx = mfi.validbox();
-                bx.grow(nghost);        // Expand to cover first layer of ghost nodes
-                Box intbx = bx & domain;  // Take intersection of box and the problem domain
-
-                //std::cout << "bx = " << bx << std::endl;
-                //std::cout << "intbx = " << intbx << std::endl;
-
-                Dim3 lo = amrex::lbound(bx), hi = amrex::ubound(bx);
-
-                amrex::Array4<amrex::Real>       const& x  = a_x.array(mfi);
-
-                for (int n = 0; n < getNComp(); n++)
-                    amrex::ParallelFor (intbx,[=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                        if ( i%4 || j%4 )
-                        {
-                            if (j == lo.y || j==hi.y)
-                            {
-                                Real du = -2.0 * (x(i+1,j,k) + x(i-1,j,k) - 2.0*x(i,j,k));
-                                if (i > lo.x+1)
-                                    du += x(i-2,j,k) + x(i,j,k) - 2.0*x(i-1,j,k);
-                                if (i < hi.x-1)
-                                    du += x(i+2,j,k) + x(i,j,k) - 2.0*x(i+1,j,k);
-                                
-                                Real ddu = -2.0;
-                                //std::cout << i << " " << j << " " << x(i,j,k) << std::endl;
-
-                                //x(i,j,k) =NAN;//x(i,j,k) + 0.5 * du / ddu;
-
-                                //std::cout << "(" << i << "," << j << ")" << std::endl;
-                            }
-                        }
-                        //x(i,j,k,n) = (1.-omega)*x(i,j,k,n) + omega*(b(i,j,k,n) - Rx(i,j,k,n))/diag(i,j,k,n);
-                    });
-            }
-
-        }
-        //std::cout << std::endl << std::endl << std::endl;
-    }
-    */
-
-    //myfile.close();
-    //amrex::Abort();
 
     // This is a JACOBI iteration, not Gauss-Seidel.
     // So we need to do twice the number of iterations to get the same behavior as GS.
@@ -209,8 +146,7 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
             //Box bx = mfi.tilebox();
             Box bx = mfi.validbox();
             //bx.grow(1);        // Expand to cover first layer of ghost nodes
-            //bx.grow(buffer);        // Expand to cover first layer of ghost nodes
-            //bx.grow(buffer-2);
+            bx.grow(buffer);        // Expand to cover first layer of ghost nodes
             bx = bx & domain;  // Take intersection of box and the problem domain
 
             amrex::Array4<amrex::Real>       const& x  = a_x.array(mfi);
@@ -234,7 +170,7 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
 void MCNodalLinOp::normalize (int amrlev, int mglev, MultiFab& a_x) const
 {
     BL_PROFILE("MCNodalLinOp::normalize()");
-    int nghost = getNGrow(amrlev,mglev);
+    int nghost = std::max(0,getNGrow(amrlev,mglev)-1);
     amrex::MultiFab::Divide(a_x,*m_diag[amrlev][mglev],0,0,ncomp,nghost); // Dx *= diag  (Dx = x*diag)
 }
 
@@ -248,8 +184,6 @@ void MCNodalLinOp::define (const Vector<Geometry>& a_geom,
                const Vector<FabFactory<FArrayBox> const*>& a_factory)
 {
     BL_PROFILE("MCNodalLinOp::~Operator()");
-
-//    m_defined = true;
 
      // This makes sure grids are node-centered;
      Vector<BoxArray> cc_grids = a_grids;
@@ -565,8 +499,6 @@ void MCNodalLinOp::interpolation (int amrlev, int fmglev, MultiFab& fine, const 
 
                     int I=i/2, J=j/2, K=k/2;
 
-//                    if (nghost == 2)
-//                    {                    
                     if (i%2 == 0 && j%2 == 0 && k%2 ==0) // Coincident
                         fdata(i,j,k,n) = cdata(I,J,K,n);
                     else if (j%2 == 0 && k%2 == 0) // X Edge
@@ -589,25 +521,6 @@ void MCNodalLinOp::interpolation (int amrlev, int fmglev, MultiFab& fine, const 
                                       cdata(I+1,J,K,n)   + cdata(I,J+1,K,n)   + cdata(I,J,K+1,n) +
                                       cdata(I,J+1,K+1,n) + cdata(I+1,J,K+1,n) + cdata(I+1,J+1,K,n) +
                                       cdata(I+1,J+1,K+1,n));
-//                    }
-//                    else if (nghost == 4)
-//                    {
-//                        amrex::Real fracx_hi = (amrex::Real)(i%nghost) / (amrex::Real)nghost;
-//                        amrex::Real fracx_lo = 1.0 - fracx_hi;
-//                        amrex::Real fracy_hi = (amrex::Real)(j%nghost) / (amrex::Real)nghost;
-//                        amrex::Real fracy_lo = 1.0 - fracy_hi;
-//
-//                        fdata(i,j,k,n) = 
-//                            fracx_lo * fracy_lo * cdata(I,J,K,n) +
-//                            fracx_lo * fracy_hi * cdata(I,J+1,K,n) + 
-//                            fracx_hi * fracy_lo * cdata(I+1,J,K,n) +
-//                            fracx_hi * fracy_hi * cdata(I+1,J+1,K,n);
-//                        
-//                        //if (i%2 == 0 && j%2 == 0) // Coincident
-//                        //    fdata(i,j,k,n) = cdata(I,J,K,n);
-//                        
-//
-//                    }
                 });
         }
         fine[mfi].plus<RunOn::Host>(tmpfab,fine_bx,fine_bx,0,0,fine.nComp());
