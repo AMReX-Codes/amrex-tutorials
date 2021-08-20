@@ -13,6 +13,7 @@
 int main (int argc, char* argv[])
 {
     amrex::Initialize(argc,argv);
+    {
 
     // **********************************
     // DECLARE SIMULATION PARAMETERS
@@ -216,12 +217,8 @@ int main (int argc, char* argv[])
         }
     }
 
-    // clean up data objects by calling destructors
-    phi_old.~MultiFab();
-    phi_new.~MultiFab();
-    dm.~DistributionMapping();
 
-
+    } 
     amrex::Finalize();
     return 0;
 }
