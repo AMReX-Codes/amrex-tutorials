@@ -4,6 +4,9 @@
 .. role:: fortran(code)
    :language: fortran
 
+.. include:: <isonum.txt>
+
+
 Tutorials/Basic
 ==========================
 
@@ -32,7 +35,7 @@ the usual Fortran print call.
 ------------------
 
 The Demo Tutorial is designed to introduce main concepts of AMReX to new users
-while walking through a compile->run->visualize pipeline. Demo tutorial uses
+while walking through a compile |rarr| run |rarr| visualize pipeline. Demo tutorial uses
 the online coding environment GitPod and can be found by follow `this link`_.
 
 .. _`this link`: https://amrex-codes.github.io/amrex/docs_html/DemoTutorial.html
