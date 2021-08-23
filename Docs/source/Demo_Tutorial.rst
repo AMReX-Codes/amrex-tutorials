@@ -96,17 +96,18 @@ Basic Structure
 ::
 
    Main
+    ├──── Initialize AMReX
     ├──── Declare Simulation Parameters
     ├──── Read Parameter Values From Input File
     ├──── Define Simulation Setup & Geometry
     ├──── Initialize Data Loop
     │     └──── Set Values For Each Cell
     ├──── Write Initial Plotfile
-    └──── Main Time Evolution Loop
-          ├──── Evolve Values For Each Cell
-          ├──── Increment
-          └──── Write Plotfile At Given Interval
-
+    ├──── Main Time Evolution Loop
+    │     ├──── Evolve Values For Each Cell
+    │     ├──── Increment
+    │     └──── Write Plotfile At Given Interval
+    └──── Finalize AMReX
 
 AMReX Namespace and Required Commands
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -114,16 +115,16 @@ AMReX Namespace and Required Commands
 The AMReX namespace contains many useful features. They are accessed by including
 the necessary header files and using the
 prefix :code:`amrex::`. Each
-:code:`int main(...)` using AMReX should begin with :code:`amrex::Initialize()`
-and end with :code:`amrex::Finalize()`. Together these commands are responsible for
+:code:`int main(...)` using AMReX should begin with :code:`amrex::Initialize()` 
+immediately followed by :code:`{` 
+and end with code:`}` immediately followed by :code:`amrex::Finalize()`. Together 
+these commands are responsible for
 initializing the AMReX execution environment and proper release of resources. AMReX
 classes and features not located between the commands will not function properly.
 
 Other useful features include
 :code:`amrex::Print()` which was written to handle print output during parallel
 execution.
-
-
 
 
 The MultiFab Data Structure
