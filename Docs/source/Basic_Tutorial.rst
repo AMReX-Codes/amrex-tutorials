@@ -29,7 +29,7 @@ the usual Fortran print call.
 
 
 **Demo Tutorial**
-----------------
+------------------
 
 The Demo Tutorial is designed to introduce main concepts of AMReX to new users
 while walking through a compile->run->visualize pipeline. Demo tutorial uses
