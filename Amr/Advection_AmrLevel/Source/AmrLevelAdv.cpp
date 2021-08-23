@@ -784,7 +784,7 @@ AmrLevelAdv::init_particles ()
 
       TracerPC.reset(new AmrTracerParticleContainer(parent));
 
-      AmrTracerParticleContainer::ParticleInitData pdata = {AMREX_D_DECL(0.0, 0.0, 0.0), {}, {}, {}};
+      AmrTracerParticleContainer::ParticleInitData pdata = {{AMREX_D_DECL(0.0, 0.0, 0.0)}, {}, {}, {}};
 
       TracerPC->SetVerbose(0);
       TracerPC->InitOnePerCell(0.5, 0.5, 0.5, pdata);
