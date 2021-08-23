@@ -31,7 +31,7 @@ environment.
 
 .. |GitpodLink| raw:: html
 
-   <a href="https://gitpod.io/#https://github.com/atmyers/ecp-tutorials" target="_blank">here</a>
+   <a href="https://gitpod.io/#https://github.com/AMReX-Codes/amrex-tutorials" target="_blank">here</a>
 
 ..
     To download and build AMReX yourself see:
@@ -44,7 +44,7 @@ Building the Project
 ~~~~~~~~~~~~~~~~~~~~
 
 This example will use CMake to build the project. Navigate to the directory
-:code:`/workspace/exp-tutorials`
+:code:`/workspace/amrex-tutorials`
 and type
 
 .. code-block::
@@ -64,7 +64,7 @@ https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX_Chapter.html.
 Compiling the Code
 ~~~~~~~~~~~~~~~~~~
 
-After building the project, Navigate to the directory :code:`03_HeatEquation`.
+After building the project, Navigate to the directory :code:`DemoTutorial1`.
 At the prompt type :code:`make` and
 CMake will compile the code and dependencies. The first time you call :code:`make`,
 you should see a list of all the source AMReX files being compiled:
@@ -78,9 +78,9 @@ To run the code type:
 
 .. code-block::
 
-   ./03_HeatEquation inputs
+   ./Basic_DemoTutorial1 inputs
 
-This command will run the :code:`03_HeatEquation` code with the :code:`inputs` file as
+This command will run the :code:`Basic_DemoTutorial1` code with the :code:`inputs` file as
 the input parameters. Parsing of the information in the :code:`inputs` file is done by
 :code:`ParmParse`. More details can be found at
 https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse
@@ -88,7 +88,7 @@ https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse
 Code Highlights
 ~~~~~~~~~~~~~~~
 
-At this point we have built, compiled and ran the :code:`03_HeatEquation` code. Now
+At this point we have built, compiled and ran the :code:`Basic_DemoTutorial1` code. Now
 we will walk through the code and explain some essential features of AMReX syntax.
 
 Basic Structure
@@ -115,9 +115,9 @@ AMReX Namespace and Required Commands
 The AMReX namespace contains many useful features. They are accessed by including
 the necessary header files and using the
 prefix :code:`amrex::`. Each
-:code:`int main(...)` using AMReX should begin with :code:`amrex::Initialize()` 
-immediately followed by :code:`{` 
-and end with code:`}` immediately followed by :code:`amrex::Finalize()`. Together 
+:code:`int main(...)` using AMReX should begin with :code:`amrex::Initialize()`
+immediately followed by :code:`{`
+and end with code:`}` immediately followed by :code:`amrex::Finalize()`. Together
 these commands are responsible for
 initializing the AMReX execution environment and proper release of resources. AMReX
 classes and features not located between the commands will not function properly.
@@ -348,28 +348,3 @@ The code in this example was simplified down to a single file. Other convenient 
 that require more complex syntax were removed for the sake of a
 straight-forward presentation. In the next example
 we'll put these pieces back and write code like an AMReX developer.
-
-
-
-Commentary: Tutorial Features
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Main Goal**:
-Want someone who goes through this tutorial to feel that they are capable of
-understanding and using AMReX.
-
-Other Goals:
-  - sense of accomplishment
-  - introduce basic workflow: Download, Compile, Run, Visualize
-  - understand purpose of initialize/finalize, MultiFab, MFIter and ParallelFor
-
-
-
-
-Useful Features:
-  - objectives and time listed at the beginning of the tutorial.
-  - less explanations, more actions to follow. Longer explanations linked to.
-    - aim for short explanations that tell 80% of the story without being incorrect (avoid "white lies").
-  - frequent headings and short text blocks.
-
-
