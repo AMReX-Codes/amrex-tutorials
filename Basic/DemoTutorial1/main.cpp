@@ -218,7 +218,7 @@ int main (int argc, char* argv[])
     }
 
 
-    } 
+    }
     amrex::Finalize();
     return 0;
 }
