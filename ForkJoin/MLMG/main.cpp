@@ -225,13 +225,11 @@ void fork_solve(MultiFab& soln, const MultiFab& rhs,
     for (int i = 0; i < 2; ++i) {
         // issue fork-join
         fj.fork_join(
-            [&geom, i] (ForkJoin &f) {
+            [&geom] (ForkJoin &f) {
                 solve_all(f.get_mf("soln"), f.get_mf("rhs"), f.get_mf("alpha"),
                           f.get_mf_vec("beta"), geom);
             }
         );
-        ++i; //to silence "error: lambda capture 'i' is not used"
-        --i; //to silence "error: lambda capture 'i' is not used"
     }
 }
 
