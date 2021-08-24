@@ -230,6 +230,7 @@ void fork_solve(MultiFab& soln, const MultiFab& rhs,
                           f.get_mf_vec("beta"), geom);
             }
         );
+        i = i; //to silence "error: lambda capture 'i' is not used"
     }
 }
 
