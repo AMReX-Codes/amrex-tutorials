@@ -55,9 +55,7 @@ public:
 
     // Advance grids at this level in time.
     virtual amrex::Real advance (amrex::Real time,
-                                 amrex::Real dt,
-                                 int  iteration,
-                                 int  ncycle) override;
+                                 amrex::Real dt) override;
 
     virtual void computeInitialDt (int                                 finest_level,
                                    int                                 sub_cycle,
