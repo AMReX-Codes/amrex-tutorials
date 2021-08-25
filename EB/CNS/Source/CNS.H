@@ -54,6 +54,7 @@ public:
     virtual void initData () override;
 
     // Advance grids at this level in time.
+    using amrex::AmrLevel::advance;
     virtual amrex::Real advance (amrex::Real time,
                                  amrex::Real dt);
 
