@@ -20,6 +20,9 @@ int main (int argc, char* argv[])
 void main_main ()
 {
 
+    // store the current time so we can later compute total run time.
+    Real strt_time = ParallelDescriptor::second();
+
     // **********************************
     // SIMULATION PARAMETERS
 
@@ -121,9 +124,9 @@ void main_main ()
         const Array4<Real>& phi_input = phi_in.array(mfi);
 
         // set phi = random(0, dt)
-        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
+        amrex::ParallelForRNG(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
-            phi_input(i,j,k) = amrex::Random() * dt;
+            phi_input(i,j,k) = amrex::Random(engine) * dt;
         });
     }
 
@@ -216,4 +219,10 @@ void main_main ()
     // Write a plotfile of the current data
     const std::string& pltfile2 = amrex::Concatenate("plt",1,5);
     WriteSingleLevelPlotfile(pltfile2, phi_out, {"y0", "y1"}, geom, dt, 1);
+
+    // Call the timer again and compute the maximum difference between the start time 
+    // and stop time over all processors
+    Real stop_time = ParallelDescriptor::second() - strt_time;
+    ParallelDescriptor::ReduceRealMax(stop_time);
+    amrex::Print() << "Run time = " << stop_time << std::endl;    
 }
