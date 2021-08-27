@@ -1,0 +1,4 @@
+n_cell = 8
+max_grid_size = 4
+model_file = "model.pt"
+dt = 1.0e1
