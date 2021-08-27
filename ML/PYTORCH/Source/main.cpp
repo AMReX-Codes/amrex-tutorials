@@ -114,7 +114,7 @@ void main_main ()
     // **********************************
     // INITIALIZE DATA
 
-    ResetRandomSeed(seed);
+    ResetRandomSeed(seed+ParallelDescriptor::MyProc());
 
     // loop over boxes
     for (MFIter mfi(phi_in); mfi.isValid(); ++mfi)
