@@ -1,3 +1,0 @@
-CEXE_headers += Adv_K.H
-CEXE_headers += compute_flux_K_$(DIM).H
-CEXE_headers += slope_K.H
