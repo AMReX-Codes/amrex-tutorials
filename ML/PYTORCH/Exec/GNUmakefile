@@ -15,7 +15,11 @@ VPATH_LOCATIONS  += ../Source
 INCLUDE_LOCATIONS += ../Source
 
 # Pytorch directories 
-PYTORCH_ROOT := ../libtorch
+ifeq ($(USE_CUDA),TRUE)
+  PYTORCH_ROOT := ../libtorch_cuda
+else
+  PYTORCH_ROOT := ../libtorch_cpu
+endif
 TORCH_LIBPATH = $(PYTORCH_ROOT)/lib
 
 ifeq ($(USE_CUDA),TRUE)
