@@ -33,12 +33,12 @@ set(_sv_sources face_velocity_${AMReX_SPACEDIM}d_K.H Prob_Parm.H Adv_prob.cpp Pr
 list(TRANSFORM _sv_sources PREPEND ${_sv_exe_dir})
 list(APPEND _sv_sources ${_sources})
 
-set(_input_files inputs-ci)
+set(_input_files inputs)
 list(TRANSFORM _input_files PREPEND ${_sv_exe_dir})
 
-setup_test(_sv_sources _input_files
+setup_tutorial(_sv_sources _input_files
    HAS_FORTRAN_MODULES
-   BASE_NAME Advection_AmrLevel_SV
+   BASE_NAME Advection_AmrLevel_GPU_SV
    RUNTIME_SUBDIR SingleVortex)
 
 unset(_sv_sources)
@@ -56,12 +56,12 @@ set(_uv_sources face_velocity_${AMReX_SPACEDIM}d_K.H Prob_Parm.H Adv_prob.cpp Pr
 list(TRANSFORM _uv_sources PREPEND ${_uv_exe_dir})
 list(APPEND _uv_sources ${_sources})
 
-set(_input_files inputs-ci)
+set(_input_files inputs)
 list(TRANSFORM _input_files PREPEND ${_uv_exe_dir})
 
-setup_test(_uv_sources _input_files
+setup_tutorial(_uv_sources _input_files
    HAS_FORTRAN_MODULES
-   BASE_NAME Advection_AmrLevel_UV
+   BASE_NAME Advection_AmrLevel_GPU_UV
    RUNTIME_SUBDIR UniformVelocity)
 
 unset(_uv_sources)
