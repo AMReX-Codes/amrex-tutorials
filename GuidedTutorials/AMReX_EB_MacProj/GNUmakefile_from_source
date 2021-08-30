@@ -1,0 +1,36 @@
+USE_MPI  = TRUE
+USE_OMP  = FALSE
+
+COMP = gnu
+
+DIM = 3
+
+DEBUG = FALSE
+
+AMREX_HOME ?= ../../..
+
+USE_EB = TRUE
+
+USE_HYPRE = TRUE
+USE_HYPRE = FALSE
+
+include $(AMREX_HOME)/Tools/GNUMake/Make.defs
+
+include ./Make.package
+
+Pdirs := AmrCore 
+Pdirs += Base 
+Pdirs += Boundary 
+Pdirs += EB
+Pdirs += LinearSolvers/Projections
+Pdirs += LinearSolvers/MLMG
+Pdirs += Particle
+
+Ppack	+= $(foreach dir, $(Pdirs), $(AMREX_HOME)/Src/$(dir)/Make.package)
+
+include $(Ppack)
+
+include $(AMREX_HOME)/Tools/GNUMake/Make.rules
+
+movie:
+	ffmpeg -framerate 10 -pattern_type glob -i "p*.png" -r 5 -vf scale=1024:-1 pachinko.gif

@@ -1,0 +1,7 @@
+an_int_scalar = 2
+a_bool_scalar = true
+a_real_array = 1. 2. 3. 4.
+
+a_prefix.a_real_scalar = 99.0
+a_prefix.a_string = "option"
+a_prefix.an_int_array = 4 5 6

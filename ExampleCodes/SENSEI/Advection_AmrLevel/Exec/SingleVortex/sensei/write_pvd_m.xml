@@ -1,0 +1,7 @@
+ <sensei>
+  <analysis type="VTKAmrWriter" mode="paraview" output_dir="./output_m" enabled="1">
+    <mesh name="mesh">
+      <cell_arrays> phi </cell_arrays>
+    </mesh>
+  </analysis>
+ </sensei>

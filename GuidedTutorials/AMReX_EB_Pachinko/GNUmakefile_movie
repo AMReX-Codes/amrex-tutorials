@@ -1,0 +1,6 @@
+PARAVIEW_PATH ?= /path/containing/paraview/executable
+
+movie:
+	@echo "Making a movie from 3D simulation, this will probably take <30 seconds ..."
+	@$(PARAVIEW_PATH)/pvpython paraview_pachinko.py > /dev/null 2>&1
+	@echo "Done! Generated pachinko.avi and pachinko.gif"

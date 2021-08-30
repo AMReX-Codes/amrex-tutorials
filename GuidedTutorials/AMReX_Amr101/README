@@ -1,0 +1,17 @@
+Advection_AmrCore: This tutorial contains an AMR advection code that advects a single 
+scalar field with a velocity field that is specified on faces.
+
+It also has an option to use the MAC projection to enforce that the specified
+velocity field is discretely divergence-free.
+
+It is an AMReX based code designed to run in parallel using MPI/OMP.
+
+This example uses source code from the amrex/Src/Base, Boundary, and AmrCore directories.
+To see a similar example that uses amrex/Src/Amr rather than AmrCore, see
+the tutorial in amrex/Tutorials/Amr/Advection_AmrLevel.
+
+Each directorie --  Exec/SingleVortex and Exec/SingleVortexProjected --
+includes a makefile and a sample inputs file.  
+Plotfiles are generated that can be viewed with amrvis2d / amrvis3d
+(CCSE's native vis / spreadsheet tool, downloadable separately from 
+https://github.com/amrex-codes/amrvis) or with VisIt, yt or Paraview.

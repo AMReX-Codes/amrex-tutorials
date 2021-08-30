@@ -1,0 +1,116 @@
+#!/usr/bin/env python
+""" 
+Use ffpmeg to transform a set of png files to an mp4 video.
+
+Donald E. Willcox
+"""
+import os
+import argparse
+from itertools import zip_longest
+
+parser = argparse.ArgumentParser()
+parser.add_argument('infiles', type=str, nargs='+',
+                    help='List of input files for encoding into a movie.')
+parser.add_argument('-s', '--sort', action='store_true',
+                    help='Sort input files sequentially by interpreting as an integer the first contiguous subset of the filename strings where the filenames differ. Does not strip leading paths.')
+parser.add_argument('-name', '--moviename', type=str,
+                    default='movie',
+                    help='Name of output (not extension). Default is "movie.mp4".')
+parser.add_argument('-ifps', '--input_fps', type=int, default=15,
+                    help='Input rate at which to read images, i.e. number of pngs per second. Default is 15.')
+parser.add_argument('-ofps', '--output_fps', type=int, default=25,
+                    help='Output rate of movie frames (not the rate of plot images). Default is 25.')
+args = parser.parse_args()
+
+def compare_mask(s1, s2):
+    """Compare string s1 to string s2, return elementwise equality as boolean mask."""
+
+    return [a==b for a, b in zip_longest(str(s1), str(s2))]
+
+def first_diff_substring(s, sref):
+    """Return the first substring of string s which differs from the reference string sref.
+    Return the empty string if the two strings are identical."""
+
+    mask = compare_mask(s, sref)
+    set_ifirst = False
+    ifirst = 0
+    ilast  = len(s)-1
+    for i, x in enumerate(mask):
+        if not x and not set_ifirst:
+            ifirst = i
+            set_ifirst = True
+        elif x and set_ifirst:
+            ilast = i-1
+            break
+
+    if set_ifirst and ifirst <= len(s)-1:
+        return s[ifirst:ilast+1]
+    else:
+        return ''
+
+def longest_diff_substring_list(s, sref_list):
+    """Return the longest substring of string s which differs from all strings in sref_list.
+    Return the empty string if no diffs can be found."""
+
+    maxlen = 0
+    maxdff = ''
+    for sref in sref_list:
+        sdiff = first_diff_substring(s, sref)
+        if sdiff:
+            if len(sdiff) > maxlen:
+                maxdff = sdiff
+                maxlen = len(sdiff)
+    return maxdff
+
+def get_sort_key(s, sref_list):
+    """Return an integer sorting key for string s given the list of strings sref_list."""
+
+    sdiff = longest_diff_substring_list(s, sref_list)
+    if sdiff:
+        return int(sdiff)
+    else:
+        return 0
+
+def sort_input_filenames(filenames):
+    """If sorting is desired, sort the input file list.
+    Determine the substring to interpret as an integer by comparing file names."""
+
+    if len(filenames) > 1:
+        filenames = sorted(filenames, key=lambda x: get_sort_key(x, filenames))
+    return filenames
+
+def symlink_inputs(base_link, filenames):
+    """Create temporary symbolic links for the filenames."""
+
+    symnames = []
+    for i, f in enumerate(filenames):
+        symn = '{}_{:010d}.png'.format(base_link, i)
+        os.symlink(f, symn)
+        symnames.append(symn)
+    return symnames
+
+def remove_symlinks(symnames):
+    """Delete the temporary symbolic links."""
+
+    for sf in symnames:
+        os.remove(sf)
+
+if __name__=='__main__':
+    # Sort input files if needed
+    if args.sort:
+        input_files = sort_input_filenames(args.infiles)
+    else:
+        input_files = args.infiles
+
+    # Symbolically link input files to a series of temporary files
+    base_link = '__fftemp'
+    symnames  = symlink_inputs(base_link, input_files)
+
+    # Run ffmpeg on the files specified
+    cmd = 'ffmpeg -y -r {} -i __fftemp_%010d.png -s 1440x1080 -vcodec libx264 -crf {} -pix_fmt yuv420p {}.mp4'.format(args.input_fps,
+                                                                                                                      args.output_fps,
+                                                                                                                      args.moviename)
+    os.system(cmd)
+
+    # Remove temporary files
+    remove_symlinks(symnames)

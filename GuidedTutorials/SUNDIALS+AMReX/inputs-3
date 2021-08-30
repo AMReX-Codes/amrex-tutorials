@@ -1,0 +1,36 @@
+# ------------------------------------------------------------------------------
+# Input parameters for HandsOn3.exe -- see README.md for parameter descriptions
+# and defaults
+# ------------------------------------------------------------------------------
+plot_int = 1
+arkode_order = 4
+nls_method = 0
+nls_max_iter = 3
+ls_max_iter = 100
+rhs_adv = 2
+rtol = 1.0e-4
+atol = 1.0e-9
+tfinal = 1.0e4
+dtout = 1.0e4
+max_steps = 10000
+write_diag = 1
+use_preconditioner = 1
+n_cell = 128
+max_grid_size = 64
+advCoeffx = 5.0e-4
+advCoeffy = 2.5e-4
+diffCoeffx = 1.0e-6
+diffCoeffy = 1.0e-6
+
+mlmg.agglomeration = 1
+mlmg.consolidation = 1
+mlmg.max_coarsening_level = 1000
+mlmg.linop_maxorder = 2
+mlmg.max_iter = 1000
+mlmg.max_fmg_iter = 1000
+mlmg.verbose = 0
+mlmg.bottom_verbose = 0
+mlmg.use_hypre = 1
+mlmg.hypre_interface = 3
+mlmg.use_petsc = 0
+mlmg.tol_rel = 1.0e-6

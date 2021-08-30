@@ -1,0 +1,8 @@
+CEXE_sources += main.cpp
+CEXE_sources += DefineVelocity.cpp
+CEXE_sources += EB_Cylinder.cpp
+CEXE_sources += FluidParticleContainer.cpp
+CEXE_sources += mac_project_velocity.cpp
+
+CEXE_headers += face_velocity.H
+CEXE_headers += FluidParticleContainer.H
