@@ -2,7 +2,7 @@
 AMREX_HOME ?= ../../../../amrex
 
 DEBUG      = FALSE
-USE_MPI    = TRUE
+USE_MPI    = TRIE
 USE_OMP    = FALSE
 USE_CUDA   = FALSE
 COMP	   = gnu
@@ -19,7 +19,7 @@ PYTORCH_ROOT := ../libtorch
 TORCH_LIBPATH = $(PYTORCH_ROOT)/lib
 
 ifeq ($(USE_CUDA),TRUE)
-  TORCH_LIBS = -ltorch -lc10 -lc10_cuda -lcuda 
+  TORCH_LIBS = -ltorch -ltorch_cpu -lc10 -lc10_cuda -lcuda 
 else
   TORCH_LIBS = -ltorch -ltorch_cpu -lc10
 endif
@@ -29,7 +29,11 @@ INCLUDE_LOCATIONS += $(PYTORCH_ROOT)/include \
 LIBRARY_LOCATIONS += $(TORCH_LIBPATH)
 
 DEFINES += -D_GLIBCXX_USE_CXX11_ABI=1
-LDFLAGS += -Wl,--no-as-needed,-rpath=$(TORCH_LIBPATH) $(TORCH_LIBS)
+ifeq ($(USE_CUDA),TRUE)
+  LDFLAGS += -Xlinker "--no-as-needed,-rpath $(TORCH_LIBPATH) $(TORCH_LIBS)"
+else
+  LDFLAGS += -Wl,--no-as-needed,-rpath=$(TORCH_LIBPATH) $(TORCH_LIBS)
+endif
 
 # AMReX 
 Pdirs   := Base Boundary AmrCore 

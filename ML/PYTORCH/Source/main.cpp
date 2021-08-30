@@ -144,8 +144,7 @@ void main_main ()
 	module = torch::jit::load(model_filename);
     }
     catch (const c10::Error& e) {
-	std::cerr << "error loading the model\n";
-	return;
+	amrex::Abort("Error loading the model\n");
     }
     
     Print() << "Model loaded.\n";
@@ -172,45 +171,50 @@ void main_main ()
 	// create torch tensor
         at::Tensor t1 = torch::zeros({ncell, Ncomp});
 
-#ifdef USE_AMREX_CUDA
-        t1 = t1.to(torch::kCUDA);
-#endif
-
 	// copy input multifab to torch tensor
-	amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
-        {
-	    int ii = i - bx_lo[0];
-	    int jj = j - bx_lo[1];
-	    int index = jj*nbox[0] + ii;
+	auto lo = bx.loVect3d();
+	auto hi = bx.hiVect3d();
+	for (auto k = lo[2]; k <= hi[2]; ++k) {
+	    for (auto j = lo[1]; j <= hi[1]; ++j) {
+		for (auto i = lo[0]; i <= hi[0]; ++i) {
+
+		    int ii = i - bx_lo[0];
+		    int jj = j - bx_lo[1];
+		    int index = jj*nbox[0] + ii;
 #if AMREX_SPACEDIM == 3
-	    int kk = k - bx_lo[2];
-	    index += kk*nbox[0]*nbox[1];
+		    int kk = k - bx_lo[2];
+		    index += kk*nbox[0]*nbox[1];
 #endif
-	    t1[index][0] = phi_input(i, j, k, 0);
-        });
+		    t1[index][0] = phi_input(i, j, k, 0);
+		}
+	    }
+        }
+
+#ifdef USE_AMREX_CUDA
+	torch::Device device0(torch::kCUDA, 1);
+        t1 = t1.to(device0);
+#endif
 
         // create torch data array
         std::vector<torch::jit::IValue> inputs_torch{t1};
         at::Tensor outputs_torch = module.forward(inputs_torch).toTensor();
 	
-#ifdef USE_AMREX_CUDA
-        outputs_torch = outputs_torch.to(torch::kCUDA);
-#endif
-
 	// copy tensor to output multifab
-	ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-            // const int index = AMREX_SPACEDIM == 2 ?
-            //         i*nbox[1] + j : (i*nbox[1] + j)*nbox[2] + k;
-	    int ii = i - bx_lo[0];
-	    int jj = j - bx_lo[1];
-	    int index = jj*nbox[0] + ii;
+	for (auto k = lo[2]; k <= hi[2]; ++k) {
+	    for (auto j = lo[1]; j <= hi[1]; ++j) {
+		for (auto i = lo[0]; i <= hi[0]; ++i) {
+		    int ii = i - bx_lo[0];
+		    int jj = j - bx_lo[1];
+		    int index = jj*nbox[0] + ii;
 #if AMREX_SPACEDIM == 3
-	    int kk = k - bx_lo[2];
-	    index += kk*nbox[0]*nbox[1];
+		    int kk = k - bx_lo[2];
+		    index += kk*nbox[0]*nbox[1];
 #endif
-	    phi_output(i, j, k, 0) = outputs_torch[index][0].item<double>();
-	    phi_output(i, j, k, 1) = outputs_torch[index][1].item<double>();
-        });
+		    phi_output(i, j, k, 0) = outputs_torch[index][0].item<double>();
+		    phi_output(i, j, k, 1) = outputs_torch[index][1].item<double>();
+		}
+	    }
+	}
     }
 
     // Tell the I/O Processor to write out that we're done
