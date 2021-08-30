@@ -130,7 +130,7 @@ void main_main ()
         });
     }
 
-    // Write a plotfile of the initial data 
+    // Write a plotfile of the initial data
     const std::string& pltfile = amrex::Concatenate("plt",0,5);
     WriteSingleLevelPlotfile(pltfile, phi_in, {"dt"}, geom, 0.0, 0);
 
@@ -140,93 +140,93 @@ void main_main ()
     // Load pytorch module via torch script
     torch::jit::script::Module module;
     try {
-	// Deserialize the ScriptModule from a file using torch::jit::load().
-	module = torch::jit::load(model_filename);
+        // Deserialize the ScriptModule from a file using torch::jit::load().
+        module = torch::jit::load(model_filename);
     }
     catch (const c10::Error& e) {
-	amrex::Abort("Error loading the model\n");
+        amrex::Abort("Error loading the model\n");
     }
-    
+
     Print() << "Model loaded.\n";
 
     // **********************************
     // EVALUATE MODEL
-    
+
     // loop over boxes
     for ( MFIter mfi(phi_in); mfi.isValid(); ++mfi )
     {
-	const Box& bx = mfi.validbox();
-	
-	const Array4<Real>& phi_input = phi_in.array(mfi);
-	const Array4<Real>& phi_output = phi_out.array(mfi);
+        const Box& bx = mfi.validbox();
 
-	// retrieve smallend and size of box
-	const IntVect bx_lo = bx.smallEnd();
-	const IntVect nbox = bx.size();
+        const Array4<Real>& phi_input = phi_in.array(mfi);
+        const Array4<Real>& phi_output = phi_out.array(mfi);
 
-	// compute total cells in the box
-	int ncell = AMREX_SPACEDIM == 2 ?
-	    nbox[0] * nbox[1] : nbox[0] * nbox[1] * nbox[2];
-	
-	// create torch tensor
+        // retrieve smallend and size of box
+        const IntVect bx_lo = bx.smallEnd();
+        const IntVect nbox = bx.size();
+
+        // compute total cells in the box
+        int ncell = AMREX_SPACEDIM == 2 ?
+            nbox[0] * nbox[1] : nbox[0] * nbox[1] * nbox[2];
+
+        // create torch tensor
         at::Tensor t1 = torch::zeros({ncell, Ncomp});
 
-	// copy input multifab to torch tensor
-	auto lo = bx.loVect3d();
-	auto hi = bx.hiVect3d();
-	for (auto k = lo[2]; k <= hi[2]; ++k) {
-	    for (auto j = lo[1]; j <= hi[1]; ++j) {
-		for (auto i = lo[0]; i <= hi[0]; ++i) {
+        // copy input multifab to torch tensor
+        auto lo = bx.loVect3d();
+        auto hi = bx.hiVect3d();
+        for (auto k = lo[2]; k <= hi[2]; ++k) {
+            for (auto j = lo[1]; j <= hi[1]; ++j) {
+                for (auto i = lo[0]; i <= hi[0]; ++i) {
 
-		    int ii = i - bx_lo[0];
-		    int jj = j - bx_lo[1];
-		    int index = jj*nbox[0] + ii;
+                    int ii = i - bx_lo[0];
+                    int jj = j - bx_lo[1];
+                    int index = jj*nbox[0] + ii;
 #if AMREX_SPACEDIM == 3
-		    int kk = k - bx_lo[2];
-		    index += kk*nbox[0]*nbox[1];
+                    int kk = k - bx_lo[2];
+                    index += kk*nbox[0]*nbox[1];
 #endif
-		    t1[index][0] = phi_input(i, j, k, 0);
-		}
-	    }
+                    t1[index][0] = phi_input(i, j, k, 0);
+                }
+            }
         }
 
 #ifdef USE_AMREX_CUDA
-	torch::Device device0(torch::kCUDA, 1);
+        torch::Device device0(torch::kCUDA, 1);
         t1 = t1.to(device0);
 #endif
 
         // create torch data array
         std::vector<torch::jit::IValue> inputs_torch{t1};
         at::Tensor outputs_torch = module.forward(inputs_torch).toTensor();
-	
-	// copy tensor to output multifab
-	for (auto k = lo[2]; k <= hi[2]; ++k) {
-	    for (auto j = lo[1]; j <= hi[1]; ++j) {
-		for (auto i = lo[0]; i <= hi[0]; ++i) {
-		    int ii = i - bx_lo[0];
-		    int jj = j - bx_lo[1];
-		    int index = jj*nbox[0] + ii;
+
+        // copy tensor to output multifab
+        for (auto k = lo[2]; k <= hi[2]; ++k) {
+            for (auto j = lo[1]; j <= hi[1]; ++j) {
+                for (auto i = lo[0]; i <= hi[0]; ++i) {
+                    int ii = i - bx_lo[0];
+                    int jj = j - bx_lo[1];
+                    int index = jj*nbox[0] + ii;
 #if AMREX_SPACEDIM == 3
-		    int kk = k - bx_lo[2];
-		    index += kk*nbox[0]*nbox[1];
+                    int kk = k - bx_lo[2];
+                    index += kk*nbox[0]*nbox[1];
 #endif
-		    phi_output(i, j, k, 0) = outputs_torch[index][0].item<double>();
-		    phi_output(i, j, k, 1) = outputs_torch[index][1].item<double>();
-		}
-	    }
-	}
+                    phi_output(i, j, k, 0) = outputs_torch[index][0].item<double>();
+                    phi_output(i, j, k, 1) = outputs_torch[index][1].item<double>();
+                }
+            }
+        }
     }
 
     // Tell the I/O Processor to write out that we're done
     amrex::Print() << "Finish evaluating model.\n";
-    
+
     // Write a plotfile of the current data
     const std::string& pltfile2 = amrex::Concatenate("plt",1,5);
     WriteSingleLevelPlotfile(pltfile2, phi_out, {"y0", "y1"}, geom, dt, 1);
 
-    // Call the timer again and compute the maximum difference between the start time 
+    // Call the timer again and compute the maximum difference between the start time
     // and stop time over all processors
     Real stop_time = ParallelDescriptor::second() - strt_time;
     ParallelDescriptor::ReduceRealMax(stop_time);
-    amrex::Print() << "Run time = " << stop_time << std::endl;    
+    amrex::Print() << "Run time = " << stop_time << std::endl;
 }
