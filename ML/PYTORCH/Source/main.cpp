@@ -169,7 +169,7 @@ void main_main ()
             nbox[0] * nbox[1] : nbox[0] * nbox[1] * nbox[2];
 
         // create torch tensor
-        at::Tensor t1 = torch::zeros({ncell, Ncomp});
+        at::Tensor inputs_torch = torch::zeros({ncell, Ncomp});
 
         // copy input multifab to torch tensor
         auto lo = bx.loVect3d();
@@ -185,19 +185,18 @@ void main_main ()
                     int kk = k - bx_lo[2];
                     index += kk*nbox[0]*nbox[1];
 #endif
-                    t1[index][0] = phi_input(i, j, k, 0);
+                    inputs_torch[index][0] = phi_input(i, j, k, 0);
                 }
             }
         }
 
 #ifdef USE_AMREX_CUDA
         torch::Device device0(torch::kCUDA, 1);
-        t1 = t1.to(device0);
+        inputs_torch = intputs_torch.to(device0);
 #endif
 
-        // create torch data array
-        std::vector<torch::jit::IValue> inputs_torch{t1};
-        at::Tensor outputs_torch = module.forward(inputs_torch).toTensor();
+        // evaluate torch model
+        at::Tensor outputs_torch = module.forward({inputs_torch}).toTensor();
 
         // copy tensor to output multifab
         for (auto k = lo[2]; k <= hi[2]; ++k) {
