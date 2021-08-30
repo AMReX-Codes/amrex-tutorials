@@ -23,7 +23,7 @@ void main_main ()
     // store the current time so we can later compute total run time.
     Real strt_time = ParallelDescriptor::second();
     Real eval_time = 0.0;
-    
+
     // **********************************
     // SIMULATION PARAMETERS
 
@@ -196,13 +196,13 @@ void main_main ()
         inputs_torch = intputs_torch.to(device0);
 #endif
 
-	// store the current time so we can later compute total eval time.
+        // store the current time so we can later compute total eval time.
         Real eval_t_start = ParallelDescriptor::second();
 
         // evaluate torch model
         at::Tensor outputs_torch = module.forward({inputs_torch}).toTensor();
 
-	// add eval time
+        // add eval time
         eval_time += ParallelDescriptor::second() - eval_t_start;
 
         // copy tensor to output multifab
