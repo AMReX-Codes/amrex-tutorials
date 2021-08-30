@@ -235,5 +235,6 @@ void main_main ()
     Real stop_time = ParallelDescriptor::second() - strt_time;
     ParallelDescriptor::ReduceRealMax(stop_time);
     amrex::Print() << "Run time = " << stop_time << std::endl;
+    ParallelDescriptor::ReduceRealMax(eval_time);
     amrex::Print() << "Eval time = " << eval_time << std::endl;
 }
