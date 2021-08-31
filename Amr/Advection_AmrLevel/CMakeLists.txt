@@ -38,7 +38,7 @@ list(TRANSFORM _input_files PREPEND ${_sv_exe_dir})
 
 setup_tutorial(_sv_sources _input_files
    HAS_FORTRAN_MODULES
-   BASE_NAME Advection_AmrLevel_GPU_SV
+   BASE_NAME Advection_AmrLevel_SV
    RUNTIME_SUBDIR SingleVortex)
 
 unset(_sv_sources)
@@ -61,7 +61,7 @@ list(TRANSFORM _input_files PREPEND ${_uv_exe_dir})
 
 setup_tutorial(_uv_sources _input_files
    HAS_FORTRAN_MODULES
-   BASE_NAME Advection_AmrLevel_GPU_UV
+   BASE_NAME Advection_AmrLevel_UV
    RUNTIME_SUBDIR UniformVelocity)
 
 unset(_uv_sources)

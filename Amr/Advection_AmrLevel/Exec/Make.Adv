@@ -1,5 +1,5 @@
 AMREX_HOME ?= ../../../../amrex
-ADR_DIR    ?= ../../../Advection_AmrLevel_GPU
+ADR_DIR    ?= ../../../Advection_AmrLevel
 
 TOP := $(ADR_DIR)
 
