@@ -164,23 +164,25 @@ void main_main ()
 
     Print() << "Model loaded.\n";
 
+    BL_PROFILE_VAR_STOP(LoadPytorch);
+    
 #ifdef AMREX_USE_CUDA
+    BL_PROFILE_VAR("LoadPytorch",LoadPytorchGpu);
     torch::Device device0(torch::kCUDA);
     module.to(device0);
     amrex::Print() << "Copying model to GPU." << std::endl;
-#endif
-
     BL_PROFILE_VAR_STOP(LoadPytorch);
+#endif
 
     // **********************************
     // EVALUATE MODEL
 
-    BL_PROFILE_VAR("Eval",Eval);
-
     // loop over boxes
     for ( MFIter mfi(phi_in); mfi.isValid(); ++mfi )
     {
-        const Box& bx = mfi.validbox();
+      BL_PROFILE_VAR("CopyTo",CopyTo);
+
+      const Box& bx = mfi.validbox();
 
         const Array4<Real>& phi_input = phi_in.array(mfi);
         const Array4<Real>& phi_output = phi_out.array(mfi);
@@ -215,10 +217,16 @@ void main_main ()
             }
         }
 
+	BL_PROFILE_VAR_STOP(CopyTo);
+	
 #ifdef AMREX_USE_CUDA
+	BL_PROFILE_VAR("CopyToGpu",CopyToGpu);
         inputs_torch = inputs_torch.to(device0);
+	BL_PROFILE_VAR_STOP(CopyToGpu);
 #endif
 
+	BL_PROFILE_VAR("Model",Model);
+	
         // store the current time so we can later compute total eval time.
         Real eval_t_start = ParallelDescriptor::second();
 
@@ -228,6 +236,10 @@ void main_main ()
         // add eval time
         eval_time += ParallelDescriptor::second() - eval_t_start;
 
+	BL_PROFILE_VAR_STOP(Model);
+
+	BL_PROFILE_VAR("CopyFrom",CopyFrom);
+	
         // copy tensor to output multifab
         for (auto k = lo[2]; k <= hi[2]; ++k) {
             for (auto j = lo[1]; j <= hi[1]; ++j) {
@@ -244,10 +256,10 @@ void main_main ()
                 }
             }
         }
+
+	BL_PROFILE_VAR_STOP(CopyFrom);
     }
-
-    BL_PROFILE_VAR_STOP(Eval);
-
+    
     BL_PROFILE_VAR("Post",Post);
 
     // Tell the I/O Processor to write out that we're done
