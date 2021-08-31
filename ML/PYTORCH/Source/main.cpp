@@ -21,7 +21,7 @@ void main_main ()
 {
 
     BL_PROFILE_VAR("Init",Init);
-  
+
     // store the current time so we can later compute total run time.
     Real strt_time = ParallelDescriptor::second();
     Real eval_time = 0.0;
@@ -122,7 +122,7 @@ void main_main ()
     BL_PROFILE_VAR_STOP(Init);
 
     BL_PROFILE_VAR("InitData",InitData);
-    
+
     // loop over boxes
     for (MFIter mfi(phi_in); mfi.isValid(); ++mfi)
     {
@@ -133,25 +133,25 @@ void main_main ()
         // set phi = random(0, dt)
         amrex::ParallelForRNG(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
-	  phi_input(i,j,k) = (i+j+k)/256.;
+            phi_input(i,j,k) = (i+j+k)/n_cell;
         });
     }
 
     BL_PROFILE_VAR_STOP(InitData);
 
     BL_PROFILE_VAR("WriteInitPlot",WriteInitPlot);
-    
+
     // Write a plotfile of the initial data
     const std::string& pltfile = amrex::Concatenate("plt",0,5);
     WriteSingleLevelPlotfile(pltfile, phi_in, {"dt"}, geom, 0.0, 0);
 
     BL_PROFILE_VAR_STOP(WriteInitPlot);
-    
+
     // **********************************
     // LOAD PYTORCH MODEL
 
     BL_PROFILE_VAR("LoadPytorch",LoadPytorch);
-    
+
     // Load pytorch module via torch script
     torch::jit::script::Module module;
     try {
@@ -176,7 +176,7 @@ void main_main ()
     // EVALUATE MODEL
 
     BL_PROFILE_VAR("Eval",Eval);
-    
+
     // loop over boxes
     for ( MFIter mfi(phi_in); mfi.isValid(); ++mfi )
     {
@@ -245,11 +245,11 @@ void main_main ()
             }
         }
     }
-    
+
     BL_PROFILE_VAR_STOP(Eval);
 
     BL_PROFILE_VAR("Post",Post);
-    
+
     // Tell the I/O Processor to write out that we're done
     amrex::Print() << "Finish evaluating model.\n";
 
