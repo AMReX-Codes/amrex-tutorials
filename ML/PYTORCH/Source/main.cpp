@@ -228,6 +228,10 @@ void main_main ()
         // add eval time
         eval_time += ParallelDescriptor::second() - eval_t_start;
 
+#ifdef AMREX_USE_CUDA
+        outputs_torch = outputs_torch.to(torch::kCPU);
+#endif
+
         // copy tensor to output multifab
         for (auto k = lo[2]; k <= hi[2]; ++k) {
             for (auto j = lo[1]; j <= hi[1]; ++j) {
