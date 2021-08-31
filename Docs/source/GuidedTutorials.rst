@@ -24,17 +24,17 @@ This tutorial is about how to build AMReX HelloWorld.
 A complete build-run-visualize workflow walk-through. This simplified introduction
 covers several basic components of AMReX while minimizing required knowledge of c++. 
 
-.. _`Heat Equation -- Simple`: HelloWorld.html
+.. _`Heat Equation -- Simple`: HeatEquation_Simple.html
 
-
----------
-
+|
 
 `Heat Equation`_ 
 ----------------
 
-This tutorial revisits the heat equation with all the AMReX tools in place. It demonstrates
-how preprocessor directives and namespaces allow AMReX to provide convenience and functionality
-to scientific codes.
+This tutorial revisits AMReX's approach to  heat equation in additional detail with
+preprocessor variables, scoped namespaces, and multiple source files 
+to offer addtional convenience and functionality.
 
 .. _`Heat Equation`: HeatEquation_EX1_C.html
+
+---------
