@@ -164,6 +164,12 @@ void main_main ()
 
     Print() << "Model loaded.\n";
 
+#ifdef AMREX_USE_CUDA
+    torch::Device device0(torch::kCUDA);
+    module.to(device0);
+    amrex::Print() << "Copying model to GPU." << std::endl;
+#endif
+
     BL_PROFILE_VAR_STOP(LoadPytorch);
 
     // **********************************
@@ -209,9 +215,8 @@ void main_main ()
             }
         }
 
-#ifdef USE_AMREX_CUDA
-        torch::Device device0(torch::kCUDA, 1);
-        inputs_torch = intputs_torch.to(device0);
+#ifdef AMREX_USE_CUDA
+        inputs_torch = inputs_torch.to(device0);
 #endif
 
         // store the current time so we can later compute total eval time.
