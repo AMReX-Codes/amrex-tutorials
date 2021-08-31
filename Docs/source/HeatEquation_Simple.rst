@@ -1,9 +1,5 @@
-Demo Tutorial
-=============
-
-..
-   Questions*
-   What do people need fingers on keys for. What are the core things to have them do.
+Tutorial: Heat Equation - Simple
+==================================
 
 
 .. admonition:: **Time to Complete**: 20 mins

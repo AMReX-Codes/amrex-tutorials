@@ -37,4 +37,3 @@ to offer addtional convenience and functionality.
 
 .. _`Heat Equation`: HeatEquation_EX1_C.html
 
----------
