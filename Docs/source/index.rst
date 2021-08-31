@@ -49,8 +49,8 @@ to provide a starting place for user's to develop their unique applications.
 Additional Questions and Help
 -----------------------------
 
-Didn't find what you were looking for? Have questions we didn't answer? 
-Please let us know how we can improve by posting on `AMReX's GitHub Discussions`_. 
+Didn't find what you were looking for? Have questions we didn't answer?
+Please let us know how we can improve by posting on `AMReX's GitHub Discussions`_.
 
 .. _`AMReX's GitHub Discussions`: https://github.com/AMReX-Codes/amrex/discussions
 
