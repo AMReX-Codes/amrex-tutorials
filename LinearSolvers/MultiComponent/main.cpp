@@ -137,13 +137,16 @@ int main (int argc, char* argv[])
              if (ilev < mesh.nlevels-1) domain.refine(mesh.ref_ratio[ilev]);
          }
     Box cdomain = CDomain;
+    int fac = 1;
      for (int ilev = 0; ilev < mesh.nlevels; ++ilev)
     {
         cgrids[ilev].define(cdomain);
         cgrids[ilev].maxSize(mesh.max_grid_size); // TODO
 
-        //cdomain.grow(-mesh.nnodes/4);
-        cdomain.grow(IntVect(0,-mesh.nnodes/4));
+        
+        if (ilev > 0) fac *= (mesh.ref_ratio[ilev-1]/2);
+        cdomain.grow(-(mesh.nnodes/4) * fac);
+        //cdomain.grow(IntVect(0,-mesh.nnodes/4));
         
         //std::cout << "refining ... " << mesh.ref_ratio[ilev] << std::endl;
         if (ilev < mesh.nlevels-1) cdomain.refine(mesh.ref_ratio[ilev]);

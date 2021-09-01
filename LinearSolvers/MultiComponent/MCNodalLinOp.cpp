@@ -40,8 +40,7 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
     for (MFIter mfi(a_out, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         Box bx = mfi.tilebox();
-        bx.grow(1);        // Expand to cover first layer of ghost nodes
-//        bx.grow(buffer);        // Expand to cover first layer of ghost nodes
+        bx.grow(buffer);        // Expand to cover first layer of ghost nodes
         bx = bx & domain;  // Take intersection of box and the problem domain
 
         amrex::Array4<const amrex::Real> const& in  = a_in.array(mfi);
@@ -77,7 +76,6 @@ void MCNodalLinOp::Diag (int amrlev, int mglev, MultiFab& a_diag)
     for (MFIter mfi(a_diag, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         Box bx = mfi.tilebox();
-//        bx.grow(1);        // Expand to cover first layer of ghost nodes
         bx.grow(buffer);        // Expand to cover first layer of ghost nodes
         bx = bx & domain;  // Take intersection of box and the problem domain
 
@@ -143,10 +141,8 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
         //for (MFIter mfi(a_x, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         for (MFIter mfi(a_x, false); mfi.isValid(); ++mfi)
         {
-            //Box bx = mfi.tilebox();
-            Box bx = mfi.validbox();
-            //bx.grow(1);        // Expand to cover first layer of ghost nodes
-            bx.grow(buffer);        // Expand to cover first layer of ghost nodes
+            Box bx = mfi.tilebox();
+            if (buffer==1) bx.grow(1);        // Expand to cover first layer of ghost nodes
             bx = bx & domain;  // Take intersection of box and the problem domain
 
             amrex::Array4<amrex::Real>       const& x  = a_x.array(mfi);
@@ -775,4 +771,21 @@ MCNodalLinOp::correctionResidual (int amrlev, int mglev, MultiFab& resid, MultiF
     amrex::Geometry geom = m_geom[amrlev][mglev];
     resid.setMultiGhost(true);
     resid.FillBoundary();
+}
+
+void 
+MCNodalLinOp::make (Vector<Vector<MultiFab> >& mf, int nc) const 
+{
+    mf.clear();
+    mf.resize(m_num_amr_levels);
+    for (int alev = 0; alev < m_num_amr_levels; ++alev)
+    {
+        mf[alev].resize(m_num_mg_levels[alev]);
+        for (int mlev = 0; mlev < m_num_mg_levels[alev]; ++mlev)
+        {
+            IntVect ng(getNGrow(alev,mlev));
+            const auto& ba = amrex::convert(m_grids[alev][mlev], m_ixtype);
+            mf[alev][mlev].define(ba, m_dmap[alev][mlev], nc, ng, MFInfo(), *m_factory[alev][mlev]);
+        }
+    }    
 }
