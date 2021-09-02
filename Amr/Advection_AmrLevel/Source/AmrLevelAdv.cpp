@@ -224,6 +224,8 @@ AmrLevelAdv::advance (Real time,
                       int  iteration,
                       int  ncycle)
 {
+    (void) ncycle;
+
     MultiFab& S_mm = get_new_data(Phi_Type);
     Real maxval = S_mm.max(0);
     Real minval = S_mm.min(0);
@@ -425,6 +427,9 @@ AmrLevelAdv::computeInitialDt (int                    finest_level,
                                Vector<Real>&          dt_level,
                                Real                   stop_time)
 {
+    (void) sub_cycle;
+    (void) ref_ratio;
+
     //
     // Grids have been constructed, compute dt for all levels.
     //
@@ -471,6 +476,9 @@ AmrLevelAdv::computeNewDt (int                    finest_level,
                            Real                   stop_time,
                            int                    post_regrid_flag)
 {
+    (void) ref_ratio;
+    (void) sub_cycle;
+
     //
     // We are at the end of a coarse grid timecycle.
     // Compute the timesteps for the next iteration.
@@ -565,6 +573,8 @@ AmrLevelAdv::post_timestep (int iteration)
             TracerPC->Redistribute(level, TracerPC->finestLevel(), ngrow);
           }
       }
+#else
+    (void) iteration;
 #endif
 }
 
@@ -573,10 +583,13 @@ AmrLevelAdv::post_timestep (int iteration)
 //
 void
 AmrLevelAdv::post_regrid (int lbase, int new_finest) {
+  (void) new_finest;
 #ifdef AMREX_PARTICLES
   if (TracerPC && level == lbase) {
       TracerPC->Redistribute(lbase);
   }
+#else
+  (void) lbase;
 #endif
 }
 
@@ -601,6 +614,8 @@ AmrLevelAdv::post_restart()
 void
 AmrLevelAdv::post_init (Real stop_time)
 {
+    (void) stop_time;
+
     if (level > 0)
         return;
     //
@@ -623,6 +638,9 @@ AmrLevelAdv::errorEst (TagBoxArray& tags,
                        int          n_error_buf,
                        int          ngrow)
 {
+    (void) n_error_buf;
+    (void) ngrow;
+
     const Real* dx        = geom.CellSize();
     const Real* prob_lo   = geom.ProbLo();
 

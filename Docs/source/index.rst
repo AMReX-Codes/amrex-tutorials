@@ -11,7 +11,10 @@ applications. AMReX is freely available at https://github.com/AMReX-Codes/amrex.
 There is extensive documentation for AMReX at :ref:`amrex_docs:amrex_doc_indx`
 
 AMReX Tutorials are a set of small stand-alone example codes that demonstrate how
-to use different parts of the AMReX functionality.
+to use different parts of the AMReX functionality. You can also work through a set
+of AMReX tutorials online `here <https://github.com/atmyers/ecp-tutorials>`_, without
+needing to install any dependencies or download any code to your local machine. For
+accompanying slides, see `here <https://amrex-codes.github.io/amrex/tutorial_slides.pdf>`_.
 
 We are always happy to have users contribute to AMReX Tutorials as well as
 the AMReX source code. To contribute, issue a pull request against the development branch

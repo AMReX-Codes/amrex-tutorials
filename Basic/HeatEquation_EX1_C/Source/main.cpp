@@ -81,6 +81,9 @@ void main_main ()
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
+    amrex::Print() << ba << "\n";
+    amrex::Print() << dm << "\n";
+
     // we allocate two phi multifabs; one will store the old state, the other the new.
     MultiFab phi_old(ba, dm, Ncomp, Nghost);
     MultiFab phi_new(ba, dm, Ncomp, Nghost);
