@@ -250,7 +250,6 @@ jobs:
             -DAMReX_EB=ON                                  \
             -DAMReX_PARTICLES=ON                           \
             -DAMReX_GPU_BACKEND=HIP                        \
-
             -DAMReX_AMD_ARCH=gfx900                        \
             -DCMAKE_CXX_STANDARD=17                        \
             -DCMAKE_C_COMPILER=$(which clang)              \
