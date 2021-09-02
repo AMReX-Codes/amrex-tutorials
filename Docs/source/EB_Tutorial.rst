@@ -16,4 +16,4 @@ charge inside.
 
 ``amrex/Tutorials/EB/MacProj`` is a single-level code that computes a divergence-free
 flow field around a sphere.  A MAC projection is performed on an initial velocity
-field of (1,0,0).
+field of :math:`(1,0,0)`.

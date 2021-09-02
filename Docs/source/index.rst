@@ -13,7 +13,6 @@ described below.
 
 .. _`AMReX Source Documentation`: https://amrex-codes.github.io/amrex/docs_html/
 
-|
 
 Guided Tutorials
 ----------------
