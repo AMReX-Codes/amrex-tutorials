@@ -40,7 +40,7 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
     for (MFIter mfi(a_out, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         Box bx = mfi.tilebox();
-        bx.grow(buffer);        // Expand to cover first layer of ghost nodes
+        bx.grow(buffer);        // Expand to cover buffer layer of ghost nodes
         bx = bx & domain;  // Take intersection of box and the problem domain
 
         amrex::Array4<const amrex::Real> const& in  = a_in.array(mfi);
@@ -81,7 +81,7 @@ void MCNodalLinOp::Diag (int amrlev, int mglev, MultiFab& a_diag)
 
         amrex::Array4<amrex::Real> const& diag  = a_diag.array(mfi);
 
-        for (int n = 0; n < getNComp(); n++)
+        for (int n = 0; n < N; n++)
             amrex::ParallelFor (bx,[=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 diag(i,j,k,n) = dcoeff[N*n + n] *
                     ( AMREX_D_TERM(+ 2.0 / DX[0] / DX[0],
@@ -191,8 +191,7 @@ void MCNodalLinOp::define (const Vector<Geometry>& a_geom,
 
      MLNodeLinOp::define(a_geom, a_grids, a_dmap, a_info, a_factory);
 
-//     int nghost = 2;
-     //
+    int ncomp = getNComp();
      // Resize the multifab containing the operator diagonal
      m_diag.resize(m_num_amr_levels);
      for (int amrlev = 0; amrlev < m_num_amr_levels; ++amrlev)
@@ -203,7 +202,7 @@ void MCNodalLinOp::define (const Vector<Geometry>& a_geom,
          {
             int nghost = getNGrow(amrlev,mglev);
             m_diag[amrlev][mglev].reset(new MultiFab(amrex::convert(m_grids[amrlev][mglev], amrex::IntVect::TheNodeVector()),
-                                   m_dmap[amrlev][mglev], getNComp(), nghost));
+                                   m_dmap[amrlev][mglev], ncomp, nghost));
          }
      }
 
@@ -382,11 +381,6 @@ void MCNodalLinOp::prepareForSolve ()
 void MCNodalLinOp::restriction (int amrlev, int cmglev, MultiFab& crse, MultiFab& fine) const
 {
     BL_PROFILE("MCNodalLinOp::restriction()");
-    //std::cout<<"RESTRICTING"<<std::endl;
-    //std::cout << "amrlev = " << amrlev << " cmglev = "<< cmglev << std::endl;
-    //if (amrlev == 1 && cmglev == 1) amrex::Abort(); // amrlev=mglev=1 gets called by vCycle
-    //std::cout << "   crse ngrow = " << crse.nGrow() << std::endl;
-    //std::cout << "   fine ngrow = " << fine.nGrow() << std::endl;
     int nghost = getNGrow(amrlev,cmglev);
 
     applyBC(amrlev, cmglev-1, fine, BCMode::Homogeneous, StateMode::Solution);
@@ -540,7 +534,7 @@ void MCNodalLinOp::applyBC (int amrlev, int mglev, MultiFab& phi, BCMode,
                                amrex::MLLinOp::StateMode , bool skip_fillboundary) const
 {
     BL_PROFILE("MCNodalLinOp::applyBC()");
-    const Geometry& geom = m_geom[amrlev][mglev];
+    //const Geometry& geom = m_geom[amrlev][mglev];
     if (!skip_fillboundary) {phi.setMultiGhost(true); phi.FillBoundary();}
 }
 
@@ -550,7 +544,7 @@ void MCNodalLinOp::reflux (int crse_amrlev,
 {
     BL_PROFILE("MCNodalLinOp::reflux()");
 
-    int nghost = getNGrow(crse_amrlev+1,0);
+    int nghost = getNGrow(crse_amrlev+1);
 
     amrex::Box cdomain(m_geom[crse_amrlev][0].Domain());
     cdomain.convert(amrex::IntVect::TheNodeVector());
@@ -755,7 +749,7 @@ MCNodalLinOp::solutionResidual (int amrlev, MultiFab& resid, MultiFab& x, const 
 {
     const int mglev = 0;
     apply(amrlev, mglev, resid, x, BCMode::Inhomogeneous, StateMode::Solution);
-    MultiFab::Xpay(resid, -1.0, b, 0, 0, ncomp, getNGrow(amrlev,0));
+    MultiFab::Xpay(resid, -1.0, b, 0, 0, ncomp, getNGrow(amrlev,mglev));
     amrex::Geometry geom = m_geom[amrlev][mglev];
     resid.setMultiGhost(true);
     resid.FillBoundary();
@@ -774,7 +768,7 @@ MCNodalLinOp::correctionResidual (int amrlev, int mglev, MultiFab& resid, MultiF
 }
 
 void 
-MCNodalLinOp::make (Vector<Vector<MultiFab> >& mf, int nc) const 
+MCNodalLinOp::make (Vector<Vector<MultiFab> >& mf, int nc,IntVect const& /*ng*/) const 
 {
     mf.clear();
     mf.resize(m_num_amr_levels);

@@ -1,7 +1,7 @@
-mesh.nlevels = 4                # Number of AMR levels
+mesh.nlevels = 2                # Number of AMR levels
 mesh.nnodes = 32                # Number of nodes in each direction
 mesh.max_grid_size = 32         # Maximum grid size (default = very large --> no parallelism)
-mesh.ref_ratio = 4 2 4          # Refinement ratio - level 1 has rr=4, level 2 has rr = 2, etc.
+mesh.ref_ratio = 4           # Refinement ratio - level 1 has rr=4, level 2 has rr = 2, etc.
 
 mlmg.fixed_iter = 5000          # Number of iterations before exiting gracefully
 mlmg.verbose = 2                # Verbosity of MLMG

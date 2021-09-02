@@ -188,22 +188,22 @@ int main (int argc, char* argv[])
             ///bgn[ilev].define(grids,dmap[ilev],op.ncomp,0);
         }
 
-        Box domain(geom[ilev].Domain());
+        Box dom(geom[ilev].Domain());
         const Real AMREX_D_DECL( dx = geom[ilev].CellSize()[0],
                                  dy = geom[ilev].CellSize()[1],
                                  dz = geom[ilev].CellSize()[2]);
         const Real AMREX_D_DECL( minx = geom[ilev].ProbLo()[0],
                                  miny = geom[ilev].ProbLo()[1],
                                  minz = geom[ilev].ProbLo()[2]);
-        domain.convert(IntVect::TheNodeVector());
-        domain.grow(-1); // Shrink domain so we don't operate on any boundaries
+        dom.convert(IntVect::TheNodeVector());
+        dom.grow(-1); // Shrink domain so we don't operate on any boundaries
         for (MFIter mfi(solution[ilev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
             Box bx = mfi.tilebox();
 //            bx.grow(1);        // Expand to cover first layer of ghost nodes
             //bx.grow(nghost-1);        // Expand to cover first layer of ghost nodes
             bx.grow(nghost);        // Expand to cover first layer of ghost nodes
-            bx = bx & domain;  // Take intersection of box and the problem domain
+            bx = bx & dom;  // Take intersection of box and the problem domain
 
             Array4<Real> const& RHS  = rhs[ilev].array(mfi);
             for (int n = 0; n < op.ncomp; n++)
