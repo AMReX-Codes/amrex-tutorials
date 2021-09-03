@@ -172,6 +172,9 @@ void main_main ()
 
     BL_PROFILE_VAR_STOP(LoadPytorch);
 
+    // set pytorch data type
+    auto dtype0 = torch::kFloat64;
+    
     // **********************************
     // EVALUATE MODEL
 
@@ -194,7 +197,10 @@ void main_main ()
             nbox[0] * nbox[1] : nbox[0] * nbox[1] * nbox[2];
 
         // create torch tensor
-        at::Tensor inputs_torch = torch::zeros({ncell, Ncomp});
+        at::Tensor inputs_torch = torch::zeros({ncell, Ncomp}, torch::TensorOptions().dtype(dtype0));
+
+        // get accessor to tensor <type,num_of_dim>
+        auto inputs_torch_acc = inputs_torch.accessor<Real,2>();
 
         // copy input multifab to torch tensor
         auto lo = bx.loVect3d();
@@ -210,7 +216,7 @@ void main_main ()
                     int kk = k - bx_lo[2];
                     index += kk*nbox[0]*nbox[1];
 #endif
-                    inputs_torch[index][0] = phi_input(i, j, k, 0);
+                    inputs_torch_acc[index][0] = phi_input(i, j, k, 0);
                 }
             }
         }
@@ -224,13 +230,17 @@ void main_main ()
 
         // evaluate torch model
         at::Tensor outputs_torch = module.forward({inputs_torch}).toTensor();
-
+	outputs_torch = outputs_torch.to(dtype0);
+	
         // add eval time
         eval_time += ParallelDescriptor::second() - eval_t_start;
 
 #ifdef AMREX_USE_CUDA
         outputs_torch = outputs_torch.to(torch::kCPU);
 #endif
+
+	// get accessor to tensor
+        auto outputs_torch_acc = outputs_torch.accessor<Real,2>();
 
         // copy tensor to output multifab
         for (auto k = lo[2]; k <= hi[2]; ++k) {
@@ -243,8 +253,8 @@ void main_main ()
                     int kk = k - bx_lo[2];
                     index += kk*nbox[0]*nbox[1];
 #endif
-                    phi_output(i, j, k, 0) = outputs_torch[index][0].item<double>();
-                    phi_output(i, j, k, 1) = outputs_torch[index][1].item<double>();
+                    phi_output(i, j, k, 0) = outputs_torch_acc[index][0];
+                    phi_output(i, j, k, 1) = outputs_torch_acc[index][1];
                 }
             }
         }
