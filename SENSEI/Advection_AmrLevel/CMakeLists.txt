@@ -1,102 +1,75 @@
 #
-# This test works for both 2D and 3D builds
-# There are two different tutorials here:
+# Single Vortex Tutorial Instrumented with SENSEI
 #
-# 1) Single Vortex
-# 2) Uniform Velocity
+# | Mini-app                | Description |
+# | ----                    | ----        |
+# | ExplicitAmrAndParticles | Process both mesh and particle data |
+# | ImplicitAmr             | Processes mesh based data using built in instrumentation |
+# | ExplicitAmr             | Processes mesh based data using explicit intrumentation |
 #
 
-
-
-
-set (SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/Source )
+set ( SRC_DIR Source )
+set ( EXE_DIR Exec/SingleVortex )
 
 #
-# Sources common to both cases
+# Tutorial executables
 #
-find_all_sources ( SRC1 INC1 ROOT ${SRC_DIR} )
-find_all_sources ( SRC2 INC2 ROOT ${SRC_DIR}/Src_${DIM}d )
-find_all_sources ( SRC3 INC3 ROOT ${SRC_DIR}/Src_nd )
+set ( _mini_apps )
 
+if ( AMReX_PARTICLES AND AMReX_NO_SENSEI_AMR_INST )
+    message ( STATUS "Tutorial SENSEI ExplicitAmrAndParticles ... enabled")
+    list ( APPEND _mini_apps ExplicitAmrAndParticles )
+else ()
+    message ( STATUS "Tutorial SENSEI ExplicitAmrAndParticles ... disabled")
+endif ()
 
-###############################################################################
-#
-# Single Vortex tutorial ------------------------------------------------------
-#
-################################################################################
-set ( EXENAME  "Advection_AmrLevel_SV.exe")
-set ( EXE_DIR ${CMAKE_CURRENT_LIST_DIR}/Exec/SingleVortex )
-
-
-add_executable ( ${EXENAME} EXCLUDE_FROM_ALL "" )
-
-target_sources ( ${EXENAME}
-   PRIVATE
-   ${EXE_DIR}/Prob.f90 ${EXE_DIR}/face_velocity_${DIM}d.f90
-   ${SRC1} ${SRC2} ${SRC3} )
-
-set_target_properties ( ${EXENAME} PROPERTIES
-   INCLUDE_DIRECTORIES
-   "${INC1};${INC2};${INC3};${CMAKE_CURRENT_BINARY_DIR}/${EXENAME}_mod_files"
-   Fortran_MODULE_DIRECTORY
-   ${CMAKE_CURRENT_BINARY_DIR}/${EXENAME}_mod_files
-   RUNTIME_OUTPUT_DIRECTORY
-   ${CMAKE_CURRENT_BINARY_DIR}/SingleVortex )
-
-target_link_libraries (${EXENAME} amrex)
+if ( NOT AMReX_NO_SENSEI_AMR_INST )
+    message ( STATUS "Tutorial SENSEI ImplcitAmr ................ enabled")
+    message ( STATUS "Tutorial SENSEI ExplicitAmr ............... disabled")
+    list ( APPEND _mini_apps ImplicitAmr )
+else ()
+    message ( STATUS "Tutorial SENSEI ImplcitAmr ................ disabled")
+    message ( STATUS "Tutorial SENSEI ExplicitAmr ............... enabled")
+    list ( APPEND _mini_apps ExplicitAmr )
+endif ()
 
 #
 # Find input files
 #
-file ( GLOB_RECURSE inputs LIST_DIRECTORIES false
-   ${EXE_DIR}/input* ${EXE_DIR}/probin)
+set ( _inputs_files sensei probin inputs inputs.tracers )
 
-#
-# Copy input files to corresponding build dir
-#
-file ( COPY ${inputs} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/SingleVortex )
-file ( COPY ${EXE_DIR}/sensei DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/SingleVortex )
+list(TRANSFORM _inputs_files PREPEND "${EXE_DIR}/")
 
-add_tutorial (${EXENAME})
+foreach ( _app ${_mini_apps} )
 
+    #
+    # collect source files
+    #
+    set(_sources
+      ${SRC_DIR}/Adv_F.H
+      ${SRC_DIR}/AmrLevelAdv.cpp
+      ${SRC_DIR}/AmrLevelAdv.H
+      ${SRC_DIR}/LevelBldAdv.cpp
+      ${SRC_DIR}/main${_app}.cpp
 
-###############################################################################
-#
-# Single Vortex tutorial ------------------------------------------------------
-#
-################################################################################
-set ( EXENAME  "Advection_AmrLevel_UV.exe")
-set ( EXE_DIR ${CMAKE_CURRENT_LIST_DIR}/Exec/UniformVelocity)
+      ${SRC_DIR}/Src_${AMReX_SPACEDIM}d/Adv_${AMReX_SPACEDIM}d.f90
+      ${SRC_DIR}/Src_${AMReX_SPACEDIM}d/compute_flux_${AMReX_SPACEDIM}d.f90
+      ${SRC_DIR}/Src_${AMReX_SPACEDIM}d/slope_${AMReX_SPACEDIM}d.f90
 
+      ${EXE_DIR}/Prob.f90
+      ${EXE_DIR}/face_velocity_${AMReX_SPACEDIM}d.f90
 
-add_executable ( ${EXENAME} EXCLUDE_FROM_ALL "" )
+      ${SRC_DIR}/Src_nd/Adv_nd.f90
+      ${SRC_DIR}/Src_nd/Tagging_nd.f90
+      ${SRC_DIR}/Src_nd/tagging_params.f90 )
 
+    #
+    # Add to the "tutorial" target
+    #
+    setup_tutorial( _sources _inputs_files
+        BASE_NAME Advection_AmrLevel_${_app} HAS_FORTRAN_MODULES )
 
-target_sources ( ${EXENAME}
-   PRIVATE
-   ${EXE_DIR}/Prob.f90 ${EXE_DIR}/probdata.f90 ${EXE_DIR}/face_velocity_${DIM}d.f90
-   ${SRC1} ${SRC2} ${SRC3} )
+    unset( _sources )
+    unset( _inputs_files )
 
-
-set_target_properties ( ${EXENAME} PROPERTIES
-   INCLUDE_DIRECTORIES
-   "${INC1};${INC2};${INC3};${CMAKE_CURRENT_BINARY_DIR}/${EXENAME}_mod_files"
-   Fortran_MODULE_DIRECTORY
-   ${CMAKE_CURRENT_BINARY_DIR}/${EXENAME}_mod_files
-   RUNTIME_OUTPUT_DIRECTORY
-   ${CMAKE_CURRENT_BINARY_DIR}/UniformVelocity )
-
-target_link_libraries (${EXENAME} amrex)
-
-#
-# Find input files
-#
-file ( GLOB_RECURSE inputs LIST_DIRECTORIES false
-   ${EXE_DIR}/input* ${EXE_DIR}/probin)
-
-#
-# Copy input files to corresponding build dir
-#
-file ( COPY ${inputs} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/UniformVelocity )
-
-add_tutorial (${EXENAME})
+endforeach()

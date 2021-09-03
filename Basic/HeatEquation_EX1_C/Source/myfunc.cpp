@@ -30,6 +30,9 @@ void advance (MultiFab& phi_old,
                  const Real dyinv = geom.InvCellSize(1);,
                  const Real dzinv = geom.InvCellSize(2););
 
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
     // Compute fluxes one grid at a time
     for ( MFIter mfi(phi_old); mfi.isValid(); ++mfi )
     {
@@ -64,6 +67,9 @@ void advance (MultiFab& phi_old,
 #endif
     }
 
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
     // Advance the solution one grid at a time
     for ( MFIter mfi(phi_old); mfi.isValid(); ++mfi )
     {
@@ -94,6 +100,10 @@ void init_phi(amrex::MultiFab& phi_new, amrex::Geometry const& geom){
     // =======================================
     // Initialize phi_new by calling a Fortran routine.
     // MFIter = MultiFab Iterator
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
     for (MFIter mfi(phi_new); mfi.isValid(); ++mfi)
     {
         const Box& vbx = mfi.validbox();

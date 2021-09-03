@@ -49,7 +49,7 @@ function (setup_tutorial _srcs  _inputs)
          ${CMAKE_CURRENT_BINARY_DIR}/${EXENAME}_mod_files )
    endif ()
 
-   target_link_libraries( ${_exe_name} amrex )
+   target_link_libraries( ${_exe_name} AMReX::amrex )
 
    if (AMReX_CUDA)
       setup_target_for_cuda_compilation( ${_exe_name} )

@@ -16,7 +16,7 @@ int      AmrLevelAdv::NUM_GROW        = 3;  // number of ghost cells
 
 #ifdef AMREX_PARTICLES
 std::unique_ptr<AmrTracerParticleContainer> AmrLevelAdv::TracerPC =  nullptr;
-int AmrLevelAdv::do_tracers                       =  0;
+int AmrLevelAdv::do_tracers           = 0;
 #endif
 
 //
@@ -75,7 +75,7 @@ AmrLevelAdv::checkPoint (const std::string& dir,
 {
   AmrLevel::checkPoint(dir, os, how, dump_old);
 #ifdef AMREX_PARTICLES
-  if (do_tracers and level == 0) {
+  if (do_tracers && level == 0) {
     TracerPC->Checkpoint(dir, "Tracer", true);
   }
 #endif
@@ -93,7 +93,7 @@ AmrLevelAdv::writePlotFile (const std::string& dir,
     AmrLevel::writePlotFile (dir,os,how);
 
 #ifdef AMREX_PARTICLES
-    if (do_tracers and level == 0) {
+    if (do_tracers && level == 0) {
       TracerPC->Checkpoint(dir, "Tracer", true);
     }
 #endif
@@ -224,6 +224,8 @@ AmrLevelAdv::advance (Real time,
                       int  iteration,
                       int  ncycle)
 {
+    (void) ncycle;
+
     MultiFab& S_mm = get_new_data(Phi_Type);
     Real maxval = S_mm.max(0);
     Real minval = S_mm.min(0);
@@ -284,7 +286,7 @@ AmrLevelAdv::advance (Real time,
       Umac[i].define(ba, dmap, 1, iteration);
     }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
@@ -366,7 +368,7 @@ AmrLevelAdv::estTimeStep (Real)
     const Real cur_time = state[Phi_Type].curTime();
     const MultiFab& S_new = get_new_data(Phi_Type);
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel reduction(min:dt_est)
 #endif
     {
@@ -425,6 +427,9 @@ AmrLevelAdv::computeInitialDt (int                    finest_level,
                                Vector<Real>&          dt_level,
                                Real                   stop_time)
 {
+    (void) sub_cycle;
+    (void) ref_ratio;
+
     //
     // Grids have been constructed, compute dt for all levels.
     //
@@ -471,6 +476,9 @@ AmrLevelAdv::computeNewDt (int                    finest_level,
                            Real                   stop_time,
                            int                    post_regrid_flag)
 {
+    (void) ref_ratio;
+    (void) sub_cycle;
+
     //
     // We are at the end of a coarse grid timecycle.
     // Compute the timesteps for the next iteration.
@@ -565,6 +573,8 @@ AmrLevelAdv::post_timestep (int iteration)
             TracerPC->Redistribute(level, TracerPC->finestLevel(), ngrow);
           }
       }
+#else
+    (void) iteration;
 #endif
 }
 
@@ -573,10 +583,13 @@ AmrLevelAdv::post_timestep (int iteration)
 //
 void
 AmrLevelAdv::post_regrid (int lbase, int new_finest) {
+  (void) new_finest;
 #ifdef AMREX_PARTICLES
   if (TracerPC && level == lbase) {
       TracerPC->Redistribute(lbase);
   }
+#else
+  (void) lbase;
 #endif
 }
 
@@ -587,7 +600,7 @@ void
 AmrLevelAdv::post_restart()
 {
 #ifdef AMREX_PARTICLES
-    if (do_tracers and level == 0) {
+    if (do_tracers && level == 0) {
       BL_ASSERT(TracerPC == 0);
       TracerPC.reset(new AmrTracerParticleContainer(parent));
       TracerPC->Restart(parent->theRestartFile(), "Tracer");
@@ -601,6 +614,8 @@ AmrLevelAdv::post_restart()
 void
 AmrLevelAdv::post_init (Real stop_time)
 {
+    (void) stop_time;
+
     if (level > 0)
         return;
     //
@@ -623,12 +638,15 @@ AmrLevelAdv::errorEst (TagBoxArray& tags,
                        int          n_error_buf,
                        int          ngrow)
 {
+    (void) n_error_buf;
+    (void) ngrow;
+
     const Real* dx        = geom.CellSize();
     const Real* prob_lo   = geom.ProbLo();
 
     MultiFab& S_new = get_new_data(Phi_Type);
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
@@ -762,7 +780,7 @@ AmrLevelAdv::avgDown (int state_indx)
 void
 AmrLevelAdv::init_particles ()
 {
-  if (do_tracers and level == 0)
+  if (do_tracers && level == 0)
     {
       BL_ASSERT(TracerPC == nullptr);
 
@@ -770,10 +788,10 @@ AmrLevelAdv::init_particles ()
       TracerPC->do_tiling = true;
       TracerPC->tile_size = IntVect(AMREX_D_DECL(1024000,4,4));
 
-      const BoxArray& ba = TracerPC->ParticleBoxArray(0);
-      const DistributionMapping& dm = TracerPC->ParticleDistributionMap(0);
+      //const BoxArray& ba = TracerPC->ParticleBoxArray(0);
+      //const DistributionMapping& dm = TracerPC->ParticleDistributionMap(0);
 
-      AmrTracerParticleContainer::ParticleInitData pdata = {AMREX_D_DECL(0.0, 0.0, 0.0)};
+      AmrTracerParticleContainer::ParticleInitData pdata = {AMREX_D_DECL(0.0, 0.0, 0.0), {}, {}, {}};
 
       TracerPC->SetVerbose(0);
       TracerPC->InitOnePerCell(0.5, 0.5, 0.5, pdata);

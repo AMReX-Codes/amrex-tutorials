@@ -53,11 +53,11 @@ AmrCoreAdv::AmrCoreAdv ()
     int bc_lo[] = {BCType::int_dir, BCType::int_dir, BCType::int_dir};
     int bc_hi[] = {BCType::int_dir, BCType::int_dir, BCType::int_dir};
 
-/*
+    /*
     // walls (Neumann)
     int bc_lo[] = {FOEXTRAP, FOEXTRAP, FOEXTRAP};
     int bc_hi[] = {FOEXTRAP, FOEXTRAP, FOEXTRAP};
-*/
+    */
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         // lo-side BCs
