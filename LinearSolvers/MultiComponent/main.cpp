@@ -146,9 +146,6 @@ int main (int argc, char* argv[])
         
         if (ilev > 0) fac *= (mesh.ref_ratio[ilev-1]/2);
         cdomain.grow(-(mesh.nnodes/4) * fac);
-        //cdomain.grow(IntVect(0,-mesh.nnodes/4));
-        
-        //std::cout << "refining ... " << mesh.ref_ratio[ilev] << std::endl;
         if (ilev < mesh.nlevels-1) cdomain.refine(mesh.ref_ratio[ilev]);
         ngrids[ilev] = cgrids[ilev];
         ngrids[ilev].convert(IntVect::TheNodeVector());
@@ -184,8 +181,6 @@ int main (int argc, char* argv[])
             rhsgn[ilev].define(grids,dmap[ilev],op.ncomp,0); rhsgn[ilev].setMultiGhost(true);
             resgn[ilev].define(grids,dmap[ilev],op.ncomp,0); resgn[ilev].setMultiGhost(true);
             bgn[ilev].define(grids,dmap[ilev],op.ncomp,0); bgn[ilev].setMultiGhost(true);
-
-            ///bgn[ilev].define(grids,dmap[ilev],op.ncomp,0);
         }
 
         Box dom(geom[ilev].Domain());
@@ -200,8 +195,6 @@ int main (int argc, char* argv[])
         for (MFIter mfi(solution[ilev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
             Box bx = mfi.tilebox();
-//            bx.grow(1);        // Expand to cover first layer of ghost nodes
-            //bx.grow(nghost-1);        // Expand to cover first layer of ghost nodes
             bx.grow(nghost);        // Expand to cover first layer of ghost nodes
             bx = bx & dom;  // Take intersection of box and the problem domain
 
@@ -238,7 +231,6 @@ int main (int argc, char* argv[])
     MCNodalLinOp linop;
     linop.setNComp(op.ncomp);
     linop.setCoeff(op.coeff);
-//    linop.define(geom,cgrids,dmap,info);
     linop.define(geom,cgrids,dmap,mesh.ref_ratio,info);
     linop.setDomainBC({AMREX_D_DECL(amrex::MLLinOp::BCType::Dirichlet,amrex::MLLinOp::BCType::Dirichlet,amrex::MLLinOp::BCType::Dirichlet)},
                       {AMREX_D_DECL(amrex::MLLinOp::BCType::Dirichlet,amrex::MLLinOp::BCType::Dirichlet,amrex::MLLinOp::BCType::Dirichlet)});
@@ -266,12 +258,6 @@ int main (int argc, char* argv[])
     solver.solve(GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs),tol_rel,tol_abs);
     solver.compResidual(GetVecOfPtrs(res),GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs));
     solver.apply(GetVecOfPtrs(b),GetVecOfPtrs(solution));
-
-//    for (int i = 0; i < resgn.size(); i++)
-//    {
-//        linop.solutionResidual(i,res[i],solution[i],rhs[i],nullptr);
-//        linop.Apply(i,0,b[i],solution[i]);
-//    }
 
     //
     // Write the output to ./solution

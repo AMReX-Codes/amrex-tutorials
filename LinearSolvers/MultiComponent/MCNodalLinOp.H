@@ -44,10 +44,7 @@ public :
     // ncomp x ncomp ( x ncomp) components. It is the matrix of coefficients
     // used in the definition of the operator.
     void setCoeff(const Vector<Real> a_coeff) {coeff = a_coeff;}
-    void Apply(int amrlev, int mglev, MultiFab &resid, MultiFab &x)
-    {
-        return apply(amrlev,mglev,resid,x,BCMode::Inhomogeneous,StateMode::Solution);
-    }
+
 protected:
     // Apply the operator, which is defined to be (in index notation)
     //    D(phi)_i = coeff_{ij} * Laplacian(phi_j)
@@ -97,7 +94,7 @@ public:
         for (int i = 0; i < mg_lev; i++) gntmp = gntmp/2;
         return gntmp;
     }
-    virtual void make (Vector<Vector<MultiFab> >& mf, int nc, IntVect const& /*ng*/) const override;// { make(mf,nc);}
+    virtual void make (Vector<Vector<MultiFab> >& mf, int nc, IntVect const& /*ng*/) const override;
 
     // Return the number of components
     virtual int getNComp() const override final {return ncomp;}

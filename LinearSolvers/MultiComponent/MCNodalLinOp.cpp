@@ -138,12 +138,10 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
         amrex::MultiFab::Subtract(_Rx,_Dx,0,0,ncomp,nghost); // Rx -= Dx  (Rx = Ax - Dx)
 
 
-        //for (MFIter mfi(a_x, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
-        for (MFIter mfi(a_x, false); mfi.isValid(); ++mfi)
+        for (MFIter mfi(a_x, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
             Box bx = mfi.tilebox();
             if (buffer==1) bx.grow(1);        // Expand to cover first layer of ghost nodes
-            //bx.grow(buffer);
             bx = bx & domain;  // Take intersection of box and the problem domain
 
             amrex::Array4<amrex::Real>       const& x  = a_x.array(mfi);
@@ -279,8 +277,6 @@ void MCNodalLinOp::buildMasks ()
 
         const Box& ccdom = m_geom[amrlev][0].Domain();
 
-//        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(AMRRefRatio(amrlev) == 2, "ref_ratio != 0 not supported");
-        // remove above
 
         cc_mask.setVal(0);  // coarse by default
 
@@ -400,9 +396,9 @@ void MCNodalLinOp::restriction (int amrlev, int cmglev, MultiFab& crse, MultiFab
     MultiFab* pcrse = (need_parallel_copy) ? &cfine : &crse;
         pcrse->setVal(0.0);
 
-    for (MFIter mfi(*pcrse, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*pcrse, true); mfi.isValid(); ++mfi)
     {
-        Box bx = mfi.tilebox();
+        Box bx = mfi.validbox();
         bx.grow(-1);
         bx = bx & cdomain;
 
@@ -535,7 +531,6 @@ void MCNodalLinOp::applyBC (int amrlev, int mglev, MultiFab& phi, BCMode,
                                amrex::MLLinOp::StateMode , bool skip_fillboundary) const
 {
     BL_PROFILE("MCNodalLinOp::applyBC()");
-    //const Geometry& geom = m_geom[amrlev][mglev];
     if (!skip_fillboundary) {phi.setMultiGhost(true); phi.FillBoundary();}
 }
 
@@ -545,7 +540,7 @@ void MCNodalLinOp::reflux (int crse_amrlev,
 {
     BL_PROFILE("MCNodalLinOp::reflux()");
 
-    int nghost = getNGrow(crse_amrlev+1);
+    int nghost = getNGrow(crse_amrlev+1,0);
 
     amrex::Box cdomain(m_geom[crse_amrlev][0].Domain());
     cdomain.convert(amrex::IntVect::TheNodeVector());
@@ -555,7 +550,6 @@ void MCNodalLinOp::reflux (int crse_amrlev,
      const BoxArray&            fba = fine_res.boxArray();
      const DistributionMapping& fdm = fine_res.DistributionMap();
 
-//     MultiFab fine_res_for_coarse(amrex::coarsen(fba, 2), fdm, ncomp, 2);
      MultiFab fine_res_for_coarse(amrex::coarsen(fba, nghost), fdm, ncomp, nghost);
     fine_res_for_coarse.ParallelCopy(res,0,0,ncomp,0,0,cgeom.periodicity());
 
@@ -564,11 +558,9 @@ void MCNodalLinOp::reflux (int crse_amrlev,
     const int coarse_fine_node = 1;
     const int fine_fine_node = 2;
 
-//    amrex::iMultiFab nodemask(amrex::coarsen(fba,2), fdm, 1, 2);
     amrex::iMultiFab nodemask(amrex::coarsen(fba,nghost), fdm, 1, nghost);
     nodemask.ParallelCopy(*m_nd_fine_mask[crse_amrlev],0,0,1,0,0,cgeom.periodicity());
 
-//    amrex::iMultiFab cellmask(amrex::convert(amrex::coarsen(fba,2),amrex::IntVect::TheCellVector()), fdm, 1, 2);
     amrex::iMultiFab cellmask(amrex::convert(amrex::coarsen(fba,nghost),amrex::IntVect::TheCellVector()), fdm, 1, nghost);
     cellmask.ParallelCopy(*m_cc_fine_mask[crse_amrlev],0,0,1,1,1,cgeom.periodicity());
 
@@ -587,7 +579,6 @@ void MCNodalLinOp::reflux (int crse_amrlev,
             // I,J,K == coarse coordinates
             // i,j,k == fine coordinates
             amrex::ParallelFor (bx,[=] AMREX_GPU_DEVICE(int I, int J, int K) {
-//                    int i=I*2, j=J*2, k=K*2;
                     int i=I*nghost, j=J*nghost, k=K*nghost;
 
                     if (nmask(I,J,K) == fine_fine_node || nmask(I,J,K) == coarse_fine_node)
