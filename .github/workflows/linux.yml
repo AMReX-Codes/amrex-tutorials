@@ -254,6 +254,6 @@ jobs:
             -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
             -DCMAKE_CXX_STANDARD=17                        \
             -DCMAKE_C_COMPILER=$(which clang)              \
-            -DCMAKE_CXX_COMPILER=$(which hipcc)            \
+            -DCMAKE_CXX_COMPILER=$(which clang++)          \
             -DCMAKE_Fortran_COMPILER=$(which gfortran)
         make -j 2
