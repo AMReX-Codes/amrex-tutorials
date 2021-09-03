@@ -42,6 +42,7 @@ int main (int argc, char* argv[])
     struct {
         int nlevels = 3;
         int nnodes = 32;
+        Vector<int> level_reduction_factor = {2};
         int max_grid_size = 10000000;
         Vector<int> ref_ratio = {4};
     } mesh;
@@ -51,7 +52,9 @@ int main (int argc, char* argv[])
         pp.query("nnodes",mesh.nnodes);
         pp.query("max_grid_size",mesh.max_grid_size);
         pp.queryarr("ref_ratio",mesh.ref_ratio);
-        //if (mesh.ref_ratio.size() == 1) mesh.ref_ratio.reset(mesh.nlevels-1, mesh.ref_ratio[0]);
+        pp.queryarr("level_reduction_factor",mesh.level_reduction_factor);
+        if (mesh.ref_ratio.size() == 1) {int tmp = mesh.ref_ratio[0]; mesh.ref_ratio.assign(mesh.nlevels-1, tmp);}
+        if (mesh.level_reduction_factor.size() == 1) {int tmp = mesh.level_reduction_factor[0]; mesh.level_reduction_factor.assign(mesh.nlevels-1, tmp);}
     }
 
     //
@@ -145,7 +148,10 @@ int main (int argc, char* argv[])
 
         
         if (ilev > 0) fac *= (mesh.ref_ratio[ilev-1]/2);
-        cdomain.grow(-(mesh.nnodes/4) * fac);
+        int fac2 = 1;
+        if (ilev < mesh.nlevels-1) fac2 = mesh.level_reduction_factor[ilev];
+        std::cout << "ilev = " << ilev << " fac = " << fac2 << std::endl;
+        cdomain.grow(-(mesh.nnodes/2/fac2) * fac);
         if (ilev < mesh.nlevels-1) cdomain.refine(mesh.ref_ratio[ilev]);
         ngrids[ilev] = cgrids[ilev];
         ngrids[ilev].convert(IntVect::TheNodeVector());
@@ -256,8 +262,8 @@ int main (int argc, char* argv[])
     //
     Real tol_rel = 1E-8, tol_abs = 1E-8;
     solver.solve(GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs),tol_rel,tol_abs);
-    solver.compResidual(GetVecOfPtrs(res),GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs));
-    solver.apply(GetVecOfPtrs(b),GetVecOfPtrs(solution));
+    //solver.compResidual(GetVecOfPtrs(res),GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs));
+    //solver.apply(GetVecOfPtrs(b),GetVecOfPtrs(solution));
 
     //
     // Write the output to ./solution
@@ -265,19 +271,19 @@ int main (int argc, char* argv[])
     WriteMLMF ("solution",GetVecOfConstPtrs(solution),geom);
     WriteMLMF ("residual",GetVecOfConstPtrs(res),geom);
 
-    for (int i = 0; i < resgn.size(); i++)
-    {
-        amrex::MultiFab::Copy(solgn[i],solution[i],0,0,op.ncomp,0); // Dx = x
-        amrex::MultiFab::Copy(rhsgn[i],rhs[i],0,0,op.ncomp,0); // Dx = x
-        amrex::MultiFab::Copy(resgn[i],res[i],0,0,op.ncomp,0); // Dx = x
-        amrex::MultiFab::Copy(bgn[i],b[i],0,0,op.ncomp,0); // Dx = x
-        
-        //resgn[i].copy();
-    }
-    WriteMLMF ("solgn",GetVecOfConstPtrs(solgn),geom);
-    WriteMLMF ("rhsgn",GetVecOfConstPtrs(rhsgn),geom);
-    WriteMLMF ("residualgn",GetVecOfConstPtrs(resgn),geom);
-    WriteMLMF ("bgn",GetVecOfConstPtrs(bgn),geom);    
+//    for (int i = 0; i < resgn.size(); i++)
+//    {
+//        amrex::MultiFab::Copy(solgn[i],solution[i],0,0,op.ncomp,0); // Dx = x
+//        amrex::MultiFab::Copy(rhsgn[i],rhs[i],0,0,op.ncomp,0); // Dx = x
+//        amrex::MultiFab::Copy(resgn[i],res[i],0,0,op.ncomp,0); // Dx = x
+//        amrex::MultiFab::Copy(bgn[i],b[i],0,0,op.ncomp,0); // Dx = x
+//        
+//        //resgn[i].copy();
+//    }
+//    WriteMLMF ("solgn",GetVecOfConstPtrs(solgn),geom);
+//    WriteMLMF ("rhsgn",GetVecOfConstPtrs(rhsgn),geom);
+//    WriteMLMF ("residualgn",GetVecOfConstPtrs(resgn),geom);
+//    WriteMLMF ("bgn",GetVecOfConstPtrs(bgn),geom);    
 
     }
     Finalize();
