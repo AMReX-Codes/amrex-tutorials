@@ -143,6 +143,7 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
         {
             Box bx = mfi.tilebox();
             if (buffer==1) bx.grow(1);        // Expand to cover first layer of ghost nodes
+            //bx.grow(buffer);
             bx = bx & domain;  // Take intersection of box and the problem domain
 
             amrex::Array4<amrex::Real>       const& x  = a_x.array(mfi);
