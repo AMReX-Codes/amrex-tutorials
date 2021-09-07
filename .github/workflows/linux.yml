@@ -252,6 +252,7 @@ jobs:
         hipcc --version
         which clang
         which clang++
+        cmake --version
 
         # "mpic++ --showme" forgets open-pal in Ubuntu 20.04 + OpenMPI 4.0.3
         #   https://bugs.launchpad.net/ubuntu/+source/openmpi/+bug/1941786
@@ -268,7 +269,6 @@ jobs:
             -DAMReX_GPU_BACKEND=HIP                       \
             -DAMReX_AMD_ARCH=gfx908                       \
             -DCMAKE_C_COMPILER=$(which clang)             \
-            -DCMAKE_CXX_COMPILER=$(which clang++)         \
-            -DCMAKE_CXX_STANDARD=17
+            -DCMAKE_CXX_COMPILER=$(which clang++)
         cmake --build build_nofortran -j 2
 
