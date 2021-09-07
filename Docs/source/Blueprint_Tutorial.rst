@@ -14,7 +14,7 @@ demonstrate how to convert AMReX Mesh data into an in-memory
 Conduit Mesh Blueprint description for consumption by the ALPINE Ascent
 in situ visualization and analysis tool.  These are variants, respectively, of
 ``amrex/Tests/Particles/AssignMultiLevelDensity`` and
-``amrex/Tutorials/Basic/HeatEquation_EX1_C``.
+``amrex-tutorials/ExampleCodes/Basic/HeatEquation_EX1_C``.
 
 For details about what mesh features are currently supported, see:
 amrex/Src/Base/AMReX_Conduit_Blueprint.H

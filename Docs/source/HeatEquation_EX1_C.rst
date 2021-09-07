@@ -3,7 +3,7 @@ Example: HeatEquation_EX1_C
 
 We now present an example of solving the heat equation.  The source
 code tree for the heat equation example is simple, as shown in
-:numref:`fig:Basics_Heat_flowchart`. We recommend you study
+:ref:`fig:Basics_Heat_flowchart`. We recommend you study
 ``main.cpp`` and ``advance.cpp`` to see some of the classes described
 below in action.
 
@@ -30,7 +30,7 @@ Source code tree for the HeatEquation_EX1_C example
         ``AmrCore``, ``LinearSolvers``, etc.  In this tutorial the only source
         code directory we need is ``Base``.
 
-    amrex/Tutorials/HeatEquation_EX1_C/Source
+    amrex-tutorials/GuidedTutorials/HeatEquation_EX1_C/Source
         Contains the following source code specific to this tutorial:
 
         #. ``Make.package``: lists the source code files
@@ -41,7 +41,7 @@ Source code tree for the HeatEquation_EX1_C example
         #. ``myfunc.H``: header file for C++ functions
         #. ``mykernel.H``: kernels functions called by ``advance`` and ``init_phi``.
 
-    amrex/Tutorials/HeatEquation_EX1_C/Exec
+    amrex-tutorials/GuidedTutorials/HeatEquation_EX1_C/Exec
         This is where you build the code with make.  There is a GNUmakefile
         and inputs file.
 
@@ -169,75 +169,6 @@ Ghost cells are filled using the ``FillBoundary`` function:
     // includes periodic domain boundaries
     phi_old.FillBoundary(geom.periodicity());
 
----------
-
-Temporarily Holding This Text Here
-
----------
-
-
-.. _sec:heat equation:
-
-Example: Heat Equation Solver
-=============================
-
-We now look at a more complicated example at
-``amrex/Tutorials/Basic/HeatEquation_EX1_C`` and show how simulation results
-can be visualized. This example solves the heat equation,
-
-.. math:: \frac{\partial\phi}{\partial t} = \nabla^2\phi
-
-using forward Euler temporal integration on a periodic domain.  We could use a
-5-point (in 2D) or 7-point (in 3D) stencil, but for demonstration purposes we
-spatially discretize the PDE by first constructing (negative) fluxes on cell faces, e.g.,
-
-.. math:: F_{i+^1\!/_2,\,j} = \frac{\phi_{i+1,j}-\phi_{i,j}}{\Delta x},
-
-and then taking the divergence to update the cells,
-
-.. math::
-
-   \phi_{i,\,j}^{n+1} = \phi_{i,\,j}^n
-   + \frac{\Delta t}{\Delta x}\left(F_{i+^1\!/_2,\,j}-F_{i-^1\!/_2,\,j}\right)
-   + \frac{\Delta t}{\Delta y}\left(F_{i,\,j+^1\!/_2}-F_{i,\,j-^1\!/_2}\right)
-
-The implementation details of the code are discussed in section
-:ref:`sec:basics:heat1`.  For now let's just build and run the code, and
-visualize the results.
-
-Building and Running the Code
------------------------------
-
-To build a 2D executable, go to
-``amrex/Tutorials/Basic/HeatEquation_EX1_C/Exec`` and type ``make DIM=2``. This
-will generate an executable named ``main2d.gnu.ex``. To run it, type,
-
-.. highlight:: console
-
-::
-
-      ./main2d.gnu.ex inputs_2d
-
-Note that the command takes a file ``inputs_2d.`` The calculation solves the
-heat equation in 2D on a domain with :math:`256 \times 256` cells.  It runs
-:math:`10,000` steps and makes a plotfile every :math:`1,000` steps.  When the
-run finishes, you will have a number of plotfiles, ``plt00000, plt01000,`` etc,
-in the directory where you are running.  You can control runtime parameters
-such as how many time steps to run and how often to write plotfiles by setting
-them in ``inputs_2d.``
-
-Visualization
-=============
-
-There are several visualization tools that can be used for AMReX plotfiles.
-One standard tool used within the AMReX-community is Amrvis, a package
-developed and supported by CCSE that is designed specifically for highly
-efficient visualization of block-structured hierarchical AMR data.  (Amrvis can
-also be used to visualize performance data; see the :ref:`Chap:AMRex-based
-Profiling Tools` chapter for further details.) Plotfiles can also be viewed
-using the VisIt, ParaView, and yt packages.  Particle data can be viewed using
-ParaView.  Refer to Chapter on :ref:`Chap:Visualization` for how to use each of
-these tools.
 
 
 

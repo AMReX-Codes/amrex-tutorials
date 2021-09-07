@@ -12,7 +12,7 @@
 Basic
 ==========================
 
-The tutorials in amrex/Tutorials/Basic demonstrate the most fundamental
+The tutorials in ``amrex_tutorials/ExampleCodes/Basic`` demonstrate the most fundamental
 operations supported by AMReX.
 
 **HelloWorld**
@@ -31,16 +31,6 @@ which are Fortran wrappers for the underlying C++ data strutures and
 iterators.  Here, for example, rather than calling amrex::Print() in C++, we
 test on whether amrex_parallel_ioprocessor() is true, and if so, invoke
 the usual Fortran print call.
-
-
-**Demo Tutorial**
-------------------
-
-The Demo Tutorial is designed to introduce main concepts of AMReX to new users
-while walking through a compile |rarr| run |rarr| visualize pipeline. Demo tutorial uses
-the online coding environment GitPod and can be found by follow `this link`_.
-
-.. _`this link`: https://amrex-codes.github.io/amrex/docs_html/DemoTutorial.html
 
 
 **main**
