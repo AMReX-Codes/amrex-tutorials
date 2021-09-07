@@ -4,7 +4,9 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/Blueprint
+.. _tutorials_blueprint:
+
+Blueprint
 ==========================
 
 These tests, ``AssignMultiLevelDensity`` and ``HeatEquation_EX1_C``,

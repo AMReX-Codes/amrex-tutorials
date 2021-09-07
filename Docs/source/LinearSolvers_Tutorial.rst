@@ -4,7 +4,9 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/LinearSolvers
+.. _tutorials_linearsolvers:
+
+LinearSolvers
 ==========================
 
 There are five examples in the Tutorials/LinearSolvers directory.

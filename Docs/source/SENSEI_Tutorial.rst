@@ -4,7 +4,10 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/SENSEI
+.. _tutorials_sensei:
+
+
+SENSEI
 ==========================
 
 SENSEI is a middleware that allows one to send data to various visualization and

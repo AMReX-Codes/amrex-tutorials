@@ -4,7 +4,10 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/MUI
+.. _tutorials_mui:
+
+
+MUI
 ==========================
 
 The goal of this tutorial is to incorporate the MxUI/MUI (Multiscale Universal Interface) framework into AMReX. This framework allows two separate executables to communicate with one another in parallel using MPI. In addition, this framework is adaptable for different geometries, in which the bounds of data one would like to send and/or receive can be specified using the ``announce_send_span()`` and ``announce_recv_span()`` commands.

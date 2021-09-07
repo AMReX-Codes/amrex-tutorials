@@ -7,7 +7,9 @@
 .. include:: <isonum.txt>
 
 
-Tutorials/Basic
+.. _tutorials_basic:
+
+Basic
 ==========================
 
 The tutorials in amrex/Tutorials/Basic demonstrate the most fundamental

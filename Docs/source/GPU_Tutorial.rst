@@ -4,7 +4,9 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/GPU
+.. _tutorials_gpu:
+
+GPU
 ==========================
 
 The tutorials in ``amrex/Tutorials/GPU`` demonstrate the implementation

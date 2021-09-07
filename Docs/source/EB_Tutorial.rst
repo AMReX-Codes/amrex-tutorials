@@ -4,7 +4,9 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/EB
+.. _tutorials_eb:
+
+EB
 ==========================
 
 ``amrex/Tutorials/EB/CNS`` is an AMR code for solving compressible

@@ -4,7 +4,9 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/SWFFT
+.. _tutorials_swfft:
+
+SWFFT
 ==========================
 
 This Tutorial demonstrates how to call the SWFFT wrapper to the FFTW3 solver.
