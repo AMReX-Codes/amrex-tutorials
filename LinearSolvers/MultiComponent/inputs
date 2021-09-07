@@ -3,7 +3,7 @@ mesh.max_grid_size = 32         # Maximum grid size (default = very large --> no
 
 mesh.nlevels = 2
 mesh.ref_ratio = 4
-mesh.level_reduction_factor = 2
+mesh.level_reduction_factor = 4
 
 #mesh.nlevels = 3
 #mesh.ref_ratio = 2 2

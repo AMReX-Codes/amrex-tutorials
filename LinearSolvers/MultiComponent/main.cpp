@@ -262,8 +262,8 @@ int main (int argc, char* argv[])
     //
     Real tol_rel = 1E-8, tol_abs = 1E-8;
     solver.solve(GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs),tol_rel,tol_abs);
-    //solver.compResidual(GetVecOfPtrs(res),GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs));
-    //solver.apply(GetVecOfPtrs(b),GetVecOfPtrs(solution));
+    solver.compResidual(GetVecOfPtrs(res),GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs));
+    solver.apply(GetVecOfPtrs(b),GetVecOfPtrs(solution));
 
     //
     // Write the output to ./solution

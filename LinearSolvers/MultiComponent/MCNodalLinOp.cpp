@@ -138,9 +138,10 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
         amrex::MultiFab::Subtract(_Rx,_Dx,0,0,ncomp,nghost); // Rx -= Dx  (Rx = Ax - Dx)
 
 
-        for (MFIter mfi(a_x, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        //for (MFIter mfi(a_x, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        for (MFIter mfi(a_x, false); mfi.isValid(); ++mfi)
         {
-            Box bx = mfi.tilebox();
+            Box bx = mfi.validbox();
             if (buffer==1) bx.grow(1);        // Expand to cover first layer of ghost nodes
             bx = bx & domain;  // Take intersection of box and the problem domain
 
@@ -379,6 +380,7 @@ void MCNodalLinOp::restriction (int amrlev, int cmglev, MultiFab& crse, MultiFab
 {
     BL_PROFILE("MCNodalLinOp::restriction()");
     int nghost = getNGrow(amrlev,cmglev);
+    int buffer = nghost - 1;
 
     applyBC(amrlev, cmglev-1, fine, BCMode::Homogeneous, StateMode::Solution);
 
@@ -396,7 +398,7 @@ void MCNodalLinOp::restriction (int amrlev, int cmglev, MultiFab& crse, MultiFab
     MultiFab* pcrse = (need_parallel_copy) ? &cfine : &crse;
         pcrse->setVal(0.0);
 
-    for (MFIter mfi(*pcrse, true); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*pcrse, false); mfi.isValid(); ++mfi)
     {
         Box bx = mfi.validbox();
         bx.grow(-1);
@@ -452,6 +454,7 @@ void MCNodalLinOp::interpolation (int amrlev, int fmglev, MultiFab& fine, const 
     amrex::Box fdomain = m_geom[amrlev][fmglev].Domain(); fdomain.convert(amrex::IntVect::TheNodeVector());
     
     int nghost = getNGrow(amrlev,fmglev);
+    int buffer = nghost - 1;
 
     bool need_parallel_copy = !amrex::isMFIterSafe(crse, fine);
     MultiFab cfine;
