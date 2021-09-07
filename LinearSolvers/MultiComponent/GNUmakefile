@@ -1,4 +1,4 @@
-AMREX_HOME = ../../../amrex
+AMREX_HOME ?= ../../../amrex
 
 DEBUG	?= FALSE
 DIM	?= 3
