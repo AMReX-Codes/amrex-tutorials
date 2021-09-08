@@ -62,7 +62,7 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
 }
 void MCNodalLinOp::Diag (int amrlev, int mglev, MultiFab& a_diag)
 {
-    int buffer = std::max(0,this->getNGrow(amrlev,mglev)-1);
+    int buffer = getNGrow(amrlev,mglev);
     a_diag.setVal(1.0);
     amrex::Box domain(m_geom[amrlev][mglev].Domain());
     domain.convert(amrex::IntVect::TheNodeVector());
@@ -114,7 +114,7 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
     domain.grow(-1); // Shrink domain so we don't operate on any boundaries
 
     int nghost = getNGrow(amrlev,mglev);
-    int buffer = std::max(0,nghost-1);
+    int buffer = nghost-1;
 
     Real omega = 2./3.; // Damping factor (very important!)
 
@@ -164,7 +164,7 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
 void MCNodalLinOp::normalize (int amrlev, int mglev, MultiFab& a_x) const
 {
     BL_PROFILE("MCNodalLinOp::normalize()");
-    int nghost = std::max(0,getNGrow(amrlev,mglev)-1);
+    int nghost = getNGrow(amrlev,mglev)-1;
     amrex::MultiFab::Divide(a_x,*m_diag[amrlev][mglev],0,0,ncomp,nghost); // Dx *= diag  (Dx = x*diag)
 }
 
@@ -396,9 +396,9 @@ void MCNodalLinOp::restriction (int amrlev, int cmglev, MultiFab& crse, MultiFab
     MultiFab* pcrse = (need_parallel_copy) ? &cfine : &crse;
         pcrse->setVal(0.0);
 
-    for (MFIter mfi(*pcrse, false); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*pcrse, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        Box bx = mfi.validbox();
+        Box bx = mfi.tilebox();
         bx.grow(-1);
         bx = bx & cdomain;
 
@@ -464,9 +464,9 @@ void MCNodalLinOp::interpolation (int amrlev, int fmglev, MultiFab& fine, const 
         cmf = &cfine;
     }
 
-    for (MFIter mfi(fine, false); mfi.isValid(); ++mfi)
+    for (MFIter mfi(fine, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        Box fine_bx = mfi.validbox();
+        Box fine_bx = mfi.tilebox();
         fine_bx.grow(-1);
         fine_bx = fine_bx & fdomain;
         const Box& course_bx = amrex::coarsen(fine_bx,2);
@@ -633,25 +633,63 @@ void MCNodalLinOp::reflux (int crse_amrlev,
                                 }
                                 else if (nghost == 4)
                                 {
-                                amrex::Abort("Not implemented yet");
-
+                                    cdata(I,J,K,n) = (
+                                        (fdata(i+0,j+0,k-3,n) + fdata(i+0,j+0,k+3,n))*1.0 +
+                                        (fdata(i+0,j+0,k-2,n) + fdata(i+0,j+0,k+2,n))*2.0 +
+                                        (fdata(i+0,j+0,k-1,n) + fdata(i+0,j+0,k+1,n))*3.0 +
+                                        (fdata(i+0,j+0,k+0,n))*4.0
+                                        )/16.0;
                                 }
                             }
                             else if (I == lo.x || I == hi.x) // X face
                             {
-                                amrex::Abort("Not implemented yet");
+                                if (nghost == 2)
+                                {
                                 cdata(I,J,K,n) =
                                     (+     fdata(i,j-1,k-1,n) + 2.0*fdata(i,j,k-1,n) +     fdata(i,j+1,k-1,n)
                                      + 2.0*fdata(i,j-1,k  ,n) + 4.0*fdata(i,j,k  ,n) + 2.0*fdata(i,j+1,k  ,n)
                                      +     fdata(i,j-1,k+1,n) + 2.0*fdata(i,j,k+1,n) +     fdata(i,j+1,k+1,n))/16.0;
+                                }
+                                else if (nghost == 4)
+                                {
+                                    cdata(I,J,K,n) = (
+                                        (fdata(i,j-3,k-3,n) + fdata(i,j-3,k+3,n) + fdata(i,j+3,k-3,n) + fdata(i,j+3,k+3,n))*1.0 +
+                                        (fdata(i,j-3,k-2,n) + fdata(i,j-3,k+2,n) + fdata(i,j-2,k-3,n) + fdata(i,j-2,k+3,n) + fdata(i,j+2,k-3,n) + fdata(i,j+2,k+3,n) + fdata(i,j+3,k-2,n) + fdata(i,j+3,k+2,n))*2.0 +
+                                        (fdata(i,j-3,k-1,n) + fdata(i,j-3,k+1,n) + fdata(i,j-1,k-3,n) + fdata(i,j-1,k+3,n) + fdata(i,j+1,k-3,n) + fdata(i,j+1,k+3,n) + fdata(i,j+3,k-1,n) + fdata(i,j+3,k+1,n))*3.0 +
+                                        (fdata(i,j-3,k+0,n) + fdata(i,j-2,k-2,n) + fdata(i,j-2,k+2,n) + fdata(i,j+0,k-3,n) + fdata(i,j+0,k+3,n) + fdata(i,j+2,k-2,n) + fdata(i,j+2,k+2,n) + fdata(i,j+3,k+0,n))*4.0 +
+                                        (fdata(i,j-2,k-1,n) + fdata(i,j-2,k+1,n) + fdata(i,j-1,k-2,n) + fdata(i,j-1,k+2,n) + fdata(i,j+1,k-2,n) + fdata(i,j+1,k+2,n) + fdata(i,j+2,k-1,n) + fdata(i,j+2,k+1,n))*6.0 +
+                                        (fdata(i,j-2,k+0,n) + fdata(i,j+0,k-2,n) + fdata(i,j+0,k+2,n) + fdata(i,j+2,k+0,n))*8.0 +
+                                        (fdata(i,j-1,k-1,n) + fdata(i,j-1,k+1,n) + fdata(i,j+1,k-1,n) + fdata(i,j+1,k+1,n))*9.0 +
+                                        (fdata(i,j-1,k+0,n) + fdata(i,j+0,k-1,n) + fdata(i,j+0,k+1,n) + fdata(i,j+1,k+0,n))*12.0 +
+                                        (fdata(i,j+0,k+0,n))*16.0
+                                        )/256.0;
+                                }
                             }
                             else if (J == lo.y || J == hi.y) // Y face
                             {
-                                amrex::Abort("Not implemented yet");
+                                if (nghost == 2)
+                                {
                                 cdata(I,J,K,n) =
                                     (+     fdata(i-1,j,k-1,n) + 2.0*fdata(i-1,j,k,n) +     fdata(i-1,j,k+1,n)
                                      + 2.0*fdata(i  ,j,k-1,n) + 4.0*fdata(i  ,j,k,n) + 2.0*fdata(i  ,j,k+1,n)
                                      +     fdata(i+1,j,k-1,n) + 2.0*fdata(i+1,j,k,n) +     fdata(i+1,j,k+1,n))/16.0;
+                                }
+                                else if (nghost == 4)
+                                {
+                                    cdata(I,J,K,n) = 
+                                        (
+                                        (fdata(i-3,j,k-3,n) + fdata(i-3,j,k+3,n) + fdata(i+3,j,k-3,n) + fdata(i+3,j,k+3,n))*1.0 +
+                                        (fdata(i-3,j,k-2,n) + fdata(i-3,j,k+2,n) + fdata(i-2,j,k-3,n) + fdata(i-2,j,k+3,n) + fdata(i+2,j,k-3,n) + fdata(i+2,j,k+3,n) + fdata(i+3,j,k-2,n) + fdata(i+3,j,k+2,n))*2.0 +
+                                        (fdata(i-3,j,k-1,n) + fdata(i-3,j,k+1,n) + fdata(i-1,j,k-3,n) + fdata(i-1,j,k+3,n) + fdata(i+1,j,k-3,n) + fdata(i+1,j,k+3,n) + fdata(i+3,j,k-1,n) + fdata(i+3,j,k+1,n))*3.0 +
+                                        (fdata(i-3,j,k+0,n) + fdata(i-2,j,k-2,n) + fdata(i-2,j,k+2,n) + fdata(i+0,j,k-3,n) + fdata(i+0,j,k+3,n) + fdata(i+2,j,k-2,n) + fdata(i+2,j,k+2,n) + fdata(i+3,j,k+0,n))*4.0 +
+                                        (fdata(i-2,j,k-1,n) + fdata(i-2,j,k+1,n) + fdata(i-1,j,k-2,n) + fdata(i-1,j,k+2,n) + fdata(i+1,j,k-2,n) + fdata(i+1,j,k+2,n) + fdata(i+2,j,k-1,n) + fdata(i+2,j,k+1,n))*6.0 +
+                                        (fdata(i-2,j,k+0,n) + fdata(i+0,j,k-2,n) + fdata(i+0,j,k+2,n) + fdata(i+2,j,k+0,n))*8.0 +
+                                        (fdata(i-1,j,k-1,n) + fdata(i-1,j,k+1,n) + fdata(i+1,j,k-1,n) + fdata(i+1,j,k+1,n))*9.0 +
+                                        (fdata(i-1,j,k+0,n) + fdata(i+0,j,k-1,n) + fdata(i+0,j,k+1,n) + fdata(i+1,j,k+0,n))*12.0 +
+                                        (fdata(i+0,j,k+0,n))*16.0
+                                        )/256.0;
+
+                                }
                             }
                             else if (K == lo.z || K == hi.z) // Z face
                             {

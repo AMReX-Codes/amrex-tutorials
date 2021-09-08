@@ -88,7 +88,7 @@ public:
     // Note: MUST return 2!
     virtual int getNGrow(int a_lev, int mg_lev = 0) const override final 
     {
-        int gntmp;// = a_lev > 0 ? m_amr_ref_ratio[a_lev-1] : 2;
+        int gntmp;
         if (a_lev == 0) return 2;
         else gntmp = m_amr_ref_ratio[a_lev-1];
         for (int i = 0; i < mg_lev; i++) gntmp = gntmp/2;
