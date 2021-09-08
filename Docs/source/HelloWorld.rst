@@ -20,8 +20,10 @@ and is also shown below.
      int main(int argc, char* argv[])
      {
          amrex::Initialize(argc,argv);
-         amrex::Print() << "Hello world from AMReX version "
-                        << amrex::Version() << "\n";
+         {
+             amrex::Print() << "Hello world from AMReX version "
+                            << amrex::Version() << "\n";
+         }
          amrex::Finalize();
      }
 
@@ -30,7 +32,15 @@ first and last statements for the :cpp:`int main(...)` function of every
 program should be calling :cpp:`amrex::Initialize` and :cpp:`amrex::Finalize`,
 respectively. The second statement calls :cpp:`amrex::Print` to print out a
 string that includes the AMReX version returned by the :cpp:`amrex::Version`
-function. The example code includes two AMReX header files. Note that the name
+function. Finally, the third statement calls :cpp:`amrex::Finalize` to clean up
+data structures that are necessary for proper AMReX operation.
+
+Notice the braces placed between :cpp:`amrex::Initialize` and
+:cpp:`amrex::Finalize`. It is considered a good programming practice to insert
+these braces such that it is guaranteed that anything executed in the code is
+done after AMReX has been initialized, and before AMReX is finalized.
+
+The example code includes two AMReX header files. Note that the name
 of all AMReX header files starts with ``AMReX_`` (or just AMReX in the case of
 AMReX.H). All AMReX C++ functions are in the :cpp:`amrex` namespace.
 
@@ -151,4 +161,3 @@ The result may look like,
       AMReX (17.05-30-g5775aed933c4-dirty) initialized
       Hello world from AMReX version 17.05-30-g5775aed933c4-dirty
       AMReX (17.05-30-g5775aed933c4-dirty) finalized
-
