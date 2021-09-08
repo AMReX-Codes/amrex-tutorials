@@ -111,13 +111,8 @@ void main_main ()
     MultiFab phi_in(ba, dm, Ncomp, Nghost);
     MultiFab phi_out(ba, dm, Ncomp+1, Nghost);
 
-    // random seed
-    int seed = 42;
-
     // **********************************
     // INITIALIZE DATA
-
-    // ResetRandomSeed(seed+ParallelDescriptor::MyProc());
 
     BL_PROFILE_VAR_STOP(Init);
 
@@ -131,9 +126,9 @@ void main_main ()
         const Array4<Real>& phi_input = phi_in.array(mfi);
 
         // set phi = random(0, dt)
-        amrex::ParallelForRNG(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k, amrex::RandomEngine const& engine) noexcept
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
-            phi_input(i,j,k) = (i+j+k)/n_cell;
+            phi_input(i,j,k) = (i+j+k)/(n_cell-1.0);
         });
     }
 
