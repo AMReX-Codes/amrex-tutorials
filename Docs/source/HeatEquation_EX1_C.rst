@@ -1,3 +1,5 @@
+.. _guided_heat:
+
 Example: HeatEquation_EX1_C
 ===========================
 

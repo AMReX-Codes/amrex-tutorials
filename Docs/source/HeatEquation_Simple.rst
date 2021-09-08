@@ -1,3 +1,5 @@
+.. _guided_heat_simple:
+
 Tutorial: Heat Equation - Simple
 ==================================
 

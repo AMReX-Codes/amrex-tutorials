@@ -1,7 +1,7 @@
 .. role:: cpp(code)
    :language: c++
 
-.. _`Hello World`:
+.. _guided_hello_world:
 
 
 Hello World
