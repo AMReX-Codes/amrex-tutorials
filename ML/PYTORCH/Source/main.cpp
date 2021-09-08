@@ -230,34 +230,31 @@ void main_main ()
 
         // evaluate torch model
         at::Tensor outputs_torch = module.forward({inputs_torch}).toTensor();
-	outputs_torch = outputs_torch.to(dtype0);
-	
+        outputs_torch = outputs_torch.to(dtype0);
+
         // add eval time
         eval_time += ParallelDescriptor::second() - eval_t_start;
 
+        // get accessor to tensor
 #ifdef AMREX_USE_CUDA
-        outputs_torch = outputs_torch.to(torch::kCPU);
-#endif
-
-	// get accessor to tensor
+        auto outputs_torch_acc = outputs_torch.packed_accessor64<Real,2>();
+#else
         auto outputs_torch_acc = outputs_torch.accessor<Real,2>();
+#endif
 
         // copy tensor to output multifab
-        for (auto k = lo[2]; k <= hi[2]; ++k) {
-            for (auto j = lo[1]; j <= hi[1]; ++j) {
-                for (auto i = lo[0]; i <= hi[0]; ++i) {
-                    int ii = i - bx_lo[0];
-                    int jj = j - bx_lo[1];
-                    int index = jj*nbox[0] + ii;
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            int ii = i - bx_lo[0];
+            int jj = j - bx_lo[1];
+            int index = jj*nbox[0] + ii;
 #if AMREX_SPACEDIM == 3
-                    int kk = k - bx_lo[2];
-                    index += kk*nbox[0]*nbox[1];
+            int kk = k - bx_lo[2];
+            index += kk*nbox[0]*nbox[1];
 #endif
-                    phi_output(i, j, k, 0) = outputs_torch_acc[index][0];
-                    phi_output(i, j, k, 1) = outputs_torch_acc[index][1];
-                }
-            }
-        }
+            phi_output(i, j, k, 0) = outputs_torch_acc[index][0];
+            phi_output(i, j, k, 1) = outputs_torch_acc[index][1];
+        });
     }
 
     BL_PROFILE_VAR_STOP(Eval);
