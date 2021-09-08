@@ -113,7 +113,6 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
     domain.convert(amrex::IntVect::TheNodeVector());
     domain.grow(-1); // Shrink domain so we don't operate on any boundaries
 
-    //int ncomp  = getNComp();
     int nghost = getNGrow(amrlev,mglev);
     int buffer = std::max(0,nghost-1);
 
@@ -138,7 +137,6 @@ void MCNodalLinOp::Fsmooth (int amrlev, int mglev, amrex::MultiFab& a_x, const a
         amrex::MultiFab::Subtract(_Rx,_Dx,0,0,ncomp,nghost); // Rx -= Dx  (Rx = Ax - Dx)
 
 
-        //for (MFIter mfi(a_x, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         for (MFIter mfi(a_x, false); mfi.isValid(); ++mfi)
         {
             Box bx = mfi.validbox();

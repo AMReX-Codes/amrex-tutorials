@@ -42,7 +42,7 @@ int main (int argc, char* argv[])
     struct {
         int nlevels = 3;
         int nnodes = 32;
-        Vector<int> level_reduction_factor = {2};
+        Vector<int> level_reduction = {2};
         int max_grid_size = 10000000;
         Vector<int> ref_ratio = {4};
     } mesh;
@@ -52,9 +52,9 @@ int main (int argc, char* argv[])
         pp.query("nnodes",mesh.nnodes);
         pp.query("max_grid_size",mesh.max_grid_size);
         pp.queryarr("ref_ratio",mesh.ref_ratio);
-        pp.queryarr("level_reduction_factor",mesh.level_reduction_factor);
+        pp.queryarr("level_reduction",mesh.level_reduction);
         if (mesh.ref_ratio.size() == 1) {int tmp = mesh.ref_ratio[0]; mesh.ref_ratio.assign(mesh.nlevels-1, tmp);}
-        if (mesh.level_reduction_factor.size() == 1) {int tmp = mesh.level_reduction_factor[0]; mesh.level_reduction_factor.assign(mesh.nlevels-1, tmp);}
+        if (mesh.level_reduction.size() == 1) {int tmp = mesh.level_reduction[0]; mesh.level_reduction.assign(mesh.nlevels-1, tmp);}
     }
 
     //
@@ -109,19 +109,13 @@ int main (int argc, char* argv[])
     Vector<Geometry> geom;
       Vector<BoxArray> cgrids, ngrids;
      Vector<DistributionMapping> dmap;
-      Vector<MultiFab> solution, solgn, rhs, rhsgn, res, resgn, b, bgn;
+      Vector<MultiFab> solution, rhs;
      geom.resize(mesh.nlevels);
      cgrids.resize(mesh.nlevels);
      ngrids.resize(mesh.nlevels);
      dmap.resize(mesh.nlevels);
      solution.resize(mesh.nlevels);
-     solgn.resize(mesh.nlevels);
      rhs.resize(mesh.nlevels);
-     rhsgn.resize(mesh.nlevels);
-     res.resize(mesh.nlevels);
-     resgn.resize(mesh.nlevels);
-     b.resize(mesh.nlevels);
-     bgn.resize(mesh.nlevels);
     RealBox rb({AMREX_D_DECL(-0.5,-0.5,-0.5)},
               {AMREX_D_DECL(0.5,0.5,0.5)});
     Geometry::Setup(&rb, 0);
@@ -146,12 +140,7 @@ int main (int argc, char* argv[])
         cgrids[ilev].define(cdomain);
         cgrids[ilev].maxSize(mesh.max_grid_size); // TODO
 
-        
-        if (ilev > 0) fac *= (mesh.ref_ratio[ilev-1]/2);
-        int fac2 = 1;
-        if (ilev < mesh.nlevels-1) fac2 = mesh.level_reduction_factor[ilev];
-        std::cout << "ilev = " << ilev << " fac = " << fac2 << std::endl;
-        cdomain.grow(-(mesh.nnodes/2/fac2) * fac);
+        if (ilev < mesh.nlevels-1) cdomain.grow(-mesh.level_reduction[ilev]);
         if (ilev < mesh.nlevels-1) cdomain.refine(mesh.ref_ratio[ilev]);
         ngrids[ilev] = cgrids[ilev];
         ngrids[ilev].convert(IntVect::TheNodeVector());
@@ -172,22 +161,9 @@ int main (int argc, char* argv[])
         solution[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         solution[ilev].setVal(0.0);
         solution[ilev].setMultiGhost(true);
-        b[ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
-        b[ilev].setMultiGhost(true);
         rhs     [ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
         rhs     [ilev].setVal(0.0);
         rhs     [ilev].setMultiGhost(true);
-        res     [ilev].define(ngrids[ilev], dmap[ilev], op.ncomp, nghost);
-        res     [ilev].setVal(0.0);
-        res     [ilev].setMultiGhost(true);
-        {
-            BoxArray grids = ngrids[ilev];
-            grids.grow(nghost);
-            solgn[ilev].define(grids,dmap[ilev],op.ncomp,0); solgn[ilev].setMultiGhost(true);
-            rhsgn[ilev].define(grids,dmap[ilev],op.ncomp,0); rhsgn[ilev].setMultiGhost(true);
-            resgn[ilev].define(grids,dmap[ilev],op.ncomp,0); resgn[ilev].setMultiGhost(true);
-            bgn[ilev].define(grids,dmap[ilev],op.ncomp,0); bgn[ilev].setMultiGhost(true);
-        }
 
         Box dom(geom[ilev].Domain());
         const Real AMREX_D_DECL( dx = geom[ilev].CellSize()[0],
@@ -227,7 +203,6 @@ int main (int argc, char* argv[])
     LPInfo info;
     if (mlmg.agglomeration >= 0)        info.setAgglomeration(mlmg.agglomeration);
     if (mlmg.consolidation >= 0)        info.setConsolidation(mlmg.consolidation);
-//    std::cout << "MAX CRS LEVEL = " << mlmg.max_coarsening_level << std::endl;
     if (mlmg.max_coarsening_level >= 0) info.setMaxCoarseningLevel(mlmg.max_coarsening_level);
 
     //
@@ -262,29 +237,11 @@ int main (int argc, char* argv[])
     //
     Real tol_rel = 1E-8, tol_abs = 1E-8;
     solver.solve(GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs),tol_rel,tol_abs);
-    solver.compResidual(GetVecOfPtrs(res),GetVecOfPtrs(solution),GetVecOfConstPtrs(rhs));
-    solver.apply(GetVecOfPtrs(b),GetVecOfPtrs(solution));
 
     //
     // Write the output to ./solution
     //
     WriteMLMF ("solution",GetVecOfConstPtrs(solution),geom);
-    WriteMLMF ("residual",GetVecOfConstPtrs(res),geom);
-
-//    for (int i = 0; i < resgn.size(); i++)
-//    {
-//        amrex::MultiFab::Copy(solgn[i],solution[i],0,0,op.ncomp,0); // Dx = x
-//        amrex::MultiFab::Copy(rhsgn[i],rhs[i],0,0,op.ncomp,0); // Dx = x
-//        amrex::MultiFab::Copy(resgn[i],res[i],0,0,op.ncomp,0); // Dx = x
-//        amrex::MultiFab::Copy(bgn[i],b[i],0,0,op.ncomp,0); // Dx = x
-//        
-//        //resgn[i].copy();
-//    }
-//    WriteMLMF ("solgn",GetVecOfConstPtrs(solgn),geom);
-//    WriteMLMF ("rhsgn",GetVecOfConstPtrs(rhsgn),geom);
-//    WriteMLMF ("residualgn",GetVecOfConstPtrs(resgn),geom);
-//    WriteMLMF ("bgn",GetVecOfConstPtrs(bgn),geom);    
-
     }
     Finalize();
 }

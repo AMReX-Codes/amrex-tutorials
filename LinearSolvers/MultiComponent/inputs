@@ -1,13 +1,15 @@
 mesh.nnodes = 32                # Number of nodes in each direction
 mesh.max_grid_size = 32         # Maximum grid size (default = very large --> no parallelism)
 
-mesh.nlevels = 2
-mesh.ref_ratio = 4
-mesh.level_reduction_factor = 4
+# Uncomment these three lines for a refinement ratio of 4
+mesh.nlevels = 3
+mesh.ref_ratio = 4 4
+mesh.level_reduction = 14 4
 
-#mesh.nlevels = 3
-#mesh.ref_ratio = 2 2
-#mesh.level_reduction_factor = 4 2
+# Uncomment these three lines for a refinement ratio of 2
+#mesh.nlevels = 5
+#mesh.ref_ratio = 2 2 2 2
+#mesh.level_reduction = 9 4 8 16
 
 mlmg.fixed_iter = 200          # Number of iterations before exiting gracefully
 mlmg.verbose = 2                # Verbosity of MLMG
