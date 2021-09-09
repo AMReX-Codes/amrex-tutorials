@@ -159,17 +159,22 @@ void main_main ()
 
     Print() << "Model loaded.\n";
 
+    // set pytorch data type (default is float or torch::kFloat32)
+    auto dtype0 = torch::kFloat64;
+
 #ifdef AMREX_USE_CUDA
     torch::Device device0(torch::kCUDA);
     module.to(device0);
     amrex::Print() << "Copying model to GPU." << std::endl;
+
+    // set tensor options
+    auto tensoropt = torch::TensorOptions().dtype(dtype0).device(device0);
+#else
+    auto tensoropt = torch::TensorOptions().dtype(dtype0);
 #endif
 
     BL_PROFILE_VAR_STOP(LoadPytorch);
 
-    // set pytorch data type
-    auto dtype0 = torch::kFloat64;
-    
     // **********************************
     // EVALUATE MODEL
 
@@ -191,34 +196,27 @@ void main_main ()
         int ncell = AMREX_SPACEDIM == 2 ?
             nbox[0] * nbox[1] : nbox[0] * nbox[1] * nbox[2];
 
-        // create torch tensor
-        at::Tensor inputs_torch = torch::zeros({ncell, Ncomp}, torch::TensorOptions().dtype(dtype0));
-
-        // get accessor to tensor <type,num_of_dim>
-        auto inputs_torch_acc = inputs_torch.accessor<Real,2>();
+        // create a temporary array to store MultiFab data
+        // this is needed to create a tensor from a contiguous block of memory
+        amrex::Gpu::ManagedVector<Real> aux(ncell*Ncomp);
+        Real* AMREX_RESTRICT auxPtr = aux.dataPtr();
 
         // copy input multifab to torch tensor
-        auto lo = bx.loVect3d();
-        auto hi = bx.hiVect3d();
-        for (auto k = lo[2]; k <= hi[2]; ++k) {
-            for (auto j = lo[1]; j <= hi[1]; ++j) {
-                for (auto i = lo[0]; i <= hi[0]; ++i) {
-
-                    int ii = i - bx_lo[0];
-                    int jj = j - bx_lo[1];
-                    int index = jj*nbox[0] + ii;
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            int ii = i - bx_lo[0];
+            int jj = j - bx_lo[1];
+            int index = jj*nbox[0] + ii;
 #if AMREX_SPACEDIM == 3
-                    int kk = k - bx_lo[2];
-                    index += kk*nbox[0]*nbox[1];
+            int kk = k - bx_lo[2];
+            index += kk*nbox[0]*nbox[1];
 #endif
-                    inputs_torch_acc[index][0] = phi_input(i, j, k, 0);
-                }
-            }
-        }
+            // array order is row-based [index][comp]
+            auxPtr[index*Ncomp + 0] = phi_input(i, j, k, 0);
+        });
 
-#ifdef AMREX_USE_CUDA
-        inputs_torch = inputs_torch.to(device0);
-#endif
+        // create torch tensor from array
+        at::Tensor inputs_torch = torch::from_blob(auxPtr, {ncell, Ncomp}, tensoropt);
 
         // store the current time so we can later compute total eval time.
         Real eval_t_start = ParallelDescriptor::second();
