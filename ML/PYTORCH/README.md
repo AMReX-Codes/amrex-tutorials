@@ -11,7 +11,7 @@ mv libtorch libtorch_cpu
 
 # CUDA 11.1
 wget https://download.pytorch.org/libtorch/cu111/libtorch-cxx11-abi-shared-with-deps-1.9.0%2Bcu111.zip
-unzip libtorch-cxx11-abi-shared-with-deps-1.9.0%2Bcu111.zip
+unzip libtorch-cxx11-abi-shared-with-deps-1.9.0+cu111.zip
 mv libtorch libtorch_cuda
 
 # CUDA 10.2

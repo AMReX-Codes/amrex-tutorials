@@ -38,9 +38,6 @@ void main_main ()
     // pytorch model file
     std::string model_filename;
 
-    // largest time step
-    Real dt;
-
     // inputs parameters
     {
         // ParmParse is way of reading inputs from the inputs file
@@ -57,9 +54,6 @@ void main_main ()
 
         // Read in model file name
         pp.query("model_file", model_filename);
-
-        // time step
-        pp.get("dt", dt);
     }
 
     // **********************************
@@ -127,7 +121,7 @@ void main_main ()
 
         const Array4<Real>& phi_input = phi_in.array(mfi);
 
-        // set phi = random(0, dt)
+        // set phi
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             phi_input(i,j,k) = (i+j+k)/(n_cell-1.0);
@@ -140,7 +134,7 @@ void main_main ()
 
     // Write a plotfile of the initial data
     const std::string& pltfile = amrex::Concatenate("plt",0,5);
-    WriteSingleLevelPlotfile(pltfile, phi_in, {"dt"}, geom, 0.0, 0);
+    WriteSingleLevelPlotfile(pltfile, phi_in, {"x0"}, geom, 0.0, 0);
 
     BL_PROFILE_VAR_STOP(WriteInitPlot);
 
@@ -204,7 +198,7 @@ void main_main ()
         Real* AMREX_RESTRICT auxPtr = aux.dataPtr();
 
         // copy input multifab to torch tensor
-        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        amrex::ParallelFor(bx, Nc_in, [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept
         {
             int ii = i - bx_lo[0];
             int jj = j - bx_lo[1];
@@ -214,7 +208,7 @@ void main_main ()
             index += kk*nbox[0]*nbox[1];
 #endif
             // array order is row-based [index][comp]
-            auxPtr[index*Nc_in + 0] = phi_input(i, j, k, 0);
+            auxPtr[index*Nc_in + n] = phi_input(i, j, k, n);
         });
 
         // create torch tensor from array
@@ -260,7 +254,7 @@ void main_main ()
 
     // Write a plotfile of the current data
     const std::string& pltfile2 = amrex::Concatenate("plt",1,5);
-    WriteSingleLevelPlotfile(pltfile2, phi_out, {"y0", "y1"}, geom, dt, 1);
+    WriteSingleLevelPlotfile(pltfile2, phi_out, {"y0", "y1"}, geom, 1.0, 1);
 
     // Call the timer again and compute the maximum difference between the start time
     // and stop time over all processors
