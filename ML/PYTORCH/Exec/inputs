@@ -1,0 +1,3 @@
+n_cell = 64
+max_grid_size = 64
+model_file = "model.pt"
