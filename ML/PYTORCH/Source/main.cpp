@@ -99,7 +99,7 @@ void main_main ()
     // Nc_out = number of components for output array
     int Nc_in = 1;
     int Nc_out = 2;
-    
+
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
@@ -224,7 +224,7 @@ void main_main ()
         // add eval time
         eval_time += ParallelDescriptor::second() - eval_t_start;
 
-        // get accessor to tensor
+        // get accessor to tensor (read-only)
 #ifdef AMREX_USE_CUDA
         auto outputs_torch_acc = outputs_torch.packed_accessor64<Real,2>();
 #else
