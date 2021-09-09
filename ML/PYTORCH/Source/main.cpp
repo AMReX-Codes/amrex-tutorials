@@ -101,15 +101,17 @@ void main_main ()
     // Nghost = number of ghost cells for each array
     int Nghost = 0;
 
-    // Ncomp = number of components for each array
-    int Ncomp = 1;
-
+    // Nc_in = number of components for input array
+    // Nc_out = number of components for output array
+    int Nc_in = 1;
+    int Nc_out = 2;
+    
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
     // we allocate two phi multifabs; one will store the input state, the other the output.
-    MultiFab phi_in(ba, dm, Ncomp, Nghost);
-    MultiFab phi_out(ba, dm, Ncomp+1, Nghost);
+    MultiFab phi_in(ba, dm, Nc_in, Nghost);
+    MultiFab phi_out(ba, dm, Nc_out, Nghost);
 
     // **********************************
     // INITIALIZE DATA
@@ -198,7 +200,7 @@ void main_main ()
 
         // create a temporary array to store MultiFab data
         // this is needed to create a tensor from a contiguous block of memory
-        amrex::Gpu::ManagedVector<Real> aux(ncell*Ncomp);
+        amrex::Gpu::ManagedVector<Real> aux(ncell*Nc_in);
         Real* AMREX_RESTRICT auxPtr = aux.dataPtr();
 
         // copy input multifab to torch tensor
@@ -212,11 +214,11 @@ void main_main ()
             index += kk*nbox[0]*nbox[1];
 #endif
             // array order is row-based [index][comp]
-            auxPtr[index*Ncomp + 0] = phi_input(i, j, k, 0);
+            auxPtr[index*Nc_in + 0] = phi_input(i, j, k, 0);
         });
 
         // create torch tensor from array
-        at::Tensor inputs_torch = torch::from_blob(auxPtr, {ncell, Ncomp}, tensoropt);
+        at::Tensor inputs_torch = torch::from_blob(auxPtr, {ncell, Nc_in}, tensoropt);
 
         // store the current time so we can later compute total eval time.
         Real eval_t_start = ParallelDescriptor::second();
@@ -236,7 +238,7 @@ void main_main ()
 #endif
 
         // copy tensor to output multifab
-        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        amrex::ParallelFor(bx, Nc_out, [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept
         {
             int ii = i - bx_lo[0];
             int jj = j - bx_lo[1];
@@ -245,8 +247,7 @@ void main_main ()
             int kk = k - bx_lo[2];
             index += kk*nbox[0]*nbox[1];
 #endif
-            phi_output(i, j, k, 0) = outputs_torch_acc[index][0];
-            phi_output(i, j, k, 1) = outputs_torch_acc[index][1];
+            phi_output(i, j, k, n) = outputs_torch_acc[index][n];
         });
     }
 
