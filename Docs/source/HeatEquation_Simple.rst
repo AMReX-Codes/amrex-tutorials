@@ -115,7 +115,7 @@ the necessary header files and using the
 prefix :code:`amrex::`. Each
 :code:`int main(...)` using AMReX should begin with :code:`amrex::Initialize()`
 immediately followed by :code:`{`
-and end with code:`}` immediately followed by :code:`amrex::Finalize()`. Together
+and end with :code:`}` immediately followed by :code:`amrex::Finalize()`. Together
 these commands are responsible for
 initializing the AMReX execution environment and proper release of resources. AMReX
 classes and features not located between the commands will not function properly.
