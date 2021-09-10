@@ -33,6 +33,7 @@ public :
     virtual ~MCNodalLinOp ();
     void define (const Vector<Geometry>& a_geom, const Vector<BoxArray>& a_grids,
              const Vector<DistributionMapping>& a_dmap,
+             Vector<int> a_ref_ratio,
              const LPInfo& a_info = LPInfo(),
              const Vector<FabFactory<FArrayBox> const*>& a_factory = {});
 
@@ -84,8 +85,16 @@ protected:
     virtual void fixUpResidualMask (int amrlev, iMultiFab& resmsk) final;
 public:
     // Return the number of ghost cells
-    // Note: MUST return 2!
-    virtual int getNGrow() const override final {return 2;}
+    virtual int getNGrow(int a_lev, int mg_lev = 0) const override final
+    {
+        int gntmp;
+        if (a_lev == 0) return 2;
+        else gntmp = m_amr_ref_ratio[a_lev-1];
+        for (int i = 0; i < mg_lev; i++) gntmp = gntmp/2;
+        return gntmp;
+    }
+    virtual void make (Vector<Vector<MultiFab> >& mf, int nc, IntVect const& /*ng*/) const override;
+
     // Return the number of components
     virtual int getNComp() const override final {return ncomp;}
     // Overrides solutionResidual to add call to realFillBoundary
