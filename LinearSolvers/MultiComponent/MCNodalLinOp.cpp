@@ -26,7 +26,7 @@ void MCNodalLinOp::Fapply (int amrlev, int mglev, MultiFab& a_out,const MultiFab
     BL_PROFILE("MCNodalLinOp::Fapply()");
 
     int buffer = std::max(0,getNGrow(amrlev,mglev)-1);
-    
+
     a_out.setVal(0.0);
     amrex::Box domain(m_geom[amrlev][mglev].Domain());
     domain.convert(amrex::IntVect::TheNodeVector());
@@ -450,7 +450,7 @@ void MCNodalLinOp::interpolation (int amrlev, int fmglev, MultiFab& fine, const 
 {
     BL_PROFILE("MCNodalLinOp::interpolation()");
     amrex::Box fdomain = m_geom[amrlev][fmglev].Domain(); fdomain.convert(amrex::IntVect::TheNodeVector());
-    
+
     int nghost = getNGrow(amrlev,fmglev);
     int buffer = nghost - 1;
 
@@ -610,7 +610,7 @@ void MCNodalLinOp::reflux (int crse_amrlev,
                             else if ((K == lo.z || K == hi.z) &&
                                  (I == lo.x || I == hi.x)) // Y edge
                             {
-                                if (nghost == 2) 
+                                if (nghost == 2)
                                 {
                                 cdata(I,J,K,n) = 0.25*fdata(i,j-1,k,n) + 0.5*fdata(i,j,k,n) + 0.25*fdata(i,j+1,k,n);
                                 }
@@ -676,7 +676,7 @@ void MCNodalLinOp::reflux (int crse_amrlev,
                                 }
                                 else if (nghost == 4)
                                 {
-                                    cdata(I,J,K,n) = 
+                                    cdata(I,J,K,n) =
                                         (
                                         (fdata(i-3,j,k-3,n) + fdata(i-3,j,k+3,n) + fdata(i+3,j,k-3,n) + fdata(i+3,j,k+3,n))*1.0 +
                                         (fdata(i-3,j,k-2,n) + fdata(i-3,j,k+2,n) + fdata(i-2,j,k-3,n) + fdata(i-2,j,k+3,n) + fdata(i+2,j,k-3,n) + fdata(i+2,j,k+3,n) + fdata(i+3,j,k-2,n) + fdata(i+3,j,k+2,n))*2.0 +
@@ -704,14 +704,14 @@ void MCNodalLinOp::reflux (int crse_amrlev,
                                 {
                                     cdata(I,J,K,n) =
                                         (
-                                        (fdata(i-3,j-3,k,n) + fdata(i-3,j+3,k,n) + fdata(i+3,j-3,k,n) + fdata(i+3,j+3,k,n)) + 
+                                        (fdata(i-3,j-3,k,n) + fdata(i-3,j+3,k,n) + fdata(i+3,j-3,k,n) + fdata(i+3,j+3,k,n)) +
                                         (fdata(i-3,j-2,k,n) + fdata(i-3,j+2,k,n) + fdata(i-2,j-3,k,n) + fdata(i-2,j+3,k,n) + fdata(i+2,j-3,k,n) + fdata(i+2,j+3,k,n) + fdata(i+3,j-2,k,n) + fdata(i+3,j+2,k,n)   ) * 2. +
                                         (fdata(i-3,j-1,k,n) + fdata(i-3,j+1,k,n) + fdata(i-1,j-3,k,n) + fdata(i-1,j+3,k,n) + fdata(i+1,j-3,k,n) + fdata(i+1,j+3,k,n) + fdata(i+3,j-1,k,n) + fdata(i+3,j+1,k,n)   ) * 3. +
                                         (fdata(i-3,j+0,k,n) + fdata(i-2,j-2,k,n) + fdata(i-2,j+2,k,n) + fdata(i+0,j-3,k,n) + fdata(i+0,j+3,k,n) + fdata(i+2,j-2,k,n) + fdata(i+2,j+2,k,n) + fdata(i+3,j+0,k,n)   ) * 4. +
                                         (fdata(i-2,j-1,k,n) + fdata(i-2,j+1,k,n) + fdata(i-1,j-2,k,n) + fdata(i-1,j+2,k,n) + fdata(i+1,j-2,k,n) + fdata(i+1,j+2,k,n) + fdata(i+2,j-1,k,n) + fdata(i+2,j+1,k,n)   ) * 6. +
                                         (fdata(i-2,j+0,k,n) + fdata(i+0,j-2,k,n) + fdata(i+0,j+2,k,n) + fdata(i+2,j+0,k,n)   ) * 8. +
                                         (fdata(i-1,j-1,k,n) + fdata(i-1,j+1,k,n) + fdata(i+1,j-1,k,n) + fdata(i+1,j+1,k,n)   ) * 9. +
-                                        (fdata(i-1,j+0,k,n) + fdata(i+0,j-1,k,n) + fdata(i+0,j+1,k,n) + fdata(i+1,j+0,k,n)   ) * 12. + 
+                                        (fdata(i-1,j+0,k,n) + fdata(i+0,j-1,k,n) + fdata(i+0,j+1,k,n) + fdata(i+1,j+0,k,n)   ) * 12. +
                                         fdata(i+0,j+0,k,n) * 16.
                                         ) / 256.;
                                 }
@@ -798,8 +798,8 @@ MCNodalLinOp::correctionResidual (int amrlev, int mglev, MultiFab& resid, MultiF
     resid.FillBoundary();
 }
 
-void 
-MCNodalLinOp::make (Vector<Vector<MultiFab> >& mf, int nc,IntVect const& /*ng*/) const 
+void
+MCNodalLinOp::make (Vector<Vector<MultiFab> >& mf, int nc,IntVect const& /*ng*/) const
 {
     mf.clear();
     mf.resize(m_num_amr_levels);
@@ -812,5 +812,5 @@ MCNodalLinOp::make (Vector<Vector<MultiFab> >& mf, int nc,IntVect const& /*ng*/)
             const auto& ba = amrex::convert(m_grids[alev][mlev], m_ixtype);
             mf[alev][mlev].define(ba, m_dmap[alev][mlev], nc, ng, MFInfo(), *m_factory[alev][mlev]);
         }
-    }    
+    }
 }

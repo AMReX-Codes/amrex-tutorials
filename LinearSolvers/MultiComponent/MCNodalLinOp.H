@@ -85,8 +85,7 @@ protected:
     virtual void fixUpResidualMask (int amrlev, iMultiFab& resmsk) final;
 public:
     // Return the number of ghost cells
-    // Note: MUST return 2!
-    virtual int getNGrow(int a_lev, int mg_lev = 0) const override final 
+    virtual int getNGrow(int a_lev, int mg_lev = 0) const override final
     {
         int gntmp;
         if (a_lev == 0) return 2;
