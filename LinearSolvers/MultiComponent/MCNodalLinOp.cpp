@@ -396,9 +396,9 @@ void MCNodalLinOp::restriction (int amrlev, int cmglev, MultiFab& crse, MultiFab
     MultiFab* pcrse = (need_parallel_copy) ? &cfine : &crse;
         pcrse->setVal(0.0);
 
-    for (MFIter mfi(*pcrse, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*pcrse, false); mfi.isValid(); ++mfi)
     {
-        Box bx = mfi.tilebox();
+        Box bx = mfi.validbox();
         bx.grow(-1);
         bx = bx & cdomain;
 
@@ -464,9 +464,9 @@ void MCNodalLinOp::interpolation (int amrlev, int fmglev, MultiFab& fine, const 
         cmf = &cfine;
     }
 
-    for (MFIter mfi(fine, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(fine, false); mfi.isValid(); ++mfi)
     {
-        Box fine_bx = mfi.tilebox();
+        Box fine_bx = mfi.validbox();
         fine_bx.grow(-1);
         fine_bx = fine_bx & fdomain;
         const Box& course_bx = amrex::coarsen(fine_bx,2);
