@@ -596,7 +596,7 @@ void MCNodalLinOp::reflux (int crse_amrlev,
                                 if (nghost == 2)
                                 {
                                     cdata(I,J,K,n) = 0.25*fdata(i-1,j,k,n) + 0.5*fdata(i,j,k,n) + 0.25*fdata(i+1,j,k,n);
-                				}
+                                }
                                 else if (nghost == 4)
                                 {
                                     cdata(I,J,K,n) = (
