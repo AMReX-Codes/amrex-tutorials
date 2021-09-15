@@ -7,36 +7,6 @@ module electrostatic_pic_module
 
 contains
 
-  subroutine sum_fine_to_crse_nodal (lo, hi, lrat, crse, clo, chi, fine, flo, fhi) &
-       bind(c, name="sum_fine_to_crse_nodal")
-
-    integer, intent(in)             ::   lo(2),  hi(2)
-    integer, intent(in)             ::  clo(2), chi(2)
-    integer, intent(in)             ::  flo(2), fhi(2)
-    integer, intent(in)             ::  lrat(2)
-    real(amrex_real), intent(inout) :: crse(clo(1):chi(1),clo(2):chi(2))
-    real(amrex_real), intent(in)    :: fine(flo(1):fhi(1),flo(2):fhi(2))
-
-    integer :: i, j, ii, jj
-
-    do j     = lo(2), hi(2)
-       jj    = j * lrat(2)
-       do i  = lo(1), hi(1)
-          ii = i * lrat(1)
-          crse(i,j)  =  fine(ii,jj)                             + &
-! These four fine nodes are shared by two coarse nodes...
-               0.5d0   * (fine(ii-1,jj)     + fine(ii+1,jj)     + &
-               fine(ii,jj-1)     + fine(ii,jj+1))               + &
-! ... and these four are shared by four...
-               0.25d0  * (fine(ii-1,jj-1)   + fine(ii-1,jj+1)   + &
-               fine(ii-1,jj+1)   + fine(ii+1,jj+1))
-! ... note that we have 9 nodes in total...
-             crse(i,j) = crse(i,j) / 4.d0
-       end do
-    end do
-
-  end subroutine sum_fine_to_crse_nodal
-
   subroutine zero_out_bndry (lo, hi, input_data, bndry_data, mask) &
        bind(c,name='zero_out_bndry')
 
@@ -266,7 +236,7 @@ contains
        bind(c,name='interpolate_cic_two_levels')
     integer, value,   intent(in)     :: ns, np
     real(amrex_particle_real), intent(in)     :: particles(ns,np)
-    real(amrex_paritcle_real), intent(inout)  :: Ex_p(np), Ey_p(np)
+    real(amrex_particle_real), intent(inout)  :: Ex_p(np), Ey_p(np)
     integer,          intent(in)     :: ng, lev
     integer,          intent(in)     :: lo(2), hi(2)
     integer,          intent(in)     :: clo(2), chi(2)
@@ -374,7 +344,7 @@ contains
     integer, value,   intent(in)     :: ns, np
     real(amrex_particle_real), intent(inout)  :: particles(ns,np)
     real(amrex_particle_real), intent(inout)  :: vx_p(np), vy_p(np)
-    real(amrex_paritcle_real), intent(in)     :: Ex_p(np), Ey_p(np)
+    real(amrex_particle_real), intent(in)     :: Ex_p(np), Ey_p(np)
     real(amrex_real), intent(in)     :: charge
     real(amrex_real), intent(in)     :: mass
     real(amrex_real), intent(in)     :: dt

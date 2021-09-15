@@ -8,10 +8,6 @@ extern "C"
 {
 #endif
 
-    void sum_fine_to_crse_nodal(const int* lo, const int* hi, const int* lrat,
-                                      amrex::Real* crse, const int* clo, const int* chi,
-                                const amrex::Real* fine, const int* flo, const int* fhi);
-
     void zero_out_bndry(const int* lo, const int* hi,
                         amrex::Real* input_data, amrex::Real* bndry_data,
                         const int* mask);

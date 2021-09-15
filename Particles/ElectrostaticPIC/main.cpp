@@ -15,15 +15,16 @@
 #include "ElectrostaticParticleContainer.H"
 
 #include "electrostatic_pic_F.H"
+#include "Electrostatic_PIC_2D.H"
 
 using namespace amrex;
 
-void WritePlotFile(const ScalarMeshData& rhs,
-                   const ScalarMeshData& phi,
-                   const VectorMeshData& E,
-                   const ElectrostaticParticleContainer& pc,
-                   const Vector<Geometry>& geom,
-                   int nstep)
+void WritePlotFile (const ScalarMeshData& rhs,
+                    const ScalarMeshData& phi,
+                    const VectorMeshData& E,
+                    const ElectrostaticParticleContainer& pc,
+                    const Vector<Geometry>& geom,
+                    int nstep)
 {
     int num_output_comp = 2 + BL_SPACEDIM;
     int num_levels = rhs.size();
@@ -81,9 +82,9 @@ void WritePlotFile(const ScalarMeshData& rhs,
 
 }
 
-void computeE(      VectorMeshData& E,
-              const ScalarMeshData& phi,
-              const Vector<Geometry>& geom) {
+void computeE (      VectorMeshData& E,
+               const ScalarMeshData& phi,
+               const Vector<Geometry>& geom) {
 
     const int num_levels = E.size();
 
@@ -114,9 +115,9 @@ void computeE(      VectorMeshData& E,
     }
 }
 
-void zeroOutBoundary(MultiFab& input_data,
-                     MultiFab& bndry_data,
-                     const FabArray<BaseFab<int> >& mask) {
+void zeroOutBoundary (MultiFab& input_data,
+                      MultiFab& bndry_data,
+                      const FabArray<BaseFab<int> >& mask) {
     bndry_data.setVal(0.0, 1);
     for (MFIter mfi(input_data); mfi.isValid(); ++mfi) {
         const Box& bx = mfi.validbox();
@@ -128,32 +129,9 @@ void zeroOutBoundary(MultiFab& input_data,
     bndry_data.FillBoundary();
 }
 
-void sumFineToCrseNodal(const MultiFab& fine, MultiFab& crse,
-                        const Geometry& cgeom, const IntVect& ratio) {
-
-    const BoxArray& fine_BA = fine.boxArray();
-    const DistributionMapping& fine_dm = fine.DistributionMap();
-    BoxArray coarsened_fine_BA = fine_BA;
-    coarsened_fine_BA.coarsen(ratio);
-
-    MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, 1, 0);
-    coarsened_fine_data.setVal(0.0);
-
-    for (MFIter mfi(coarsened_fine_data); mfi.isValid(); ++mfi) {
-        const Box& bx = mfi.validbox();
-        const Box& crse_box = coarsened_fine_data[mfi].box();
-        const Box& fine_box = fine[mfi].box();
-        sum_fine_to_crse_nodal(bx.loVect(), bx.hiVect(), ratio.getVect(),
-                               coarsened_fine_data[mfi].dataPtr(), crse_box.loVect(), crse_box.hiVect(),
-                               fine[mfi].dataPtr(), fine_box.loVect(), fine_box.hiVect());
-    }
-
-    crse.ParallelCopy(coarsened_fine_data, cgeom.periodicity(), FabArrayBase::ADD);
-}
-
-void fixRHSForSolve(Vector<std::unique_ptr<MultiFab> >& rhs,
-                    const Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks,
-                    const Vector<Geometry>& geom, const IntVect& ratio) {
+void fixRHSForSolve (Vector<std::unique_ptr<MultiFab> >& rhs,
+                     const Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks,
+                     const Vector<Geometry>& geom, const IntVect& ratio) {
     int num_levels = rhs.size();
     for (int lev = 0; lev < num_levels; ++lev) {
         MultiFab& fine_rhs = *rhs[lev];
@@ -165,11 +143,11 @@ void fixRHSForSolve(Vector<std::unique_ptr<MultiFab> >& rhs,
     }
 }
 
-void computePhi(ScalarMeshData& rhs, ScalarMeshData& phi,
-                Vector<BoxArray>& grids,
-                Vector<DistributionMapping>& dm,
-                Vector<Geometry>& geom,
-                Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks) {
+void computePhi (ScalarMeshData& rhs, ScalarMeshData& phi,
+                 Vector<BoxArray>& grids,
+                 Vector<DistributionMapping>& dm,
+                 Vector<Geometry>& geom,
+                 Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks) {
 
     int num_levels = rhs.size();
 
@@ -252,11 +230,11 @@ void computePhi(ScalarMeshData& rhs, ScalarMeshData& phi,
 }
 
 void
-getLevelMasks(Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks,
-              const Vector<BoxArray>& grids,
-              const Vector<DistributionMapping>& dmap,
-              const Vector<Geometry>& geom,
-              const int ncells = 1) {
+getLevelMasks (Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks,
+               const Vector<BoxArray>& grids,
+               const Vector<DistributionMapping>& dmap,
+               const Vector<Geometry>& geom,
+               const int ncells = 1) {
     int num_levels = grids.size();
     BL_ASSERT(num_levels == dmap.size());
 

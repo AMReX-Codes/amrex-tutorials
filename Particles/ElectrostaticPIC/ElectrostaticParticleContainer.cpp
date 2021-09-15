@@ -3,6 +3,7 @@
 #include "ElectrostaticParticleContainer.H"
 #include "AMReX_PlotFileUtil.H"
 
+#include "Electrostatic_PIC_Util.H"
 #include "electrostatic_pic_F.H"
 
 using namespace amrex;
@@ -88,28 +89,9 @@ ElectrostaticParticleContainer::DepositCharge(ScalarMeshData& rho) {
     }
 
     // now we average down fine to crse
-    std::unique_ptr<MultiFab> crse;
+    IntVect ratio(D_DECL(2, 2, 2));  // FIXME
     for (int lev = finest_level - 1; lev >= 0; --lev) {
-        const BoxArray& fine_BA = rho[lev+1]->boxArray();
-        const DistributionMapping& fine_dm = rho[lev+1]->DistributionMap();
-        BoxArray coarsened_fine_BA = fine_BA;
-        coarsened_fine_BA.coarsen(m_gdb->refRatio(lev));
-
-        MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, 1, 0);
-        coarsened_fine_data.setVal(0.0);
-
-        IntVect ratio(D_DECL(2, 2, 2));  // FIXME
-
-        for (MFIter mfi(coarsened_fine_data); mfi.isValid(); ++mfi) {
-            const Box& bx = mfi.validbox();
-            const Box& crse_box = coarsened_fine_data[mfi].box();
-            const Box& fine_box = (*rho[lev+1])[mfi].box();
-            sum_fine_to_crse_nodal(bx.loVect(), bx.hiVect(), ratio.getVect(),
-                                   coarsened_fine_data[mfi].dataPtr(), crse_box.loVect(), crse_box.hiVect(),
-                                   (*rho[lev+1])[mfi].dataPtr(), fine_box.loVect(), fine_box.hiVect());
-        }
-
-        rho[lev]->ParallelCopy(coarsened_fine_data, m_gdb->Geom(lev).periodicity(), FabArrayBase::ADD);
+        sumFineToCrseNodal(*rho[lev+1], *rho[lev], m_gdb->Geom(lev), ratio);
     }
 
     for (int lev = 0; lev < num_levels; ++lev) {

@@ -1,5 +1,6 @@
 CEXE_headers += ElectrostaticParticleContainer.H PhysConst.H
-CEXE_sources += main.cpp ElectrostaticParticleContainer.cpp
+CEXE_headers += Electrostatic_PIC_Util.H Electrostatic_PIC_2D.H
+CEXE_sources += main.cpp ElectrostaticParticleContainer.cpp Electrostatic_PIC_Util.cpp
 
 FEXE_headers += electrostatic_pic_F.H
 f90EXE_sources += electrostatic_pic_$(DIM)d.f90
