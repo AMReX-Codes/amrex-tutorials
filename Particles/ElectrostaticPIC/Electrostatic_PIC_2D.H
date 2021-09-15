@@ -38,4 +38,19 @@ void zero_out_bndry (int i, int j, int,
         input(i,j,0,0) = amrex::Real(0.0);
     }
 }
+
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void build_mask (int i, int j, int,
+                 amrex::Array4<int const> tmp_mask,
+                 amrex::Array4<int> mask, int ncells) noexcept
+{
+    int total = 0;
+    for (int jj = j-ncells; jj <= j+ncells; ++jj) {
+        for (int ii = i-ncells; ii <= i+ncells; ++ii) {
+            total += tmp_mask(ii, jj, 0, 0);
+        }
+    }
+
+    mask(i, j, 0, 0) = (total > 0) ? 1 : 0;
+}
 #endif

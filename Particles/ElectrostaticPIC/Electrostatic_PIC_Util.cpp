@@ -41,3 +41,37 @@ void zeroOutBoundary (MultiFab& input_data,
     }
     bndry_data.FillBoundary();
 }
+
+void getLevelMasks (Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks,
+                    const Vector<BoxArray>& grids,
+                    const Vector<DistributionMapping>& dmap,
+                    const Vector<Geometry>& geom,
+                    const int ncells) {
+
+    int num_levels = grids.size();
+    BL_ASSERT(num_levels == dmap.size());
+
+    int covered = 0;
+    int notcovered = 1;
+    int physbnd = 1;
+    int interior = 0;
+
+    for (int lev = 0; lev < num_levels; ++lev) {
+        BoxArray nba = grids[lev];
+        nba.surroundingNodes();
+
+        FabArray<BaseFab<int> > tmp_mask(nba, dmap[lev], 1, ncells);
+        tmp_mask.BuildMask(geom[lev].Domain(), geom[lev].periodicity(),
+                           covered, notcovered, physbnd, interior);
+        masks[lev].reset(new FabArray<BaseFab<int> >(nba, dmap[lev], 1, 0));
+        for (MFIter mfi(tmp_mask); mfi.isValid(); ++mfi) {
+            const Box& bx = mfi.validbox();
+            const auto tmp_arr = tmp_mask[mfi].array();
+            auto mask_arr = (*masks[lev])[mfi].array();
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+                                       build_mask(i, j, k, tmp_arr, mask_arr, ncells);
+                                   });
+        }
+    }
+}
+

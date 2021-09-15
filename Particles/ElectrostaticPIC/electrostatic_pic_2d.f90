@@ -7,36 +7,6 @@ module electrostatic_pic_module
 
 contains
 
-  subroutine build_mask (lo, hi, tmp_mask, mask, ncells) &
-       bind(c,name='build_mask')
-    integer(c_int),   intent(in   ) :: lo(2), hi(2)
-    integer(c_int),   intent(in   ) :: ncells
-    integer(c_int),   intent(in   ) :: tmp_mask(lo(1)-ncells:hi(1)+ncells,lo(2)-ncells:hi(2)+ncells)
-    integer(c_int),   intent(inout) :: mask (lo(1):hi(1),lo(2):hi(2))
-
-    integer :: i, j, ii, jj, total
-
-    do j = lo(2), hi(2)
-       do i = lo(1), hi(1)
-
-          total = 0
-          do ii = i-ncells, i+ncells
-             do jj = j-ncells, j+ncells
-                total = total + tmp_mask(ii, jj)
-             end do
-          end do
-
-          if (total .gt. 0) then
-             mask(i,j) = 1
-          else
-             mask(i,j) = 0
-          end if
-
-       end do
-    end do
-
-  end subroutine build_mask
-
 ! This routine computes the node-centered electric field given a node-centered phi.
 ! The gradient is computed using 2nd-order centered differences. It assumes the
 ! Boundary conditions have already been set and that you have one row of ghost cells.
