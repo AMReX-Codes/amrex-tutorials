@@ -1,10 +1,15 @@
-# List of source files
-set(_sources main.cpp)
+cmake_minimum_required(VERSION 3.16)
 
-# List of input files
-set(_input_files)
+# Project name and source file language
+project(HelloWorld 
+        LANGUAGES C CXX)
 
-setup_tutorial(_sources _input_files)
+add_executable(HelloWorld main.cpp)
 
-unset( _sources )
-unset( _input_files   )
+# Add AMReX
+find_package(AMReX REQUIRED)
+target_link_libraries(HelloWorld PRIVATE AMReX::amrex) 
+
+# Add mpi
+find_package(MPI REQUIRED)
+target_link_libraries(AMReX::amrex INTERFACE ${MPI_LIBRARIES}) 
