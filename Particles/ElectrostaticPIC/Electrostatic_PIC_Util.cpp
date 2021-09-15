@@ -25,3 +25,19 @@ void sumFineToCrseNodal (const MultiFab& fine, MultiFab& crse,
 
     crse.ParallelCopy(coarsened_fine_data, cgeom.periodicity(), FabArrayBase::ADD);
 }
+
+void zeroOutBoundary (MultiFab& input_data,
+                      MultiFab& bndry_data,
+                      const FabArray<BaseFab<int> >& mask) {
+    bndry_data.setVal(0.0, 1);
+    for (MFIter mfi(input_data); mfi.isValid(); ++mfi) {
+        const Box& bx = mfi.validbox();
+        auto input_arr = input_data[mfi].array();
+        auto bndry_arr = bndry_data[mfi].array();
+        auto mask_arr = mask[mfi].array();
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+                                   zero_out_bndry(i, j, k, input_arr, bndry_arr, mask_arr);
+                               });
+    }
+    bndry_data.FillBoundary();
+}

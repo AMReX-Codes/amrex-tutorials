@@ -8,10 +8,6 @@ extern "C"
 {
 #endif
 
-    void zero_out_bndry(const int* lo, const int* hi,
-                        amrex::Real* input_data, amrex::Real* bndry_data,
-                        const int* mask);
-
     void build_mask(const int* lo, const int* hi,
                     const int* tmp_mask, int* mask, const int* ncells);
 

@@ -27,4 +27,15 @@ void sum_fine_to_crse_nodal (int i, int j, int,
     crse(i,j,0,0) = crse(i,j,0,0) / amrex::Real(4.0);
 }
 
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void zero_out_bndry (int i, int j, int,
+                     amrex::Array4<amrex::Real> const& input,
+                     amrex::Array4<amrex::Real> const& bndry,
+                     amrex::Array4<int const> mask) noexcept
+{
+    if (mask(i,j,0,0) == 1) {
+        bndry(i,j,0,0) = input(i,j,0,0);
+        input(i,j,0,0) = amrex::Real(0.0);
+    }
+}
 #endif

@@ -7,27 +7,6 @@ module electrostatic_pic_module
 
 contains
 
-  subroutine zero_out_bndry (lo, hi, input_data, bndry_data, mask) &
-       bind(c,name='zero_out_bndry')
-
-    integer(c_int),   intent(in   ) :: lo(2), hi(2)
-    double precision, intent(inout) :: input_data(lo(1):hi(1),lo(2):hi(2))
-    double precision, intent(inout) :: bndry_data(lo(1)-1:hi(1)+1,lo(2)-1:hi(2)+1)
-    integer(c_int),   intent(in   ) :: mask (lo(1):hi(1),lo(2):hi(2))
-
-    integer :: i, j
-
-    do j = lo(2), hi(2)
-       do i = lo(1), hi(1)
-          if (mask(i,j) .eq. 1) then
-             bndry_data(i,j) = input_data(i,j)
-             input_data(i,j) = 0.d0
-          end if
-       end do
-    end do
-
-  end subroutine zero_out_bndry
-
   subroutine build_mask (lo, hi, tmp_mask, mask, ncells) &
        bind(c,name='build_mask')
     integer(c_int),   intent(in   ) :: lo(2), hi(2)

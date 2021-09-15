@@ -13,7 +13,7 @@
 #include <AMReX_PlotFileUtil.H>
 
 #include "ElectrostaticParticleContainer.H"
-
+#include "Electrostatic_PIC_Util.H"
 #include "electrostatic_pic_F.H"
 #include "Electrostatic_PIC_2D.H"
 
@@ -113,20 +113,6 @@ void computeE (      VectorMeshData& E,
 #endif
         //        VisMF::Write(*E[lev][0], amrex::MultiFabFileFullPrefix(lev, "tmp", "Level_", "Ex"));
     }
-}
-
-void zeroOutBoundary (MultiFab& input_data,
-                      MultiFab& bndry_data,
-                      const FabArray<BaseFab<int> >& mask) {
-    bndry_data.setVal(0.0, 1);
-    for (MFIter mfi(input_data); mfi.isValid(); ++mfi) {
-        const Box& bx = mfi.validbox();
-        zero_out_bndry(bx.loVect(), bx.hiVect(),
-                       input_data[mfi].dataPtr(),
-                       bndry_data[mfi].dataPtr(),
-                       mask[mfi].dataPtr());
-    }
-    bndry_data.FillBoundary();
 }
 
 void fixRHSForSolve (Vector<std::unique_ptr<MultiFab> >& rhs,
