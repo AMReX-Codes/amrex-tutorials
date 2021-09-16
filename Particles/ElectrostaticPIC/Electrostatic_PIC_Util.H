@@ -10,6 +10,9 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_Vector.H>
 
+using VectorMeshData = amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, BL_SPACEDIM> >;
+using ScalarMeshData = amrex::Vector<std::unique_ptr<amrex::MultiFab> >;
+
 void sumFineToCrseNodal (const amrex::MultiFab& fine, amrex::MultiFab& crse,
                          const amrex::Geometry& cgeom, const amrex::IntVect& ratio);
 
@@ -22,5 +25,8 @@ void getLevelMasks (amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab
                     const amrex::Vector<amrex::DistributionMapping>& dmap,
                     const amrex::Vector<amrex::Geometry>& geom,
                     const int ncells = 1);
+
+void computeE (VectorMeshData& E, const ScalarMeshData& phi,
+               const amrex::Vector<amrex::Geometry>& geom);
 
 #endif

@@ -53,4 +53,32 @@ void build_mask (int i, int j, int,
 
     mask(i, j, 0, 0) = (total > 0) ? 1 : 0;
 }
+
+/**
+ * \brief This routine computes the node-centered electric field given a node-centered phi.
+ * The gradient is computed using 2nd-order centered differences. It assumes the
+ * boundary conditions have already been set and that you have one row of ghost cells.
+ * Note that this routine includes the minus sign in E = - grad phi.
+ *
+ * Arguments:
+ *     lo, hi:     The corners of the valid box over which the gradient is taken
+ *     Ex, Ey:     The electric field in the x and y directions.
+ *     dx:         The cell spacing
+ *
+ */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void compute_E_nodal (int i, int j, int,
+                      amrex::Array4<amrex::Real> Ex,
+                      amrex::Array4<amrex::Real> Ey,
+                      amrex::Array4<amrex::Real const> phi,
+                      amrex::GpuArray<amrex::Real, 2> dx) noexcept
+{
+    amrex::GpuArray<amrex::Real, 2> fac;
+    fac[0] = amrex::Real(0.5) / dx[0];
+    fac[1] = amrex::Real(0.5) / dx[1];
+
+    Ex(i,j,0,0) = fac[0] * (phi(i-1,j,0,0) - phi(i+1,j,0,0));
+    Ey(i,j,0,0) = fac[1] * (phi(i,j-1,0,0) - phi(i,j+1,0,0));
+};
+
 #endif

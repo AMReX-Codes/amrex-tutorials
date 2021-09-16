@@ -3,9 +3,10 @@
 
 #include <AMReX_MultiFab.H>
 #include <AMReX_MultiFabUtil.H>
-#include "AMReX_Particles.H"
+#include <AMReX_Particles.H>
 
 #include "PhysConst.H"
+#include "Electrostatic_PIC_Util.H"
 
 namespace amrex {
 
@@ -49,9 +50,6 @@ public:
     }
 
 };
-
-using VectorMeshData = Vector<std::array<std::unique_ptr<MultiFab>, BL_SPACEDIM> >;
-using ScalarMeshData = Vector<std::unique_ptr<MultiFab> >;
 
 class ElectrostaticParticleContainer
     : public ParticleContainer<0, 0, PIdx::nattribs>

@@ -82,39 +82,6 @@ void WritePlotFile (const ScalarMeshData& rhs,
 
 }
 
-void computeE (      VectorMeshData& E,
-               const ScalarMeshData& phi,
-               const Vector<Geometry>& geom) {
-
-    const int num_levels = E.size();
-
-    for (int lev = 0; lev < num_levels; ++lev) {
-
-        const auto& gm = geom[lev];
-        const Real* dx = gm.CellSize();
-
-        for (MFIter mfi(*phi[lev]); mfi.isValid(); ++mfi) {
-            const Box& bx = mfi.validbox();
-
-            compute_E_nodal(bx.loVect(), bx.hiVect(),
-                            (*phi[lev] )[mfi].dataPtr(),
-                            (*E[lev][0])[mfi].dataPtr(),
-                            (*E[lev][1])[mfi].dataPtr(),
-#if BL_SPACEDIM == 3
-                            (*E[lev][2])[mfi].dataPtr(),
-#endif
-                            dx);
-        }
-
-        E[lev][0]->FillBoundary(gm.periodicity());
-        E[lev][1]->FillBoundary(gm.periodicity());
-#if BL_SPACEDIM == 3
-        E[lev][2]->FillBoundary(gm.periodicity());
-#endif
-        //        VisMF::Write(*E[lev][0], amrex::MultiFabFileFullPrefix(lev, "tmp", "Level_", "Ex"));
-    }
-}
-
 void fixRHSForSolve (Vector<std::unique_ptr<MultiFab> >& rhs,
                      const Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks,
                      const Vector<Geometry>& geom, const IntVect& ratio) {

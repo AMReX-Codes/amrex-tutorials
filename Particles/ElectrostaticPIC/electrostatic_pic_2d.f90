@@ -7,40 +7,6 @@ module electrostatic_pic_module
 
 contains
 
-! This routine computes the node-centered electric field given a node-centered phi.
-! The gradient is computed using 2nd-order centered differences. It assumes the
-! Boundary conditions have already been set and that you have one row of ghost cells.
-! Note that this routine includes the minus sign in E = - grad phi.
-!
-! Arguments:
-!     lo, hi:     The corners of the valid box over which the gradient is taken
-!     Ex, Ey:     The electric field in the x and y directions.
-!     dx:         The cell spacing
-!
-  subroutine compute_E_nodal (lo, hi, phi, Ex, Ey, dx) &
-       bind(c,name='compute_E_nodal')
-    integer(c_int),   intent(in)    :: lo(2), hi(2)
-    real(amrex_real), intent(in)    :: dx(2)
-    real(amrex_real), intent(in   ) :: phi(lo(1)-2:hi(1)+2,lo(2)-2:hi(2)+2)
-    real(amrex_real), intent(inout) :: Ex (lo(1)-1:hi(1)+1,lo(2)-1:hi(2)+1)
-    real(amrex_real), intent(inout) :: Ey (lo(1)-1:hi(1)+1,lo(2)-1:hi(2)+1)
-
-    integer :: i, j
-    real(amrex_real) :: fac(2)
-
-    fac = 0.5d0 / dx
-
-    do j = lo(2)-1, hi(2)+1
-       do i = lo(1)-1, hi(1)+1
-
-          Ex(i,j) = fac(1) * (phi(i-1,j) - phi(i+1,j))
-          Ey(i,j) = fac(2) * (phi(i,j-1) - phi(i,j+1))
-
-       end do
-    end do
-
-  end subroutine compute_E_nodal
-
 ! This routine computes the charge density due to the particles using cloud-in-cell
 ! deposition. The Fab rho is assumed to be node-centered.
 !
