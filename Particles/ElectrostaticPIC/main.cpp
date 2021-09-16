@@ -26,7 +26,7 @@ void WritePlotFile (const ScalarMeshData& rhs,
                     const Vector<Geometry>& geom,
                     int nstep)
 {
-    int num_output_comp = 2 + BL_SPACEDIM;
+    int num_output_comp = 2 + AMREX_SPACEDIM;
     int num_levels = rhs.size();
     IntVect cc_flag = IntVect::TheZeroVector();
     Vector<std::unique_ptr<MultiFab> > output_cc(num_levels);
@@ -36,7 +36,7 @@ void WritePlotFile (const ScalarMeshData& rhs,
                                           rhs[lev]->DistributionMap(), num_output_comp, 0));
         amrex::average_node_to_cellcenter(*output_cc[lev], 0, *rhs[lev],  0, 1);
         amrex::average_node_to_cellcenter(*output_cc[lev], 1, *phi[lev],  0, 1);
-        for (int i = 0; i < BL_SPACEDIM; ++i) {
+        for (int i = 0; i < AMREX_SPACEDIM; ++i) {
             amrex::average_node_to_cellcenter(*output_cc[lev], 2+i, *E[lev][i], 0, 1);
         }
     }
@@ -46,7 +46,7 @@ void WritePlotFile (const ScalarMeshData& rhs,
     varnames.push_back("phi");
     varnames.push_back("Ex");
     varnames.push_back("Ey");
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
     varnames.push_back("Ez");
 #endif
 
@@ -54,12 +54,12 @@ void WritePlotFile (const ScalarMeshData& rhs,
     particle_varnames.push_back("weight");
     particle_varnames.push_back("vx");
     particle_varnames.push_back("vy");
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
     particle_varnames.push_back("vz");
 #endif
     particle_varnames.push_back("Ex");
     particle_varnames.push_back("Ey");
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
     particle_varnames.push_back("Ez");
 #endif
 
@@ -156,7 +156,7 @@ void computePhi (ScalarMeshData& rhs, ScalarMeshData& phi,
         if (lev < num_levels-1) {
 
             PhysBCFunctNoOp cphysbc, fphysbc;
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
             int lo_bc[] = {INT_DIR, INT_DIR, INT_DIR};
             int hi_bc[] = {INT_DIR, INT_DIR, INT_DIR};
 #else
@@ -183,7 +183,7 @@ void computePhi (ScalarMeshData& rhs, ScalarMeshData& phi,
 }
 
 void main_main () {
-    int max_level, n_cell, max_grid_size, particle_output_int, n_buffer, max_step, is_periodic[BL_SPACEDIM];
+    int max_level, n_cell, max_grid_size, particle_output_int, n_buffer, max_step, is_periodic[AMREX_SPACEDIM];
     Real dt;
 
     // inputs parameters
@@ -207,13 +207,13 @@ void main_main () {
         rr[lev-1] = 2;
 
     RealBox real_box;
-    for (int n = 0; n < BL_SPACEDIM; n++) {
+    for (int n = 0; n < AMREX_SPACEDIM; n++) {
         real_box.setLo(n,-20.0e-6);
         real_box.setHi(n, 20.0e-6);
     }
 
     // This sets the boundary conditions to be doubly or triply periodic
-    for (int i = 0; i < BL_SPACEDIM; i++) {
+    for (int i = 0; i < AMREX_SPACEDIM; i++) {
         is_periodic[i] = 0;
     }
 
@@ -251,7 +251,7 @@ void main_main () {
     Vector<DistributionMapping> dm(num_levels);
     Vector<std::unique_ptr<MultiFab> > phi(num_levels);
     Vector<std::unique_ptr<MultiFab> > rhs(num_levels);
-    Vector<std::array<std::unique_ptr<MultiFab>, BL_SPACEDIM> > eField(num_levels);
+    Vector<std::array<std::unique_ptr<MultiFab>, AMREX_SPACEDIM> > eField(num_levels);
 
     for (int lev = 0; lev < num_levels; ++lev) {
         BoxArray nba = grids[lev];
@@ -261,7 +261,7 @@ void main_main () {
         rhs[lev].reset(new MultiFab(nba, dm[lev], Ncomp, 1));
         phi[lev].reset(new MultiFab(nba, dm[lev], Ncomp, 2));
 
-        for (int idim = 0; idim < BL_SPACEDIM; ++idim) {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             eField[lev][idim].reset(new MultiFab(nba, dm[lev], Ncomp, 1));
             eField[lev][idim]->setVal(0.0);
         }

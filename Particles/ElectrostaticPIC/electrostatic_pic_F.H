@@ -11,7 +11,7 @@ extern "C"
     void compute_E_nodal (const int* lo, const int* hi,
                           const amrex::Real* phi,
                           amrex::Real* Ex, amrex::Real* Ey,
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                           amrex::Real* Ez,
 #endif
                           const amrex::Real* dx);
@@ -25,16 +25,16 @@ extern "C"
 
     void interpolate_cic_two_levels(const amrex::ParticleReal* particles, int ns, int np,
                                     amrex::ParticleReal* Ex_p, amrex::ParticleReal* Ey_p,
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                     amrex::ParticleReal* Ez_p,
 #endif
                                     const amrex::Real* Ex, const amrex::Real* Ey,
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                     const amrex::Real* Ez,
 #endif
                                     const int* lo, const int* hi, const amrex::Real* dx,
                                     const amrex::Real* cEx, const amrex::Real* cEy,
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                     const amrex::Real* cEz,
 #endif
                                     const int* mask,
@@ -43,11 +43,11 @@ extern "C"
 
     void interpolate_cic(const amrex::ParticleReal* particles, int ns, int np,
                          amrex::ParticleReal* Ex_p, amrex::ParticleReal* Ey_p,
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                          amrex::ParticleReal* Ez_p,
 #endif
                          const amrex::Real* Ex, const amrex::Real* Ey,
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                          const amrex::Real* Ez,
 #endif
                          const int* lo, const int* hi,

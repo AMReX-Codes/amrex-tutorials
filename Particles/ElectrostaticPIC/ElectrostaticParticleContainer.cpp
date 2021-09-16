@@ -20,7 +20,7 @@ void ElectrostaticParticleContainer::InitParticles() {
 
         p.pos(0) = -2.5e-6;
         p.pos(1) =  0.0;
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
         p.pos(2) =  0.0;
 #endif
 
@@ -28,12 +28,12 @@ void ElectrostaticParticleContainer::InitParticles() {
         attribs[PIdx::w]  = 1.0;
         attribs[PIdx::vx] = 0.0;
         attribs[PIdx::vy] = 0.0;
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
         attribs[PIdx::vz] = 0.0;
 #endif
         attribs[PIdx::Ex] = 0.0;
         attribs[PIdx::Ey] = 0.0;
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
         attribs[PIdx::Ez] = 0.0;
 #endif
 
@@ -131,28 +131,28 @@ FieldGather(const VectorMeshData& E,
             auto& attribs = pti.GetAttribs();
             auto& Exp = attribs[PIdx::Ex];
             auto& Eyp = attribs[PIdx::Ey];
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
             auto& Ezp = attribs[PIdx::Ez];
 #endif
             Exp.assign(np,0.0);
             Eyp.assign(np,0.0);
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
             Ezp.assign(np,0.0);
 #endif
 
             const FArrayBox& exfab = (*E[lev][0])[pti];
             const FArrayBox& eyfab = (*E[lev][1])[pti];
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
             const FArrayBox& ezfab = (*E[lev][2])[pti];
 #endif
 
             interpolate_cic(particles.data(), nstride, np,
                             Exp.data(), Eyp.data(),
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                             Ezp.data(),
 #endif
                             exfab.dataPtr(), eyfab.dataPtr(),
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                             ezfab.dataPtr(),
 #endif
                             box.loVect(), box.hiVect(), plo, dx, &ng);
@@ -168,13 +168,13 @@ FieldGather(const VectorMeshData& E,
 
     MultiFab coarse_Ex(coarsened_fine_BA, fine_dm, 1, 1);
     MultiFab coarse_Ey(coarsened_fine_BA, fine_dm, 1, 1);
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
     MultiFab coarse_Ez(coarsened_fine_BA, fine_dm, 1, 1);
 #endif
 
     coarse_Ex.ParallelCopy(*E[0][0], 0, 0, 1, 1, 1);
     coarse_Ey.ParallelCopy(*E[0][1], 0, 0, 1, 1, 1);
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
     coarse_Ez.ParallelCopy(*E[0][2], 0, 0, 1, 1, 1);
 #endif
 
@@ -200,29 +200,29 @@ FieldGather(const VectorMeshData& E,
             auto& attribs = pti.GetAttribs();
             auto& Exp = attribs[PIdx::Ex];
             auto& Eyp = attribs[PIdx::Ey];
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
             auto& Ezp = attribs[PIdx::Ez];
 #endif
             Exp.assign(np,0.0);
             Eyp.assign(np,0.0);
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
             Ezp.assign(np,0.0);
 #endif
 
             const FArrayBox& exfab = (*E[lev][0])[pti];
             const FArrayBox& eyfab = (*E[lev][1])[pti];
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
             const FArrayBox& ezfab = (*E[lev][2])[pti];
 #endif
 
             if (lev == 0) {
                 interpolate_cic(particles.data(), nstride, np,
                                 Exp.data(), Eyp.data(),
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                 Ezp.data(),
 #endif
                                 exfab.dataPtr(), eyfab.dataPtr(),
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                 ezfab.dataPtr(),
 #endif
                                 box.loVect(), box.hiVect(), plo, dx, &ng);
@@ -230,7 +230,7 @@ FieldGather(const VectorMeshData& E,
 
                 const FArrayBox& exfab_coarse = coarse_Ex[pti];
                 const FArrayBox& eyfab_coarse = coarse_Ey[pti];
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                 const FArrayBox& ezfab_coarse = coarse_Ez[pti];
 #endif
                 const Box& coarse_box = coarsened_fine_BA[pti];
@@ -238,16 +238,16 @@ FieldGather(const VectorMeshData& E,
 
                 interpolate_cic_two_levels(particles.data(), nstride, np,
                                            Exp.data(), Eyp.data(),
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                            Ezp.data(),
 #endif
                                            exfab.dataPtr(), eyfab.dataPtr(),
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                            ezfab.dataPtr(),
 #endif
                                            box.loVect(), box.hiVect(), dx,
                                            exfab_coarse.dataPtr(), eyfab_coarse.dataPtr(),
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                            ezfab_coarse.dataPtr(),
 #endif
                                            (*masks[1])[pti].dataPtr(),
@@ -280,14 +280,14 @@ void ElectrostaticParticleContainer:: Evolve (const VectorMeshData& E, ScalarMes
             auto vxp = attribs[PIdx::vx].data();
             auto vyp = attribs[PIdx::vy].data();
 
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
             auto vzp = attribs[PIdx::vz].data();
 #endif
 
             auto Exp = attribs[PIdx::Ex].data();
             auto Eyp = attribs[PIdx::Ey].data();
 
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
             auto Ezp = attribs[PIdx::Ez].data();
 #endif
 
@@ -298,15 +298,15 @@ void ElectrostaticParticleContainer:: Evolve (const VectorMeshData& E, ScalarMes
             amrex::Real m = this->mass;
             amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept {
                                        push_leapfrog(p_ptr[i].pos(0), p_ptr[i].pos(1),
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                                      p_ptr[i].pos(2),
 #endif
                                                      vxp[i], vyp[i],
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                                      vzp[i],
 #endif
                                                      Exp[i], Eyp[i],
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                                      Ezp[i],
 #endif
                                                      q, m, dt, plo, phi);
@@ -327,7 +327,7 @@ void ElectrostaticParticleContainer::pushX (const Real& dt) {
             auto& attribs = pti.GetAttribs();
             auto vxp = attribs[PIdx::vx].data();
             auto vyp = attribs[PIdx::vy].data();
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
             auto vzp = attribs[PIdx::vz].data();
 #endif
 
@@ -338,11 +338,11 @@ void ElectrostaticParticleContainer::pushX (const Real& dt) {
             amrex::Real m = this->mass;
             amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept {
                                        push_leapfrog_positions(p_ptr[i].pos(0), p_ptr[i].pos(1),
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                                                p_ptr[i].pos(2),
 #endif
                                                                vxp[i], vyp[i],
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
                                                                vzp[i],
 #endif
                                                                dt, plo, phi);

@@ -15,11 +15,11 @@ struct PIdx
     enum { // Particle Attributes stored in amrex::ParticleContainer's struct-of-arrays
         w = 0,
         vx, vy,
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
         vz,
 #endif
         Ex, Ey,
-#if BL_SPACEDIM == 3
+#if AMREX_SPACEDIM == 3
         Ez,
 #endif
         nattribs

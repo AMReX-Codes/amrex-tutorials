@@ -10,7 +10,7 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_Vector.H>
 
-using VectorMeshData = amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, BL_SPACEDIM> >;
+using VectorMeshData = amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, AMREX_SPACEDIM> >;
 using ScalarMeshData = amrex::Vector<std::unique_ptr<amrex::MultiFab> >;
 
 void sumFineToCrseNodal (const amrex::MultiFab& fine, amrex::MultiFab& crse,
