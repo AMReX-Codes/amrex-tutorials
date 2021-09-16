@@ -3,6 +3,7 @@
 #include "ElectrostaticParticleContainer.H"
 #include "AMReX_PlotFileUtil.H"
 
+#include "Particle_Pusher.H"
 #include "Electrostatic_PIC_Util.H"
 #include "electrostatic_pic_F.H"
 
@@ -257,9 +258,8 @@ FieldGather(const VectorMeshData& E,
     }
 }
 
-void
-ElectrostaticParticleContainer::
-Evolve(const VectorMeshData& E, ScalarMeshData& rho, const Real& dt) {
+void ElectrostaticParticleContainer:: Evolve (const VectorMeshData& E, ScalarMeshData& rho,
+                                              const Real& dt) {
 
     const int num_levels = E.size();
 
@@ -273,44 +273,49 @@ Evolve(const VectorMeshData& E, ScalarMeshData& rho, const Real& dt) {
 
             // Particle structs
             auto& particles = pti.GetArrayOfStructs();
-            int nstride = particles.dataShape().first;
             const Long np  = pti.numParticles();
 
             // Particle attributes
             auto& attribs = pti.GetAttribs();
-            auto& vxp = attribs[PIdx::vx];
-            auto& vyp = attribs[PIdx::vy];
+            auto vxp = attribs[PIdx::vx].data();
+            auto vyp = attribs[PIdx::vy].data();
 
 #if BL_SPACEDIM == 3
-            auto& vzp = attribs[PIdx::vz];
+            auto vzp = attribs[PIdx::vz].data();
 #endif
 
-            auto& Exp = attribs[PIdx::Ex];
-            auto& Eyp = attribs[PIdx::Ey];
+            auto Exp = attribs[PIdx::Ex].data();
+            auto Eyp = attribs[PIdx::Ey].data();
 
 #if BL_SPACEDIM == 3
-            auto& Ezp = attribs[PIdx::Ez];
+            auto Ezp = attribs[PIdx::Ez].data();
 #endif
 
-            //
-            // Particle Push
-            //
-            push_leapfrog(particles.data(), nstride, np,
-                          vxp.data(), vyp.data(),
+            auto p_ptr = particles().data();
+            auto plo = gm.ProbLoArray();
+            auto phi = gm.ProbHiArray();
+            amrex::Real q = this->charge;
+            amrex::Real m = this->mass;
+            amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept {
+                                       push_leapfrog(p_ptr[i].pos(0), p_ptr[i].pos(1),
 #if BL_SPACEDIM == 3
-                vzp.data(),
+                                                     p_ptr[i].pos(2),
 #endif
-                          Exp.data(), Eyp.data(),
+                                                     vxp[i], vyp[i],
 #if BL_SPACEDIM == 3
-                          Ezp.data(),
+                                                     vzp[i],
 #endif
-                          &this->charge, &this->mass, &dt,
-                          prob_domain.lo(), prob_domain.hi());
+                                                     Exp[i], Eyp[i],
+#if BL_SPACEDIM == 3
+                                                     Ezp[i],
+#endif
+                                                     q, m, dt, plo, phi);
+                                   });
         }
     }
 }
 
-void ElectrostaticParticleContainer::pushX(const Real& dt) {
+void ElectrostaticParticleContainer::pushX (const Real& dt) {
     for (int lev = 0; lev <= finestLevel(); ++lev) {
         const auto& gm = m_gdb->Geom(lev);
         const RealBox& prob_domain = gm.ProbDomain();
@@ -320,17 +325,28 @@ void ElectrostaticParticleContainer::pushX(const Real& dt) {
             const Long np  = pti.numParticles();
 
             auto& attribs = pti.GetAttribs();
-            auto& vxp = attribs[PIdx::vx];
-            auto& vyp = attribs[PIdx::vy];
+            auto vxp = attribs[PIdx::vx].data();
+            auto vyp = attribs[PIdx::vy].data();
 #if BL_SPACEDIM == 3
-            auto& vzp = attribs[PIdx::vz];
+            auto vzp = attribs[PIdx::vz].data();
 #endif
-            push_leapfrog_positions(particles.data(), nstride, np,
-                                    vxp.data(), vyp.data(),
+
+            auto p_ptr = particles().data();
+            auto plo = gm.ProbLoArray();
+            auto phi = gm.ProbHiArray();
+            amrex::Real q = this->charge;
+            amrex::Real m = this->mass;
+            amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept {
+                                       push_leapfrog_positions(p_ptr[i].pos(0), p_ptr[i].pos(1),
 #if BL_SPACEDIM == 3
-                                    vzp.data(),
+                                                               p_ptr[i].pos(2),
 #endif
-                                    &dt, prob_domain.lo(), prob_domain.hi());
+                                                               vxp[i], vyp[i],
+#if BL_SPACEDIM == 3
+                                                               vzp[i],
+#endif
+                                                               dt, plo, phi);
+                                   });
 
         }
     }

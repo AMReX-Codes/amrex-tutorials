@@ -8,9 +8,6 @@ extern "C"
 {
 #endif
 
-    void build_mask(const int* lo, const int* hi,
-                    const int* tmp_mask, int* mask, const int* ncells);
-
     void compute_E_nodal (const int* lo, const int* hi,
                           const amrex::Real* phi,
                           amrex::Real* Ex, amrex::Real* Ey,
@@ -56,26 +53,6 @@ extern "C"
                          const int* lo, const int* hi,
                          const amrex::Real* plo, const amrex::Real* dx,
                          const int* ng);
-
-    void push_leapfrog(amrex::ParticleReal* particles, int ns, int np,
-                       amrex::ParticleReal* vx_p, amrex::ParticleReal* vy_p,
-#if BL_SPACEDIM == 3
-                       amrex::ParticleReal* vz_p,
-#endif
-                       const amrex::ParticleReal* Ex_p, const amrex::ParticleReal* Ey_p,
-#if BL_SPACEDIM == 3
-                       const amrex::ParticleReal* Ez_p,
-#endif
-                       const amrex::Real* charge, const amrex::Real* mass, const amrex::Real* dt,
-                       const amrex::Real* prob_lo, const amrex::Real* prob_hi);
-
-    void push_leapfrog_positions(amrex::ParticleReal* particles, int ns, int np,
-                                 amrex::ParticleReal* vx_p, amrex::ParticleReal* vy_p,
-#if BL_SPACEDIM == 3
-                                 amrex::ParticleReal* vz_p,
-#endif
-                                 const amrex::Real* dt, const amrex::Real* prob_lo,
-                                 const amrex::Real* prob_hi);
 
 #ifdef __cplusplus
 }
