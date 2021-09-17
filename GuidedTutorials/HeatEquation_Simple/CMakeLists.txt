@@ -1,10 +1,18 @@
-# List of source files
-set(_sources main.cpp)
+cmake_minimum_required(VERSION 3.16)
 
-# List of input files
-set(_input_files inputs)
+# Project name and source file languages
+project(HeatEquation_Simple
+        LANGUAGES C CXX)
 
-setup_tutorial(_sources _input_files)
+add_executable(HeatEquation_Simple main.cpp)
 
-unset( _sources )
-unset( _input_files )
+# Add AMReX
+find_package(AMReX REQUIRED)
+target_link_libraries(HeatEquation_Simple PRIVATE AMReX::amrex)
+
+# Add mpi
+find_package(MPI REQUIRED)
+target_link_libraries(AMReX::amrex INTERFACE ${MPI_LIBRARIES})
+
+## Copy input files to build directory
+file( COPY ${CMAKE_SOURCE_DIR}/inputs DESTINATION . )
