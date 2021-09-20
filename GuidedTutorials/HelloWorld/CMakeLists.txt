@@ -1,3 +1,31 @@
+# CMake file for build HelloWorld tutorial. 
+#
+# Step 1: Create and enter a build directory:
+# 
+#   mkdir build 
+#   cd build
+#
+# Step 2: Configure with CMake from inside the build directory:
+#
+#   cmake <compile options> ..                   #if AMReX not installed
+#
+#         or:
+#
+#   cmake -DAMReX_ROOT=/path/to/installdir <compile options> ..    #if AMReX already installed
+#
+# Step 3: Build the configuration:
+#
+#   cmake --build . -j4
+#
+# Done! You should now see an executable called "HelloWorld". To run:
+#
+#   mpiexec -n 4 /HelloWorld
+#
+# For additional CMake compile options see 
+# https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#building-with-cmake
+
+
+
 cmake_minimum_required(VERSION 3.16)
 
 # Project name and source file language
@@ -8,42 +36,39 @@ add_executable(HelloWorld main.cpp)
 
 
 
+# To use a pre-installed AMReX build, run:
+#    cmake -DAMReX_ROOT=/path/to/installdir
+# Otherwise cmake will download AMReX from GitHub
 
+if(NOT DEFINED AMReX_ROOT)
+  message("-- Download and configure AMReX from GitHub")
 
+  #Download AMReX from GitHub
+  include(FetchContent)
+  set(FETCHCONTENT_QUIET OFF)
+  
+  FetchContent_Declare(
+    amrex_code
+    GIT_REPOSITORY https://github.com/AMReX-Codes/amrex.git/
+    GIT_TAG        origin/development   
+    )
+  
+  FetchContent_Populate(amrex_code)
+  
+  # CMake will read the files in these directories and configure, build
+  # and install AMReX.
+  add_subdirectory(${amrex_code_SOURCE_DIR} ${amrex_code_BINARY_DIR})
 
+else()
 
-include(FetchContent)
-set(FETCHCONTENT_QUIET OFF)
+  # Add AMReX
+  message("-- Searching for AMReX install directory at ${AMReX_ROOT}")
+  find_package(AMReX PATHS ${AMReX_ROOT}/lib/cmake/AMReX/AMReXConfig.cmake)
+  
+  # Add mpi
+  find_package(MPI REQUIRED)
+  target_link_libraries(AMReX::amrex INTERFACE ${MPI_LIBRARIES}) 
 
+endif()
 
-FetchContent_Declare(
-  amrex_code
-  GIT_REPOSITORY https://github.com/AMReX-Codes/amrex.git/
-  GIT_TAG        origin/development
-  CONFIGURE_COMMAND "-DAMREX_HOME=${amrex_code_SOURCE_DIR}"
-  #BUILD_COMMAND "cmake --build . -j4"
-  #INSTALL_COMMAND "make -j4 install"
-  )
-
-FetchContent_Populate(amrex_code)
-
-add_subdirectory(${amrex_code_SOURCE_DIR} ${amrex_code_BINARY_DIR})
-
-
-
-
-message("amrex_SOURCE_DIR = ${amrex_code_SOURCE_DIR}")
-message("amrex_BINARY_DIR = ${amrex_code_BINARY_DIR}")
-
-
-
-
-
-
-# Add AMReX
-#nd_package(AMReX PATHS ${amrex_BINARY_DIR}/lib/cmake/AMReX/AMReXConfig.cmake)
 target_link_libraries(HelloWorld PRIVATE AMReX::amrex) 
-
-# Add mpi
-find_package(MPI REQUIRED)
-target_link_libraries(AMReX::amrex INTERFACE ${MPI_LIBRARIES}) 
