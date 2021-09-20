@@ -1,8 +1,8 @@
-# CMake file for build HelloWorld tutorial. 
+# CMake file for build HelloWorld tutorial.
 #
 # Step 1: Create and enter a build directory:
-# 
-#   mkdir build 
+#
+#   mkdir build
 #   cd build
 #
 # Step 2: Configure with CMake from inside the build directory:
@@ -21,7 +21,7 @@
 #
 #   mpiexec -n 4 ./HelloWorld
 #
-# For additional CMake compile options see 
+# For additional CMake compile options see
 # https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#building-with-cmake
 
 
@@ -29,7 +29,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Project name and source file language
-project(HelloWorld 
+project(HelloWorld
         LANGUAGES C CXX)
 
 add_executable(HelloWorld main.cpp)
@@ -46,15 +46,15 @@ if(NOT DEFINED AMReX_ROOT)
   #Download AMReX from GitHub
   include(FetchContent)
   set(FETCHCONTENT_QUIET OFF)
-  
+
   FetchContent_Declare(
     amrex_code
     GIT_REPOSITORY https://github.com/AMReX-Codes/amrex.git/
-    GIT_TAG        origin/development   
+    GIT_TAG        origin/development
     )
-  
+
   FetchContent_Populate(amrex_code)
-  
+
   # CMake will read the files in these directories and configure, build
   # and install AMReX.
   add_subdirectory(${amrex_code_SOURCE_DIR} ${amrex_code_BINARY_DIR})
@@ -64,11 +64,11 @@ else()
   # Add AMReX
   message("-- Searching for AMReX install directory at ${AMReX_ROOT}")
   find_package(AMReX PATHS ${AMReX_ROOT}/lib/cmake/AMReX/AMReXConfig.cmake)
-  
+
   # Add mpi
   find_package(MPI REQUIRED)
-  target_link_libraries(AMReX::amrex INTERFACE ${MPI_LIBRARIES}) 
+  target_link_libraries(AMReX::amrex INTERFACE ${MPI_LIBRARIES})
 
 endif()
 
-target_link_libraries(HelloWorld PRIVATE AMReX::amrex) 
+target_link_libraries(HelloWorld PRIVATE AMReX::amrex)
