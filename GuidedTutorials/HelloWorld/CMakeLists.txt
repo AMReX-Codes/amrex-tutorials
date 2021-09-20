@@ -19,7 +19,7 @@
 #
 # Done! You should now see an executable called "HelloWorld". To run:
 #
-#   mpiexec -n 4 /HelloWorld
+#   mpiexec -n 4 ./HelloWorld
 #
 # For additional CMake compile options see 
 # https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#building-with-cmake
