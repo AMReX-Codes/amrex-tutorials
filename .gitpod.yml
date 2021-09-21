@@ -2,8 +2,8 @@
 image:
   file: .gitpod.dockerfile
 tasks:
-- init: /workspace/ecp-tutorials/.gitpod.dependencies.sh
-  command: cp -r /workspace/ecp-tutorials/.jupyter /home/gitpod/
+- init: /workspace/amrex-tutorials/.gitpod.dependencies.sh
+  command: cp -r /workspace/amrex-tutorials/.jupyter /home/gitpod/
 # Ports to expose on workspace startup (optional)
 ports:
   - port: 8000

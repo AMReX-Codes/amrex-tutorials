@@ -71,3 +71,6 @@ target_link_libraries(HeatEquation_Simple PRIVATE AMReX::amrex)
 
 ## Copy input files to build directory
 file( COPY ${CMAKE_SOURCE_DIR}/inputs DESTINATION . )
+
+## Copy jupyter notebook for visulation to build directory
+file( COPY ${CMAKE_SOURCE_DIR}/Visualization.ipynb DESTINATION . )
