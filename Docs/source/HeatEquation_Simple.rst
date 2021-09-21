@@ -4,12 +4,13 @@ Tutorial: Heat Equation - Simple
 ==================================
 
 
-.. admonition:: **Time to Complete**: 20 mins
+.. admonition:: **Time to Complete**: 25 mins
    :class: warning
 
-   - Compile an AMReX Code
-   - Introduce Basic AMReX Elements
-   - Generate and Visualize Output
+   **GOALS:**
+     - Compile an AMReX Code
+     - Introduce Basic AMReX Elements
+     - Generate and Visualize Output
 
 
 In this tutorial we take the steps needed to go from source download to
@@ -31,18 +32,12 @@ environment.
 
    <a href="https://gitpod.io/#https://github.com/AMReX-Codes/amrex-tutorials" target="_blank">here</a>
 
-..
-    To download and build AMReX yourself see:
-    https://amrex-codes.github.io/amrex/docs_html/GettingStarted.html
-    and
-    https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX_Chapter.html
-
 
 Building the Project
 ~~~~~~~~~~~~~~~~~~~~
 
 This example will use CMake to build the project. Navigate to the directory
-:code:`/workspace/amrex-tutorials`
+:code:`/workspace/amrex-tutorials/GuidedTutorials/HeatEquation_Simple/`
 and type
 
 .. code-block::
@@ -51,34 +46,42 @@ and type
    cd Build
    cmake ..
 
-This will run CMake for all the tutorial directories. During this process
-CMake will generate the build files it needs to compile each individual
-tutorial.
+This will create a build folder and run CMake to setup the build configuration.
+During this process CMake will read the ``CmakeLists.txt`` file in the subdirectory
+to generate and download, if necessary, the the build files it
+needs to compile the tutorial in the next step.
 
 
 More information about building options, such as disabling MPI, can be found at
 https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX_Chapter.html.
 
-Compiling the Code
-~~~~~~~~~~~~~~~~~~
+Compiling the Code with CMake
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-After building the project, Navigate to the directory :code:`DemoTutorial1`.
-At the prompt type :code:`make` and
-CMake will compile the code and dependencies. The first time you call :code:`make`,
+After building the project, in the `Build` directory you will find several new
+files and directories created by CMake during the configuration process.
+At the prompt type
+
+::
+
+  cmake --build . -j2
+
+CMake will then compile the code and dependencies. The `-j2` flag tells CMake
+to use 2 processes to speed up compilation. The first time you call :code:`make`,
 you should see a list of all the source AMReX files being compiled:
 
 .. image:: ./images_tutorial/Cmake_make.png
 
 |
 
-When CMake finishes you will be left with an executable named :code:`03_HeatEquation`.
+When CMake finishes you will be left with an executable named :code:`HeatEquation_Simple`.
 To run the code type:
 
 .. code-block::
 
-   ./Basic_DemoTutorial1 inputs
+   ./HeatEquation_Simple inputs
 
-This command will run the :code:`Basic_DemoTutorial1` code with the :code:`inputs` file as
+This command will run the :code:`HeatEquation_Simple` code with the :code:`inputs` file as
 the input parameters. Parsing of the information in the :code:`inputs` file is done by
 :code:`ParmParse`. More details can be found at
 https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse
@@ -86,7 +89,7 @@ https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse
 Code Highlights
 ~~~~~~~~~~~~~~~
 
-At this point we have built, compiled and ran the :code:`Basic_DemoTutorial1` code. Now
+At this point we have built, compiled and ran the :code:`HeatEquation_Simple` code. Now
 we will walk through the code and explain some essential features of AMReX syntax.
 
 Basic Structure

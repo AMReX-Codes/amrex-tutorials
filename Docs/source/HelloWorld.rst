@@ -7,8 +7,21 @@
 Hello World
 ====================
 
-The source code of this example is at ``amrex-tutorials/GuidedTutorials/Basic/HelloWorld_C/``
-and is also shown below.
+.. admonition:: **Time to Complete**: 10 mins
+   :class: warning
+
+   **GOALS:**
+     - Introduce Basic AMReX Elements
+     - Build with GNUMake
+     - Build and run with MPI for parallelization
+
+This tutorial will walk through the steps involved for building AMReX ``HelloWorld``
+with GNU make. Essential elements of the ``HelloWorld`` code will also be briefly
+discussed. The source code of this example can be found  at ``amrex-tutorials/GuidedTutorials/HelloWorld/``
+and is shown below.
+
+Source Code
+-----------
 
 .. highlight:: c++
 
@@ -47,13 +60,13 @@ AMReX.H). All AMReX C++ functions are in the :cpp:`amrex` namespace.
 Building the Code
 -----------------
 
-You build the code in the ``amrex-tutorials/GuidedTutorials/Basic/HelloWorld_C/`` directory.
+You build the code in the ``amrex-tutorials/GuidedTutorials/HelloWorld/`` directory.
 Typing ``make`` will start the compilation process and result in an executable
 named ``main3d.gnu.DEBUG.ex``. The name shows that the GNU compiler with debug
 options set by AMReX is used.  It also shows that the executable is built for
 3D. Although this simple example code is dimension independent, dimensionality
 does matter for all non-trivial examples. The build process can be adjusted by
-modifying the ``amrex-tutorials/GuidedTutorials/Basic/HelloWorld_C/GNUmakefile`` file.  More
+modifying the ``amrex-tutorials/GuidedTutorials/HelloWorld/GNUmakefile`` file.  More
 details on how to build AMReX can be found in :ref:`Chap:BuildingAMReX`.
 
 Running the Code
@@ -82,7 +95,7 @@ letter g in g577.. is not part of the hash) is based on 17.05 with 30
 additional commits and the AMReX work tree is dirty (i.e. there are uncommitted
 changes).
 
-In the GNUmakefile there are compilation options for DEBUG mode (less optimized
+In the GNU make file, ``GNUmakefile``,  there are compilation options for DEBUG mode (less optimized
 code with more error checking), dimensionality, compiler type, and flags to
 enable MPI and/or OpenMP parallelism.  If there are multiple instances of a
 parameter, the last instance takes precedence.
