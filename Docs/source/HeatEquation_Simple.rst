@@ -290,7 +290,7 @@ the main time progression loop.
    175         }
 
 Each time we run the code it will create a series of directories which contain
-data for visualization. Now run :code:`03_HeatEquation` with the :code:`inputs`
+data for visualization. Now run :code:`HeatEquation_Simple` with the :code:`inputs`
 file. After it finishes your directory should look like this.
 
 .. image:: ./images_tutorial/plot_dirs.png
