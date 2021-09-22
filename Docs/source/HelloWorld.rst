@@ -57,8 +57,8 @@ The example code includes two AMReX header files. Note that the name
 of all AMReX header files starts with ``AMReX_`` (or just AMReX in the case of
 AMReX.H). All AMReX C++ functions are in the :cpp:`amrex` namespace.
 
-Building the Code
------------------
+Building the Code with GNU Make
+-------------------------------
 
 You build the code in the ``amrex-tutorials/GuidedTutorials/HelloWorld/`` directory.
 Typing ``make`` will start the compilation process and result in an executable
