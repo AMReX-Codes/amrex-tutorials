@@ -106,7 +106,6 @@ void MDParticleContainer::computeForces()
     BL_PROFILE("MDParticleContainer::computeForces");
 
     const int lev = 0;
-    const Geometry& geom = Geom(lev);
     auto& plev  = GetParticles(lev);
 
     for(MFIter mfi = MakeMFIter(lev); mfi.isValid(); ++mfi)
@@ -157,7 +156,6 @@ Real MDParticleContainer::minDistance()
     BL_PROFILE("MDParticleContainer::minDistance");
 
     const int lev = 0;
-    const Geometry& geom = Geom(lev);
     auto& plev  = GetParticles(lev);
 
     Real min_d = std::numeric_limits<Real>::max();
@@ -210,10 +208,8 @@ void MDParticleContainer::moveParticles(const amrex::Real& dt)
     BL_PROFILE("MDParticleContainer::moveParticles");
 
     const int lev = 0;
-    const Geometry& geom = Geom(lev);
     const auto plo = Geom(lev).ProbLoArray();
     const auto phi = Geom(lev).ProbHiArray();
-    const auto dx = Geom(lev).CellSizeArray();
     auto& plev  = GetParticles(lev);
 
     for(MFIter mfi = MakeMFIter(lev); mfi.isValid(); ++mfi)

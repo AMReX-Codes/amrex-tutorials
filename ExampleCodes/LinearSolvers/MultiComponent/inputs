@@ -1,12 +1,21 @@
-mesh.nlevels = 3                # Number of AMR levels
-mesh.nnodes = 64                # Number of nodes in each direction
+mesh.nnodes = 32                # Number of nodes in each direction
 mesh.max_grid_size = 32         # Maximum grid size (default = very large --> no parallelism)
 
-mlmg.fixed_iter = 1000          # Number of iterations before exiting gracefully
+## Uncomment these three lines for a refinement ratio of 4
+mesh.nlevels = 4
+mesh.ref_ratio = 4 4 4
+mesh.level_reduction = 12 8 16
+
+# Uncomment these three lines for a refinement ratio of 2
+#mesh.nlevels = 7
+#mesh.ref_ratio = 2 2 2 2 2 2
+#mesh.level_reduction = 6 8 8 16 16 8
+
+mlmg.fixed_iter = 200          # Number of iterations before exiting gracefully
 mlmg.verbose = 2                # Verbosity of MLMG
 mlmg.bottom_verbose = 0         # Verbosity of bottom solve
 mlmg.max_iter = 100             # Max number of iterations before error
-mlmg.max_fmg_iter = 100         # Number of F-cycles 
+mlmg.max_fmg_iter = 1000         # Number of F-cycles 
 mlmg.agglomeration = 1          # Do agglomeration 
 mlmg.consolidation = 1          # Do consolidation
 

@@ -67,6 +67,7 @@ sorted by the following categories:
    ForkJoin_Tutorial
    GPU_Tutorial
    LinearSolvers_Tutorial
+   ML_Tutorial
    MUI_Tutorial
    Particles_Tutorial
    SDC_Tutorial
