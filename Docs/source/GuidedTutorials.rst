@@ -49,7 +49,7 @@ It's also possible to work through several tutorials on AMReX that were presente
 at the 2021 ECP Annual Meeting without needing to install any dependencies or
 download any code to your local machine. The tutorials are available in the GitHub repo,
 `ECP-Tutorials <https://github.com/atmyers/ecp-tutorials>`_ and use the GitPod
-cloud dev environment. For accompanying slides, see 
+cloud dev environment. For accompanying slides, see
 `tutorial_slides.pdf <https://amrex-codes.github.io/amrex/tutorial_slides.pdf>`_.
 
 .. _`Tutorials from the 2021 ECP Annual Meeting`: https://github.com/atmyers/ecp-tutorials
