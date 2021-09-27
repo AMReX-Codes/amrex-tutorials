@@ -33,20 +33,6 @@ extern "C"
                                     const int* mask,
                                     const int* clo, const int* chi, const amrex::Real* cdx,
                                     const amrex::Real* plo, const int* ng, const int* lev);
-
-    void interpolate_cic(const amrex::ParticleReal* particles, int ns, int np,
-                         amrex::ParticleReal* Ex_p, amrex::ParticleReal* Ey_p,
-#if AMREX_SPACEDIM == 3
-                         amrex::ParticleReal* Ez_p,
-#endif
-                         const amrex::Real* Ex, const amrex::Real* Ey,
-#if AMREX_SPACEDIM == 3
-                         const amrex::Real* Ez,
-#endif
-                         const int* lo, const int* hi,
-                         const amrex::Real* plo, const amrex::Real* dx,
-                         const int* ng);
-
 #ifdef __cplusplus
 }
 #endif

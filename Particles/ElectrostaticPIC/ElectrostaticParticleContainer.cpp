@@ -62,6 +62,8 @@ ElectrostaticParticleContainer::DepositCharge(ScalarMeshData& rho) {
     for (int lev = 0; lev < num_levels; ++lev) {
         rho[lev]->setVal(0.0, ng);
         const auto& gm = m_gdb->Geom(lev);
+        auto plo = gm.ProbLoArray();
+        auto dxi = gm.InvCellSizeArray();
         for (MyParIter pti(*this, lev); pti.isValid(); ++pti) {
             const Long np  = pti.numParticles();
             const auto& wp = pti.GetAttribs(PIdx::w);
@@ -69,8 +71,6 @@ ElectrostaticParticleContainer::DepositCharge(ScalarMeshData& rho) {
 
             amrex::Real q = this->charge;
             auto rhoarr = (*rho[lev])[pti].array();
-            auto plo = gm.ProbLoArray();
-            auto dxi = gm.InvCellSizeArray();
             const auto wp_ptr = wp.data();
             const auto p_ptr = particles().data();
             amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept {
@@ -103,53 +103,34 @@ FieldGather(const VectorMeshData& E,
     if (num_levels == 1) {
         const int lev = 0;
         const auto& gm = m_gdb->Geom(lev);
-        const auto& ba = m_gdb->ParticleBoxArray(lev);
-
-        BoxArray nba = ba;
-        nba.surroundingNodes();
-
-        const Real* dx  = gm.CellSize();
-        const Real* plo = gm.ProbLo();
-
-        BL_ASSERT(OnSameGrids(lev, *E[lev][0]));
+        auto plo = gm.ProbLoArray();
+        auto dxi = gm.InvCellSizeArray();
+        AMREX_ASSERT(OnSameGrids(lev, *E[lev][0]));
 
         for (MyParIter pti(*this, lev); pti.isValid(); ++pti) {
-            const Box& box = nba[pti];
-
-            const auto& particles = pti.GetArrayOfStructs();
+            auto& particles = pti.GetArrayOfStructs();
+            auto p_ptr = particles().data();
             int nstride = particles.dataShape().first;
             const Long np  = pti.numParticles();
 
             auto& attribs = pti.GetAttribs();
-            auto& Exp = attribs[PIdx::Ex];
-            auto& Eyp = attribs[PIdx::Ey];
+            auto Ex_p = attribs[PIdx::Ex].data();
+            auto Ey_p = attribs[PIdx::Ey].data();
 #if AMREX_SPACEDIM == 3
-            auto& Ezp = attribs[PIdx::Ez];
-#endif
-            Exp.assign(np,0.0);
-            Eyp.assign(np,0.0);
-#if AMREX_SPACEDIM == 3
-            Ezp.assign(np,0.0);
+            auto Ez_p = attribs[PIdx::Ez].data();
 #endif
 
-            const FArrayBox& exfab = (*E[lev][0])[pti];
-            const FArrayBox& eyfab = (*E[lev][1])[pti];
+            const auto& exarr = (*E[lev][0])[pti].array();
+            const auto& eyarr = (*E[lev][1])[pti].array();
 #if AMREX_SPACEDIM == 3
-            const FArrayBox& ezfab = (*E[lev][2])[pti];
+            const auto& ezarr = (*E[lev][2])[pti].array();
 #endif
 
-            interpolate_cic(particles.data(), nstride, np,
-                            Exp.data(), Eyp.data(),
-#if AMREX_SPACEDIM == 3
-                            Ezp.data(),
-#endif
-                            exfab.dataPtr(), eyfab.dataPtr(),
-#if AMREX_SPACEDIM == 3
-                            ezfab.dataPtr(),
-#endif
-                            box.loVect(), box.hiVect(), plo, dx, &ng);
+            amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept {
+                                       interpolate_cic(p_ptr[i], Ex_p[i], Ey_p[i],
+                                                       exarr, eyarr, plo, dxi);
+                                   });
         }
-
         return;
     }
 
@@ -208,16 +189,24 @@ FieldGather(const VectorMeshData& E,
 #endif
 
             if (lev == 0) {
-                interpolate_cic(particles.data(), nstride, np,
-                                Exp.data(), Eyp.data(),
+                auto p_ptr = particles().data();
+                auto Ex_p = Exp.data();
+                auto Ey_p = Eyp.data();
 #if AMREX_SPACEDIM == 3
-                Ezp.data(),
+                auto Ez_p = Ezp.data();
 #endif
-                                exfab.dataPtr(), eyfab.dataPtr(),
+
+                const auto& exarr = exfab.array();
+                const auto& eyarr = eyfab.array();
 #if AMREX_SPACEDIM == 3
-                                ezfab.dataPtr(),
+                const auto& ezarr = ezfab.array();
 #endif
-                                box.loVect(), box.hiVect(), plo, dx, &ng);
+                auto ploarr = gm.ProbLoArray();
+                auto dxi = gm.InvCellSizeArray();
+                amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept {
+                                           interpolate_cic(p_ptr[i], Ex_p[i], Ey_p[i],
+                                                           exarr, eyarr, ploarr, dxi);
+                                       });
             } else {
 
                 const FArrayBox& exfab_coarse = coarse_Ex[pti];
