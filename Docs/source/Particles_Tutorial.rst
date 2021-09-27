@@ -4,7 +4,9 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/Particles
+.. _tutorials_particles:
+
+Particles
 ==========================
 
 There are several tutorials in amrex/Tutorials/Particles that demonstrate the basic usage of

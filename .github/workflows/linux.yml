@@ -15,6 +15,7 @@ jobs:
       run: .github/workflows/dependencies/dependencies.sh
     - name: Build & Install
       run: |
+        cd ExampleCodes
         mkdir build
         cd build
         cmake ..                        \
@@ -38,6 +39,7 @@ jobs:
       run: .github/workflows/dependencies/dependencies_gcc10.sh
     - name: Build & Install
       run: |
+        cd ExampleCodes
         mkdir build
         cd build
         cmake ..                        \
@@ -65,6 +67,7 @@ jobs:
       run: .github/workflows/dependencies/dependencies_clang6.sh
     - name: Build & Install
       run: |
+        cd ExampleCodes
         mkdir build
         cd build
         cmake ..                                      \
@@ -95,6 +98,7 @@ jobs:
       run: .github/workflows/dependencies/dependencies.sh
     - name: Build & Install
       run: |
+        cd ExampleCodes
         mkdir build
         cd build
         cmake ..                        \
@@ -119,6 +123,7 @@ jobs:
       run: .github/workflows/dependencies/dependencies_nofortran.sh
     - name: Build & Install
       run: |
+        cd ExampleCodes
         mkdir build
         cd build
         cmake ..                        \
@@ -144,6 +149,7 @@ jobs:
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
         which nvcc || echo "nvcc not in PATH!"
+        cd ExampleCodes
         mkdir build
         cd build
         cmake ..                                           \
@@ -175,7 +181,7 @@ jobs:
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
         which nvcc || echo "nvcc not in PATH!"
-
+        cd ExampleCodes
         cmake -S . -B build                              \
             -DCMAKE_VERBOSE_MAKEFILE=ON                  \
             -DAMReX_PARTICLES=ON                         \
@@ -209,6 +215,7 @@ jobs:
         set +e
         source /opt/intel/oneapi/setvars.sh
         set -e
+        cd ExampleCodes
         cmake -S . -B build                                \
             -DCMAKE_CXX_COMPILER_ID="Clang"                \
             -DCMAKE_CXX_COMPILER_VERSION=12.0              \
@@ -259,6 +266,7 @@ jobs:
         #   https://github.com/open-mpi/ompi/issues/9317
         export LDFLAGS="-lopen-pal"
 
+        cd ExampleCodes
         cmake -S . -B build_nofortran                     \
             -DCMAKE_VERBOSE_MAKEFILE=ON                   \
             -DAMReX_EB=ON                                 \

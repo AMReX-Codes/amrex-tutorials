@@ -4,7 +4,9 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/Amr
+.. _tutorials_amr:
+
+Amr
 =============
 
 For each of these tutorials,

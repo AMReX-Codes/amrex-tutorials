@@ -11,6 +11,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build & Install
       run: |
+        cd ExampleCodes
         cmake -S . -B build   `
               -DCMAKE_BUILD_TYPE=Debug      `
               -DBUILD_SHARED_LIBS=ON        `
@@ -33,6 +34,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\vc\Auxiliary\build\vcvarsall.bat" x64
+        cd ExampleCodes
         cmake -S . -B build   ^
               -T "ClangCl"    ^
               -DCMAKE_BUILD_TYPE=Release    ^
