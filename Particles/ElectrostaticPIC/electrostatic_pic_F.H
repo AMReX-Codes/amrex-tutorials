@@ -16,13 +16,6 @@ extern "C"
 #endif
                           const amrex::Real* dx);
 
-    void deposit_cic(const amrex::ParticleReal* particles, int ns, int np,
-                     const amrex::ParticleReal* weights,
-                     const amrex::Real* charge,
-                     amrex::Real* rho, const int* lo, const int* hi,
-                     const amrex::Real* plo, const amrex::Real* dx,
-                     const int* ng);
-
     void interpolate_cic_two_levels(const amrex::ParticleReal* particles, int ns, int np,
                                     amrex::ParticleReal* Ex_p, amrex::ParticleReal* Ey_p,
 #if AMREX_SPACEDIM == 3

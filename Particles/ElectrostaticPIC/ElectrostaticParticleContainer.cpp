@@ -5,6 +5,7 @@
 
 #include "Particle_Pusher.H"
 #include "Electrostatic_PIC_Util.H"
+#include "Electrostatic_PIC_2D.H"
 #include "electrostatic_pic_F.H"
 
 using namespace amrex;
@@ -59,31 +60,22 @@ ElectrostaticParticleContainer::DepositCharge(ScalarMeshData& rho) {
     // each level deposits it's own particles
     const int ng = rho[0]->nGrow();
     for (int lev = 0; lev < num_levels; ++lev) {
-
         rho[lev]->setVal(0.0, ng);
-
         const auto& gm = m_gdb->Geom(lev);
-        const auto& ba = m_gdb->ParticleBoxArray(lev);
-
-        const Real* dx  = gm.CellSize();
-        const Real* plo = gm.ProbLo();
-        BoxArray nba = ba;
-        nba.surroundingNodes();
-
         for (MyParIter pti(*this, lev); pti.isValid(); ++pti) {
-            const Box& box = nba[pti];
-
-            auto& wp = pti.GetAttribs(PIdx::w);
-            const auto& particles = pti.GetArrayOfStructs();
-            int nstride = particles.dataShape().first;
             const Long np  = pti.numParticles();
+            const auto& wp = pti.GetAttribs(PIdx::w);
+            const auto& particles = pti.GetArrayOfStructs();
 
-            FArrayBox& rhofab = (*rho[lev])[pti];
-
-            deposit_cic(particles.data(), nstride, np,
-                        wp.data(), &this->charge,
-                        rhofab.dataPtr(), box.loVect(), box.hiVect(),
-                        plo, dx, &ng);
+            amrex::Real q = this->charge;
+            auto rhoarr = (*rho[lev])[pti].array();
+            auto plo = gm.ProbLoArray();
+            auto dxi = gm.InvCellSizeArray();
+            const auto wp_ptr = wp.data();
+            const auto p_ptr = particles().data();
+            amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept {
+                          deposit_cic(p_ptr[i], wp_ptr[i], q, rhoarr, plo, dxi);
+                                   });
         }
 
         rho[lev]->SumBoundary(gm.periodicity());
@@ -292,8 +284,8 @@ void ElectrostaticParticleContainer:: Evolve (const VectorMeshData& E, ScalarMes
 #endif
 
             auto p_ptr = particles().data();
-            auto plo = gm.ProbLoArray();
-            auto phi = gm.ProbHiArray();
+            const auto plo = gm.ProbLoArray();
+            const auto phi = gm.ProbHiArray();
             amrex::Real q = this->charge;
             amrex::Real m = this->mass;
             amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept {
