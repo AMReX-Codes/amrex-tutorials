@@ -1,4 +1,0 @@
-#ifndef AMREX_COMPUTE_FORCE_F_H_
-#define AMREX_COMPUTE_FORCE_F_H_
-
-#endif /* _COMPUTE_FORCE_F_H_ */
