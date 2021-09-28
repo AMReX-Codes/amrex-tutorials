@@ -1,5 +1,5 @@
-#ifndef ELECTROSTATIC_PIC_2D
-#define ELECTROSTATIC_PIC_2D
+#ifndef ELECTROSTATIC_PIC_K
+#define ELECTROSTATIC_PIC_K
 
 #include <AMReX_Array.H>
 #include <AMReX_IntVect.H>

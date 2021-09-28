@@ -14,8 +14,7 @@
 
 #include "ElectrostaticParticleContainer.H"
 #include "Electrostatic_PIC_Util.H"
-#include "electrostatic_pic_F.H"
-#include "Electrostatic_PIC_2D.H"
+#include "Electrostatic_PIC_K.H"
 
 using namespace amrex;
 

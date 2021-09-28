@@ -1,5 +1,5 @@
 #include "Electrostatic_PIC_Util.H"
-#include "Electrostatic_PIC_2D.H"
+#include "Electrostatic_PIC_K.H"
 
 using namespace amrex;
 
