@@ -68,9 +68,9 @@ void build_mask (int i, int j, int,
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void compute_E_nodal (int i, int j, int,
-                      amrex::Array4<amrex::Real> Ex,
-                      amrex::Array4<amrex::Real> Ey,
-                      amrex::Array4<amrex::Real const> phi,
+                      amrex::Array4<amrex::Real> const& Ex,
+                      amrex::Array4<amrex::Real> const& Ey,
+                      amrex::Array4<amrex::Real const> const& phi,
                       amrex::GpuArray<amrex::Real, 2> dx) noexcept
 {
     amrex::GpuArray<amrex::Real, 2> fac;

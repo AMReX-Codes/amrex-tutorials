@@ -82,10 +82,8 @@ void computeE (      VectorMeshData& E,
     const int num_levels = E.size();
 
     for (int lev = 0; lev < num_levels; ++lev) {
-
         const auto& gm = geom[lev];
         const auto dx = gm.CellSizeArray();
-
         for (MFIter mfi(*phi[lev]); mfi.isValid(); ++mfi) {
             Box bx = mfi.validbox();
             bx.grow(1);
@@ -96,12 +94,12 @@ void computeE (      VectorMeshData& E,
 #endif
             const auto phi_arr = (*phi[lev])[mfi].array();
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-                                       compute_E_nodal(i, j, k, phi_arr,
+                                       compute_E_nodal(i, j, k,
                                                        Ex_arr, Ey_arr,
 #if AMREX_SPACEDIM == 3
                                                        Ez_arr,
 #endif
-                                                       dx);
+                                                       phi_arr, dx);
                                    });
         }
 
@@ -110,6 +108,5 @@ void computeE (      VectorMeshData& E,
 #if AMREX_SPACEDIM == 3
         E[lev][2]->FillBoundary(gm.periodicity());
 #endif
-        //        VisMF::Write(*E[lev][0], amrex::MultiFabFileFullPrefix(lev, "tmp", "Level_", "Ex"));
     }
 }

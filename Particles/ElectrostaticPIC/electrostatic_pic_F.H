@@ -8,14 +8,6 @@ extern "C"
 {
 #endif
 
-    void compute_E_nodal (const int* lo, const int* hi,
-                          const amrex::Real* phi,
-                          amrex::Real* Ex, amrex::Real* Ey,
-#if AMREX_SPACEDIM == 3
-                          amrex::Real* Ez,
-#endif
-                          const amrex::Real* dx);
-
     void interpolate_cic_two_levels(const amrex::ParticleReal* particles, int ns, int np,
                                     amrex::ParticleReal* Ex_p, amrex::ParticleReal* Ey_p,
 #if AMREX_SPACEDIM == 3
