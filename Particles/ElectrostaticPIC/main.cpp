@@ -46,22 +46,13 @@ void WritePlotFile (const ScalarMeshData& rhs,
     varnames.push_back("phi");
     varnames.push_back("Ex");
     varnames.push_back("Ey");
-#if AMREX_SPACEDIM == 3
-    varnames.push_back("Ez");
-#endif
 
     Vector<std::string> particle_varnames;
     particle_varnames.push_back("weight");
     particle_varnames.push_back("vx");
     particle_varnames.push_back("vy");
-#if AMREX_SPACEDIM == 3
-    particle_varnames.push_back("vz");
-#endif
     particle_varnames.push_back("Ex");
     particle_varnames.push_back("Ey");
-#if AMREX_SPACEDIM == 3
-    particle_varnames.push_back("Ez");
-#endif
 
     Vector<int> level_steps;
     level_steps.push_back(0);
@@ -156,13 +147,10 @@ void computePhi (ScalarMeshData& rhs, ScalarMeshData& phi,
         if (lev < num_levels-1) {
 
             PhysBCFunctNoOp cphysbc, fphysbc;
-#if AMREX_SPACEDIM == 3
-            int lo_bc[] = {INT_DIR, INT_DIR, INT_DIR};
-            int hi_bc[] = {INT_DIR, INT_DIR, INT_DIR};
-#else
+
             int lo_bc[] = {INT_DIR, INT_DIR};
             int hi_bc[] = {INT_DIR, INT_DIR};
-#endif
+
             Vector<BCRec> bcs(1, BCRec(lo_bc, hi_bc));
             NodeBilinear mapper;
 
@@ -171,9 +159,6 @@ void computePhi (ScalarMeshData& rhs, ScalarMeshData& phi,
                                          cphysbc, 0, fphysbc, 0,
                                          IntVect(D_DECL(2, 2, 2)), &mapper, bcs, 0);
         }
-
-        //        VisMF::Write(*phi[lev], amrex::MultiFabFileFullPrefix(lev, "tmp", "Level_", "phi"));
-        //        VisMF::Write(*rhs[lev], amrex::MultiFabFileFullPrefix(lev, "tmp", "Level_", "rhs"));
     }
 
     for (int lev = 0; lev < num_levels; ++lev) {

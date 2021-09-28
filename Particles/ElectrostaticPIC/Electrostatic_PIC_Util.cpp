@@ -89,24 +89,16 @@ void computeE (      VectorMeshData& E,
             bx.grow(1);
             auto Ex_arr = (*E[lev][0])[mfi].array();
             auto Ey_arr = (*E[lev][1])[mfi].array();
-#if AMREX_SPACEDIM == 3
-            auto Ez_arr = (*E[lev][2])[mfi].array();
-#endif
+
             const auto phi_arr = (*phi[lev])[mfi].array();
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
                                        compute_E_nodal(i, j, k,
                                                        Ex_arr, Ey_arr,
-#if AMREX_SPACEDIM == 3
-                                                       Ez_arr,
-#endif
                                                        phi_arr, dx);
                                    });
         }
 
         E[lev][0]->FillBoundary(gm.periodicity());
         E[lev][1]->FillBoundary(gm.periodicity());
-#if AMREX_SPACEDIM == 3
-        E[lev][2]->FillBoundary(gm.periodicity());
-#endif
     }
 }
