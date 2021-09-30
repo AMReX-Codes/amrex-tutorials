@@ -1,4 +1,4 @@
-AMREX_HOME ?= ../../../../../amrex
+AMREX_HOME ?= ../../../../../../amrex
 USE_EB = FALSE
 PRECISION  = DOUBLE
 PROFILE    = FALSE
