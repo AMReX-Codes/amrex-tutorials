@@ -7,7 +7,7 @@ DIM = 3
 
 DEBUG = FALSE
 
-AMREX_HOME ?= ../../../amrex
+AMREX_HOME ?= ../../../../amrex
 
 USE_EB = TRUE
 
