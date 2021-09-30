@@ -1,13 +1,13 @@
 # AMREX_HOME defines the directory in which we will find all the AMReX code.
-AMREX_HOME ?= ../../../../amrex
+AMREX_HOME ?= ../../../../../amrex
 
 DEBUG     = FALSE
-USE_MPI   = TRUE 
+USE_MPI   = TRUE
 USE_OMP   = FALSE
 COMP      = gcc
-DIM       = 3 
+DIM       = 3
 
-USE_CUDA  = TRUE 
+USE_CUDA  = FALSE
 USE_HIP   = FALSE
 USE_DPCPP = FALSE
 
