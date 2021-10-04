@@ -1,10 +1,8 @@
-#include "particles/ElectrostaticParticleContainer.H"
 #include "diagnostics/FieldIO.H"
 #include "field_solver/FieldSolver.H"
+#include "particles/ElectrostaticParticleContainer.H"
 
 #include <AMReX.H>
-#include <AMReX_FillPatchUtil.H>
-#include <AMReX_PlotFileUtil.H>
 
 #include <iostream>
 #include <iomanip>
@@ -26,9 +24,13 @@ int main (int argc, char* argv[])
 
 void run_espic ()
 {
-    // inputs parameters
-    int max_level, n_cell, max_grid_size, particle_output_int, n_buffer, max_step, is_periodic[AMREX_SPACEDIM];
+    // required inputs parameters
+    int max_level, n_cell, max_grid_size, n_buffer, max_step;
     Real dt;
+
+    // optional
+    int plot_int = -1;
+    int particle_output_int = -1;
     {
         ParmParse pp;
         pp.get("max_level", max_level);
@@ -36,8 +38,10 @@ void run_espic ()
         pp.get("n_buffer", n_buffer);
         pp.get("max_grid_size", max_grid_size);
         pp.get("max_step", max_step);
-        pp.get("particle_output_int", particle_output_int);
         pp.get("dt", dt);
+
+        pp.query("plot_int", plot_int);
+        pp.query("particle_output_int", particle_output_int);
     }
 
     // Example assumes at most one level of refinement
@@ -57,6 +61,7 @@ void run_espic ()
     }
 
     // This sets the boundary conditions to be doubly or triply periodic
+    int is_periodic[AMREX_SPACEDIM];
     for (int i = 0; i < AMREX_SPACEDIM; i++) {
         is_periodic[i] = 0;
     }
@@ -73,7 +78,7 @@ void run_espic ()
                          &real_box, CoordSys::cartesian, is_periodic);
     }
 
-    // make grids for each level
+    // make grids for each level - level 1 is nested inside level 0
     Vector<BoxArray> grids(num_levels);
     grids[0].define(domain);
     if (num_levels > 1) {
@@ -86,12 +91,13 @@ void run_espic ()
         grids[1].define(refined_patch);
     }
 
+    // enforce max_grid_size
     for (int lev = 0; lev < num_levels; lev++) {
         grids[lev].maxSize(max_grid_size);
     }
 
+    // Define and initialize our core mesh data structures
     int Ncomp  = 1;
-
     Vector<DistributionMapping> dm(num_levels);
     Vector<std::unique_ptr<MultiFab> > phi(num_levels);
     Vector<std::unique_ptr<MultiFab> > rhs(num_levels);
@@ -114,13 +120,15 @@ void run_espic ()
         phi[lev]->setVal(0.0);
     }
 
+    // masks for mesh refinement
     auto masks = FieldSolver::getLevelMasks(grids, dm, geom);
     auto gather_masks = FieldSolver::getLevelMasks(grids, dm, geom, n_buffer + 1); // convert from num nodes to num cells
 
+    // define and initialize particles
     ElectrostaticParticleContainer myPC(geom, dm, grids, rr);
-
     myPC.InitParticles();
 
+    // main PIC loop
     for (int step = 0; step <= max_step; ++step) {
 
         myPC.DepositCharge(GetVecOfPtrs(rhs));
@@ -134,9 +142,13 @@ void run_espic ()
         myPC.FieldGather(GetVecOfArrOfConstPtrs(eField),
                          GetVecOfConstPtrs(gather_masks));
 
-        if (step % particle_output_int == 0) myPC.writeParticles(step);
+        if ((particle_output_int > 0) && (step % particle_output_int == 0)) {
+            myPC.writeParticles(step);
+        }
 
-        //        WritePlotFile(rhs, phi, eField, myPC, geom, step);
+        if ((plot_int > 0) && (step % plot_int == 0)) {
+            WritePlotFile(GetVecOfConstPtrs(rhs), GetVecOfConstPtrs(phi), GetVecOfArrOfConstPtrs(eField), myPC, geom, step);
+        }
 
         myPC.Evolve(GetVecOfArrOfConstPtrs(eField), GetVecOfConstPtrs(rhs), dt);
 
