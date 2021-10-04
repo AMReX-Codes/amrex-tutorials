@@ -29,7 +29,7 @@ void push_leapfrog_positions (amrex::ParticleReal& x,  amrex::ParticleReal& y,
     y += dt * vy;
 
     // bounce off the walls in the x...
-    while (x < plo[0] or x >= phi[0])
+    while (x < plo[0] || x >= phi[0])
     {
         if (x < plo[0]) {
             x = 2.0*plo[0] - x;
@@ -41,7 +41,7 @@ void push_leapfrog_positions (amrex::ParticleReal& x,  amrex::ParticleReal& y,
     }
 
     // .. and y directions.
-    while (y < plo[1] or y >= phi[1])
+    while (y < plo[1] || y >= phi[1])
     {
         if (y < plo[1]) {
             y = 2.0*plo[1] - y;
