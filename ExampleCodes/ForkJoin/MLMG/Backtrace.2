@@ -1,0 +1,31 @@
+=== If no file names and line numbers are shown below, one can run
+            addr2line -Cpfie my_exefile my_line_address
+    to convert `my_line_address` (e.g., 0x4a6b) into file name and line number.
+    Or one can use amrex/Tools/Backtrace/parse_bt.py.
+
+=== Please note that the line number reported by addr2line may not be accurate.
+    One can use
+            readelf -wl my_exefile | grep my_line_address'
+    to find out the offset for that line.
+
+ 0: ./main2d.gnu.DEBUG.MPI.ex(+0x26b6f4) [0x5602cb4f06f4]
+    amrex::BLBackTrace::print_backtrace_info(_IO_FILE*) at /home/erik/AMReX/amrex-tutorials/ForkJoin/MLMG/../../../amrex/Src/Base/AMReX_BLBackTrace.cpp:175
+
+ 1: ./main2d.gnu.DEBUG.MPI.ex(+0x26b1d9) [0x5602cb4f01d9]
+    amrex::BLBackTrace::handler(int) at /home/erik/AMReX/amrex-tutorials/ForkJoin/MLMG/../../../amrex/Src/Base/AMReX_BLBackTrace.cpp:85
+
+ 2: ./main2d.gnu.DEBUG.MPI.ex(+0xb7bd4) [0x5602cb33cbd4]
+    amrex::ParallelDescriptor::Abort(int, bool) at /home/erik/AMReX/amrex-tutorials/ForkJoin/MLMG/../../../amrex/Src/Base/AMReX_ParallelDescriptor.cpp:206
+
+ 3: ./main2d.gnu.DEBUG.MPI.ex(+0x28396) [0x5602cb2ad396]
+    amrex::Assert_host(char const*, char const*, int, char const*) at /home/erik/AMReX/amrex-tutorials/ForkJoin/MLMG/../../../amrex/Src/Base/AMReX.cpp:283
+
+ 4: ./main2d.gnu.DEBUG.MPI.ex(+0x14a21) [0x5602cb299a21]
+    amrex::Assert(char const*, char const*, int, char const*) at /home/erik/AMReX/amrex-tutorials/ForkJoin/MLMG/../../../amrex/Src/Base/AMReX.H:177
+ (inlined by) main at /home/erik/AMReX/amrex-tutorials/ForkJoin/MLMG/main.cpp:78
+
+ 5: /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf3) [0x7f37bb5ba0b3]
+
+ 6: ./main2d.gnu.DEBUG.MPI.ex(+0x146de) [0x5602cb2996de]
+    ?? ??:0
+

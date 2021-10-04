@@ -4,10 +4,12 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/LinearSolvers
+.. _tutorials_linearsolvers:
+
+LinearSolvers
 ==========================
 
-There are five examples in the Tutorials/LinearSolvers directory.
+There are five examples in the ``ExampleCodes/LinearSolvers`` directory.
 
 ``ABecLaplacian_C`` demonstrates how to solve with cell-centered data in a C++ framework.
 This example shows how to use either hypre or PETSc as a bottom-solver (or to solve

@@ -4,10 +4,12 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/GPU
+.. _tutorials_gpu:
+
+GPU
 ==========================
 
-The tutorials in ``amrex/Tutorials/GPU`` demonstrate the implementation
+The tutorials in ``amrex-tutorials/ExampleCodes/GPU`` demonstrate the implementation
 of AMReX's GPU toolkit as well as provide GPU ported versions of CPU
 tutorials to help applications convert to GPUs.
 
@@ -54,12 +56,12 @@ preferred GPU launch methodologies.
 **CNS**
 -------
 
-CNS is a direct GPU port of the ``Tutorials/EB/CNS`` tutorial.
+CNS is a direct GPU port of the ``ExampleCodes/EB/CNS`` example.
 
 **AmrCore**
 -----------
 
-AmrCore is a direct GPU port of the ``Tutorials/Amr/Advection_AmrCore`` tutorial
+AmrCore is a direct GPU port of the ``ExampleCodes/Amr/Advection_AmrCore`` tutorial
 that advects a single scalar field with a velocity field specified on faces, using
 strategies similar to HeatEquation and CNS.
 
