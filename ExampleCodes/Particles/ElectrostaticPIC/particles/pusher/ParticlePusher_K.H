@@ -1,5 +1,5 @@
-#ifndef PARTICLE_PUSHER_H_
-#define PARTICLE_PUSHER_H_
+#ifndef PARTICLE_PUSHER_K_H_
+#define PARTICLE_PUSHER_K_H_
 
 #include <AMReX_REAL.H>
 

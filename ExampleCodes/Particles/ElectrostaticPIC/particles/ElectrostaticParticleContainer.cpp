@@ -1,11 +1,9 @@
+#include "particles/ElectrostaticParticleContainer.H"
+#include "particles/pusher/ParticlePusher_K.H"
+#include "particles/field_gather/FieldGather_K.H"
+#include "particles/deposition/ChargeDeposition_K.H"
+
 #include <iomanip>
-
-#include "ElectrostaticParticleContainer.H"
-#include "AMReX_PlotFileUtil.H"
-
-#include "Particle_Pusher.H"
-#include "Electrostatic_PIC_Util.H"
-#include "Electrostatic_PIC_K.H"
 
 using namespace amrex;
 
@@ -174,8 +172,8 @@ FieldGather(const VectorMeshData& E,
     }
 }
 
-void ElectrostaticParticleContainer:: Evolve (const VectorMeshData& E, ScalarMeshData& rho,
-                                              const Real& dt) {
+void ElectrostaticParticleContainer::Evolve (const VectorMeshData& E, ScalarMeshData& rho,
+                                             const Real& dt) {
 
     const int num_levels = E.size();
 
@@ -238,9 +236,4 @@ void ElectrostaticParticleContainer::pushX (const Real& dt) {
 
         }
     }
-}
-
-void ElectrostaticParticleContainer::writeParticles(int n) {
-    const std::string& pltfile = amrex::Concatenate("particles", n, 5);
-    WriteAsciiFile(pltfile);
 }

@@ -1,176 +1,37 @@
+#include "ElectrostaticParticleContainer.H"
+#include "Electrostatic_PIC_Util.H"
+#include "Electrostatic_PIC_K.H"
+
+#include "diagnostics/FieldIO.H"
+#include "field_solver/FieldSolver.H"
+
+#include <AMReX.H>
+#include <AMReX_FillPatchUtil.H>
+#include <AMReX_PlotFileUtil.H>
+
 #include <iostream>
 #include <iomanip>
 #include <random>
 #include <cassert>
 
-#include <AMReX.H>
-
-#include <AMReX_MLNodeLaplacian.H>
-#include <AMReX_MLMG.H>
-#include <AMReX_InterpBndryData.H>
-#include <AMReX_MacBndry.H>
-#include <AMReX_FillPatchUtil.H>
-#include <AMReX_PlotFileUtil.H>
-
-#include "ElectrostaticParticleContainer.H"
-#include "Electrostatic_PIC_Util.H"
-#include "Electrostatic_PIC_K.H"
-
 using namespace amrex;
 
-void WritePlotFile (const ScalarMeshData& rhs,
-                    const ScalarMeshData& phi,
-                    const VectorMeshData& E,
-                    const ElectrostaticParticleContainer& pc,
-                    const Vector<Geometry>& geom,
-                    int nstep)
+void run_espic ();
+
+int main (int argc, char* argv[])
 {
-    int num_output_comp = 2 + AMREX_SPACEDIM;
-    int num_levels = rhs.size();
-    IntVect cc_flag = IntVect::TheZeroVector();
-    Vector<std::unique_ptr<MultiFab> > output_cc(num_levels);
-    for (int lev = 0; lev < num_levels; ++lev) {
-        const BoxArray& nodal_ba = rhs[lev]->boxArray();
-        output_cc[lev].reset(new MultiFab(amrex::convert(nodal_ba, cc_flag),
-                                          rhs[lev]->DistributionMap(), num_output_comp, 0));
-        amrex::average_node_to_cellcenter(*output_cc[lev], 0, *rhs[lev],  0, 1);
-        amrex::average_node_to_cellcenter(*output_cc[lev], 1, *phi[lev],  0, 1);
-        for (int i = 0; i < AMREX_SPACEDIM; ++i) {
-            amrex::average_node_to_cellcenter(*output_cc[lev], 2+i, *E[lev][i], 0, 1);
-        }
-    }
+    amrex::Initialize(argc, argv);
 
-    Vector<std::string> varnames;
-    varnames.push_back("rhs");
-    varnames.push_back("phi");
-    varnames.push_back("Ex");
-    varnames.push_back("Ey");
+    run_espic();
 
-    Vector<std::string> particle_varnames;
-    particle_varnames.push_back("weight");
-    particle_varnames.push_back("vx");
-    particle_varnames.push_back("vy");
-    particle_varnames.push_back("Ex");
-    particle_varnames.push_back("Ey");
-
-    Vector<int> level_steps;
-    level_steps.push_back(0);
-    level_steps.push_back(0);
-
-    int output_levs = num_levels;
-
-    Vector<IntVect> outputRR(output_levs);
-    for (int lev = 0; lev < output_levs; ++lev) {
-        outputRR[lev] = IntVect(D_DECL(2, 2, 2));
-    }
-
-    const std::string& pltfile = amrex::Concatenate("plt", nstep, 5);
-    WriteMultiLevelPlotfile(pltfile, output_levs, GetVecOfConstPtrs(output_cc),
-                            varnames, geom, 0.0, level_steps, outputRR);
-
-    pc.Checkpoint(pltfile, "particle0", true, particle_varnames);
-
+    amrex::Finalize();
 }
 
-void fixRHSForSolve (Vector<std::unique_ptr<MultiFab> >& rhs,
-                     const Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks,
-                     const Vector<Geometry>& geom, const IntVect& ratio) {
-    int num_levels = rhs.size();
-    for (int lev = 0; lev < num_levels; ++lev) {
-        MultiFab& fine_rhs = *rhs[lev];
-        const FabArray<BaseFab<int> >& mask = *masks[lev];
-        const BoxArray& fine_ba = fine_rhs.boxArray();
-        const DistributionMapping& fine_dm = fine_rhs.DistributionMap();
-        MultiFab fine_bndry_data(fine_ba, fine_dm, 1, 1);
-        zeroOutBoundary(fine_rhs, fine_bndry_data, mask);
-    }
-}
-
-void computePhi (ScalarMeshData& rhs, ScalarMeshData& phi,
-                 Vector<BoxArray>& grids,
-                 Vector<DistributionMapping>& dm,
-                 Vector<Geometry>& geom,
-                 Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks) {
-
-    int num_levels = rhs.size();
-
-    Vector<std::unique_ptr<MultiFab> > tmp_rhs(num_levels);
-    for (int lev = 0; lev < num_levels; ++lev) {
-        tmp_rhs[lev].reset(new MultiFab(rhs[lev]->boxArray(), dm[lev], 1, 0));
-        MultiFab::Copy(*tmp_rhs[lev], *rhs[lev], 0, 0, 1, 0);
-    }
-
-    IntVect ratio(D_DECL(2, 2, 2));
-    fixRHSForSolve(tmp_rhs, masks, geom, ratio);
-
-    int verbose = 2;
-    Real rel_tol = 1.0e-12;
-    Real abs_tol = 1.0e-14;
-
-    Vector<Geometry>            level_geom(1);
-    Vector<BoxArray>            level_grids(1);
-    Vector<DistributionMapping> level_dm(1);
-    Vector<MultiFab*>           level_phi(1);
-    Vector<const MultiFab*>     level_rhs(1);
-
-    for (int lev = 0; lev < num_levels; ++lev) {
-        level_phi[0]   = phi[lev].get();
-        level_rhs[0]   = tmp_rhs[lev].get();
-        level_geom[0]  = geom[lev];
-        level_grids[0] = grids[lev];
-        level_dm[0]    = dm[lev];
-
-        MLNodeLaplacian linop(level_geom, level_grids, level_dm);
-
-        linop.setDomainBC({AMREX_D_DECL(LinOpBCType::Dirichlet,
-                                        LinOpBCType::Dirichlet,
-                                        LinOpBCType::Dirichlet)},
-            {AMREX_D_DECL(LinOpBCType::Dirichlet,
-                          LinOpBCType::Dirichlet,
-                          LinOpBCType::Dirichlet)});
-
-        linop.setLevelBC(0, nullptr);
-
-        MultiFab sigma(level_grids[0], level_dm[0], 1, 0);
-        sigma.setVal(1.0);
-        linop.setSigma(0, sigma);
-
-        MLMG mlmg(linop);
-        mlmg.setMaxIter(100);
-        mlmg.setMaxFmgIter(0);
-        mlmg.setVerbose(verbose);
-        mlmg.setBottomVerbose(0);
-
-        mlmg.solve(level_phi, level_rhs, rel_tol, abs_tol);
-
-        if (lev < num_levels-1) {
-
-            PhysBCFunctNoOp cphysbc, fphysbc;
-
-            int lo_bc[] = {INT_DIR, INT_DIR};
-            int hi_bc[] = {INT_DIR, INT_DIR};
-
-            Vector<BCRec> bcs(1, BCRec(lo_bc, hi_bc));
-            NodeBilinear mapper;
-
-            amrex::InterpFromCoarseLevel(*phi[lev+1], 0.0, *phi[lev],
-                                         0, 0, 1, geom[lev], geom[lev+1],
-                                         cphysbc, 0, fphysbc, 0,
-                                         IntVect(D_DECL(2, 2, 2)), &mapper, bcs, 0);
-        }
-    }
-
-    for (int lev = 0; lev < num_levels; ++lev) {
-        const Geometry& gm = geom[lev];
-        phi[lev]->FillBoundary(gm.periodicity());
-    }
-}
-
-void main_main () {
+void run_espic ()
+{
+    // inputs parameters
     int max_level, n_cell, max_grid_size, particle_output_int, n_buffer, max_step, is_periodic[AMREX_SPACEDIM];
     Real dt;
-
-    // inputs parameters
     {
         ParmParse pp;
         pp.get("max_level", max_level);
@@ -182,14 +43,16 @@ void main_main () {
         pp.get("dt", dt);
     }
 
+    // Example assumes at most one level of refinement
     assert(max_level < 2);
-
     int num_levels = max_level + 1;
 
+    // Hard code ref ratio to 2
     Vector<int> rr(num_levels-1);
     for (int lev = 1; lev < num_levels; lev++)
         rr[lev-1] = 2;
 
+    // Hard code physical problem domain
     RealBox real_box;
     for (int n = 0; n < AMREX_SPACEDIM; n++) {
         real_box.setLo(n,-20.0e-6);
@@ -282,13 +145,4 @@ void main_main () {
 
         myPC.Redistribute();
     }
-}
-
-int main(int argc, char* argv[])
-{
-    amrex::Initialize(argc, argv);
-
-    main_main();
-
-    amrex::Finalize();
 }

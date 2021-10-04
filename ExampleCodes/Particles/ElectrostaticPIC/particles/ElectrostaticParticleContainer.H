@@ -6,17 +6,14 @@
 #include <AMReX_Particles.H>
 
 #include "PhysConst.H"
-#include "Electrostatic_PIC_Util.H"
-
-namespace amrex {
 
 struct PIdx
 {
     enum { // Particle Attributes stored in amrex::ParticleContainer's struct-of-arrays
-        w = 0,
-        vx, vy,
-        Ex, Ey,
-        nattribs
+          w = 0,
+          vx, vy,
+          Ex, Ey,
+          nattribs
     };
 };
 
@@ -46,39 +43,37 @@ public:
 };
 
 class ElectrostaticParticleContainer
-    : public ParticleContainer<0, 0, PIdx::nattribs>
+    : public amrex::ParticleContainer<0, 0, PIdx::nattribs>
 {
 public:
 
-    ElectrostaticParticleContainer(const Vector<Geometry>            & geom,
-                                   const Vector<DistributionMapping> & dmap,
-                                   const Vector<BoxArray>            & ba,
-                                   const Vector<int>                 & rr)
-        : ParticleContainer<0, 0, PIdx::nattribs> (geom, dmap, ba, rr)
+    ElectrostaticParticleContainer (const amrex::Vector<amrex::Geometry>            & geom,
+                                    const amrex::Vector<amrex::DistributionMapping> & dmap,
+                                    const amrex::Vector<amrex::BoxArray>            & ba,
+                                    const amrex::Vector<int>                        & rr)
+        : amrex::ParticleContainer<0, 0, PIdx::nattribs> (geom, dmap, ba, rr)
         {
             charge = -PhysConst::q_e;
             mass   =  PhysConst::m_e;
         }
 
-    void InitParticles();
+    void InitParticles ();
 
-    void pushX(const Real& dt);
+    void pushX (const amrex::Real& dt);
 
-    void DepositCharge(ScalarMeshData& rho);
+    void DepositCharge (const amrex::Vector<amrex::MultiFab*>& rho);
 
-    void FieldGather(const VectorMeshData& E,
-                     const Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks);
+    void FieldGather (const amrex::Vector<std::array<const amrex::MultiFab*, AMREX_SPACEDIM> >& E,
+                      const amrex::Vector<const amrex::iMultiFab*>& masks);
 
-    void Evolve(const VectorMeshData& E, ScalarMeshData& rho, const Real& dt);
+    void Evolve (const amrex::Vector<std::array<const amrex::MultiFab*, AMREX_SPACEDIM> >& E,
+                 const amrex::Vector<const amrex::MultiFab*>& rho, const amrex::Real& dt);
 
-    void writeParticles(int n);
+    void writeParticles (int n);
 
 private:
 
-    Real charge, mass;
-
+    amrex::Real charge, mass;
 };
-
-}
 
 #endif // _ELECTROSTATICPARTICLECONTAINER_H_
