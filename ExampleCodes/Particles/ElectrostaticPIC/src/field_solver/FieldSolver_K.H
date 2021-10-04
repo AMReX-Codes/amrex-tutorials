@@ -1,6 +1,12 @@
 #ifndef FIELD_SOLVER_K_H_
 #define FIELD_SOLVER_K_H_
 
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void sum_fine_to_crse_nodal (int i, int j, int,
                              amrex::Array4<amrex::Real> const& crse,

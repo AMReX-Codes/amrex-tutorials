@@ -1,7 +1,7 @@
 #ifndef FIELD_SOLVER_H_
 #define FIELD_SOLVER_H_
 
-#include "Electrostatic_PIC_Util.H"
+#include "FieldSolver_K.H"
 
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
@@ -16,32 +16,34 @@
 
 namespace FieldSolver {
 
-    void fixRHSForSolve (amrex::Vector<amrex::MultiFab*>& rhs,
+    void fixRHSForSolve (const amrex::Vector<amrex::MultiFab*>& rhs,
                          const amrex::Vector<const amrex::iMultiFab*>& masks,
                          const amrex::Vector<amrex::Geometry>& geom,
                          const amrex::IntVect& ratio);
 
-    void computePhi (VectorMeshData& rhs, ScalarMeshData& phi,
+    void computePhi (const amrex::Vector<const amrex::MultiFab*>& rhs,
+                     const amrex::Vector<amrex::MultiFab*>& phi,
                      amrex::Vector<amrex::BoxArray>& grids,
                      amrex::Vector<amrex::DistributionMapping>& dm,
                      amrex::Vector<amrex::Geometry>& geom,
-                     amrex::Vector<const amrex::iMultiFab*>& masks);
+                     const amrex::Vector<const amrex::iMultiFab*>& masks);
 
-    void computeE (VectorMeshData& E, const ScalarMeshData& phi,
+    void computeE (const amrex::Vector<std::array<amrex::MultiFab*, AMREX_SPACEDIM> >& E,
+                   const amrex::Vector<const amrex::MultiFab*>& phi,
                    const amrex::Vector<amrex::Geometry>& geom);
 
     void sumFineToCrseNodal (const amrex::MultiFab& fine, amrex::MultiFab& crse,
-                         const amrex::Geometry& cgeom, const amrex::IntVect& ratio);
+                             const amrex::Geometry& cgeom, const amrex::IntVect& ratio);
 
     void zeroOutBoundary (amrex::MultiFab& input_data,
                           amrex::MultiFab& bndry_data,
-                          const amrex::FabArray<amrex::BaseFab<int> >& mask);
+                          const amrex::iMultiFab& mask);
 
-    void getLevelMasks (amrex::Vector<amrex::iMultiFab*>& masks,
-                        const amrex::Vector<amrex::BoxArray>& grids,
-                        const amrex::Vector<amrex::DistributionMapping>& dmap,
-                        const amrex::Vector<amrex::Geometry>& geom,
-                        const int ncells = 1);
+    amrex::Vector<std::unique_ptr<amrex::iMultiFab> > getLevelMasks
+         (const amrex::Vector<amrex::BoxArray>& grids,
+          const amrex::Vector<amrex::DistributionMapping>& dmap,
+          const amrex::Vector<amrex::Geometry>& geom,
+          const int ncells = 1);
 
 };
 

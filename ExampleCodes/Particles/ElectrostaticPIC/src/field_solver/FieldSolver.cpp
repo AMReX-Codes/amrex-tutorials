@@ -1,24 +1,27 @@
 #ifndef PARTICLE_PUSHER_H_
 #define PARTICLE_PUSHER_H_
 
-#include "Electrostatic_PIC_K.H"
 #include "field_solver/FieldSolver.H"
 
+#include <AMReX_FillPatchUtil.H>
+#include <AMReX_InterpBndryData.H>
+#include <AMReX_Interpolater.H>
 #include <AMReX_MLNodeLaplacian.H>
 #include <AMReX_MLMG.H>
 #include <AMReX_MacBndry.H>
+#include <AMReX_PhysBCFunct.H>
 
 using namespace amrex;
 
 namespace FieldSolver {
 
-void fixRHSForSolve (Vector<std::unique_ptr<MultiFab> >& rhs,
+void fixRHSForSolve (const Vector<MultiFab*>& rhs,
                      const Vector<const iMultiFab*>& masks,
                      const Vector<Geometry>& geom, const IntVect& ratio) {
     int num_levels = rhs.size();
     for (int lev = 0; lev < num_levels; ++lev) {
         MultiFab& fine_rhs = *rhs[lev];
-        const FabArray<BaseFab<int> >& mask = *masks[lev];
+        const auto& mask = *masks[lev];
         const BoxArray& fine_ba = fine_rhs.boxArray();
         const DistributionMapping& fine_dm = fine_rhs.DistributionMap();
         MultiFab fine_bndry_data(fine_ba, fine_dm, 1, 1);
@@ -26,11 +29,12 @@ void fixRHSForSolve (Vector<std::unique_ptr<MultiFab> >& rhs,
     }
 }
 
-void computePhi (ScalarMeshData& rhs, ScalarMeshData& phi,
+void computePhi (const Vector<const MultiFab*>& rhs,
+                 const Vector<MultiFab*>& phi,
                  Vector<BoxArray>& grids,
                  Vector<DistributionMapping>& dm,
                  Vector<Geometry>& geom,
-                 Vector<const iMultiFab*>& masks) {
+                 const Vector<const iMultiFab*>& masks) {
 
     int num_levels = rhs.size();
 
@@ -41,7 +45,7 @@ void computePhi (ScalarMeshData& rhs, ScalarMeshData& phi,
     }
 
     IntVect ratio(D_DECL(2, 2, 2));
-    fixRHSForSolve(tmp_rhs, masks, geom, ratio);
+    fixRHSForSolve(GetVecOfPtrs(tmp_rhs), masks, geom, ratio);
 
     int verbose = 2;
     Real rel_tol = 1.0e-12;
@@ -54,7 +58,7 @@ void computePhi (ScalarMeshData& rhs, ScalarMeshData& phi,
     Vector<const MultiFab*>     level_rhs(1);
 
     for (int lev = 0; lev < num_levels; ++lev) {
-        level_phi[0]   = phi[lev].get();
+        level_phi[0]   = phi[lev];
         level_rhs[0]   = tmp_rhs[lev].get();
         level_geom[0]  = geom[lev];
         level_grids[0] = grids[lev];
@@ -145,8 +149,8 @@ void zeroOutBoundary (MultiFab& input_data,
     bndry_data.FillBoundary();
 }
 
-void getLevelMasks (Vector<iMultiFab*>& masks,
-                    const Vector<BoxArray>& grids,
+Vector<std::unique_ptr<iMultiFab> > getLevelMasks
+                   (const Vector<BoxArray>& grids,
                     const Vector<DistributionMapping>& dmap,
                     const Vector<Geometry>& geom,
                     const int ncells) {
@@ -159,6 +163,8 @@ void getLevelMasks (Vector<iMultiFab*>& masks,
     int physbnd = 1;
     int interior = 0;
 
+    amrex::Vector<std::unique_ptr<amrex::iMultiFab> > masks(num_levels);
+
     for (int lev = 0; lev < num_levels; ++lev) {
         BoxArray nba = grids[lev];
         nba.surroundingNodes();
@@ -166,7 +172,7 @@ void getLevelMasks (Vector<iMultiFab*>& masks,
         FabArray<BaseFab<int> > tmp_mask(nba, dmap[lev], 1, ncells);
         tmp_mask.BuildMask(geom[lev].Domain(), geom[lev].periodicity(),
                            covered, notcovered, physbnd, interior);
-        masks[lev].reset(new FabArray<BaseFab<int> >(nba, dmap[lev], 1, 0));
+        masks[lev].reset(new iMultiFab(nba, dmap[lev], 1, 0));
         for (MFIter mfi(tmp_mask); mfi.isValid(); ++mfi) {
             const Box& bx = mfi.validbox();
             const auto tmp_arr = tmp_mask[mfi].array();
@@ -176,10 +182,12 @@ void getLevelMasks (Vector<iMultiFab*>& masks,
                                    });
         }
     }
+
+    return masks;
 }
 
-void computeE (      VectorMeshData& E,
-               const ScalarMeshData& phi,
+void computeE (const Vector<std::array<MultiFab*, AMREX_SPACEDIM> >& E,
+               const Vector<const MultiFab*>& phi,
                const Vector<Geometry>& geom) {
 
     const int num_levels = E.size();

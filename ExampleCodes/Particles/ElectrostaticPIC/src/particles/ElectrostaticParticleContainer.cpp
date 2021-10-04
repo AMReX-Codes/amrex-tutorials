@@ -1,3 +1,5 @@
+#include "field_solver/FieldSolver.H"
+
 #include "particles/ElectrostaticParticleContainer.H"
 #include "particles/pusher/ParticlePusher_K.H"
 #include "particles/field_gather/FieldGather_K.H"
@@ -7,7 +9,7 @@
 
 using namespace amrex;
 
-void ElectrostaticParticleContainer::InitParticles() {
+void ElectrostaticParticleContainer::InitParticles () {
 
     if ( ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber() ) {
 
@@ -40,7 +42,7 @@ void ElectrostaticParticleContainer::InitParticles() {
 }
 
 void
-ElectrostaticParticleContainer::DepositCharge(ScalarMeshData& rho) {
+ElectrostaticParticleContainer::DepositCharge (const Vector<MultiFab*>& rho) {
 
     int num_levels = rho.size();
     int finest_level = num_levels - 1;
@@ -72,7 +74,7 @@ ElectrostaticParticleContainer::DepositCharge(ScalarMeshData& rho) {
     // now we average down fine to crse
     IntVect ratio(D_DECL(2, 2, 2));  // FIXME
     for (int lev = finest_level - 1; lev >= 0; --lev) {
-        sumFineToCrseNodal(*rho[lev+1], *rho[lev], m_gdb->Geom(lev), ratio);
+        FieldSolver::sumFineToCrseNodal(*rho[lev+1], *rho[lev], m_gdb->Geom(lev), ratio);
     }
 
     for (int lev = 0; lev < num_levels; ++lev) {
@@ -82,8 +84,8 @@ ElectrostaticParticleContainer::DepositCharge(ScalarMeshData& rho) {
 
 void
 ElectrostaticParticleContainer::
-FieldGather(const VectorMeshData& E,
-            const Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& masks) {
+FieldGather (const Vector<std::array<const MultiFab*, AMREX_SPACEDIM> >& E,
+             const Vector<const iMultiFab*>& masks) {
 
     const int num_levels = E.size();
     const int ng = E[0][0]->nGrow();
@@ -172,8 +174,9 @@ FieldGather(const VectorMeshData& E,
     }
 }
 
-void ElectrostaticParticleContainer::Evolve (const VectorMeshData& E, ScalarMeshData& rho,
-                                             const Real& dt) {
+void ElectrostaticParticleContainer
+::Evolve (const Vector<std::array<const MultiFab*, AMREX_SPACEDIM> >& E,
+          const Vector<const MultiFab*>& rho, const Real& dt) {
 
     const int num_levels = E.size();
 

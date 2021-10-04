@@ -1,7 +1,4 @@
-#include "ElectrostaticParticleContainer.H"
-#include "Electrostatic_PIC_Util.H"
-#include "Electrostatic_PIC_K.H"
-
+#include "particles/ElectrostaticParticleContainer.H"
 #include "diagnostics/FieldIO.H"
 #include "field_solver/FieldSolver.H"
 
@@ -117,11 +114,8 @@ void run_espic ()
         phi[lev]->setVal(0.0);
     }
 
-    Vector<std::unique_ptr<FabArray<BaseFab<int> > > > masks(num_levels);
-    getLevelMasks(masks, grids, dm, geom);
-
-    Vector<std::unique_ptr<FabArray<BaseFab<int> > > > gather_masks(num_levels);
-    getLevelMasks(gather_masks, grids, dm, geom, n_buffer + 1); // convert from num nodes to num cells
+    auto masks = FieldSolver::getLevelMasks(grids, dm, geom);
+    auto gather_masks = FieldSolver::getLevelMasks(grids, dm, geom, n_buffer + 1); // convert from num nodes to num cells
 
     ElectrostaticParticleContainer myPC(geom, dm, grids, rr);
 
@@ -129,19 +123,22 @@ void run_espic ()
 
     for (int step = 0; step <= max_step; ++step) {
 
-        myPC.DepositCharge(rhs);
+        myPC.DepositCharge(GetVecOfPtrs(rhs));
 
-        computePhi(rhs, phi, grids, dm, geom, masks);
+        FieldSolver::computePhi(GetVecOfConstPtrs(rhs), GetVecOfPtrs(phi),
+                                grids, dm, geom,
+                                GetVecOfConstPtrs(masks));
 
-        computeE(eField, phi, geom);
+        FieldSolver::computeE(GetVecOfArrOfPtrs(eField), GetVecOfConstPtrs(phi), geom);
 
-        myPC.FieldGather(eField, gather_masks);
+        myPC.FieldGather(GetVecOfArrOfConstPtrs(eField),
+                         GetVecOfConstPtrs(gather_masks));
 
         if (step % particle_output_int == 0) myPC.writeParticles(step);
 
         //        WritePlotFile(rhs, phi, eField, myPC, geom, step);
 
-        myPC.Evolve(eField, rhs, dt);
+        myPC.Evolve(GetVecOfArrOfConstPtrs(eField), GetVecOfConstPtrs(rhs), dt);
 
         myPC.Redistribute();
     }
