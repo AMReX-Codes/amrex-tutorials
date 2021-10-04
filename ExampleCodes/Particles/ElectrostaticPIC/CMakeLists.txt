@@ -2,10 +2,26 @@ if (AMReX_SPACEDIM EQUAL 1 OR NOT CMAKE_Fortran_COMPILER_LOADED)
    return()
 endif ()
 
-set(_sources ElectrostaticParticleContainer.cpp ElectrostaticParticleContainer.H Electrostatic_PIC_K.H Electrostatic_PIC_Util.H Electrostatic_PIC_Util.cpp
-    main.cpp PhysConst.H Particle_Pusher.H)
+set(_sources main.cpp)
+list(APPEND _sources PhysConst.H)
 
-set(_input_files inputs)
+list(APPEND _sources particles/ElectrostaticParticleContainer.cpp)
+list(APPEND _sources particles/ElectrostaticParticleContainer.H)
+list(APPEND _sources particles/deposition/ChargeDeposition_K.H)
+list(APPEND _sources particles/field_gather/FieldGather_K.H)
+list(APPEND _sources particles/pusher/ParticlePusher_K.H)
+
+list(APPEND _sources field_solver/FieldSolver.H)
+list(APPEND _sources field_solver/FieldSolver.cpp)
+list(APPEND _sources field_solver/FieldSolver_K.H)
+
+list(APPEND _sources diagnostics/FieldIO.H)
+list(APPEND _sources diagnostics/FieldIO.cpp)
+list(APPEND _sources diagnostics/ParticleIO.cpp)
+
+list(TRANSFORM _sources PREPEND src/)
+
+set(_input_files example/inputs)
 
 setup_tutorial(_sources _input_files)
 
