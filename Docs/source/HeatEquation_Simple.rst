@@ -58,7 +58,7 @@ https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX_Chapter.html.
 Compiling the Code with CMake
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-After building the project, in the `Build` directory you will find several new
+After building the project, in the ``Build`` directory you will find several new
 files and directories created by CMake during the configuration process.
 At the prompt type
 
@@ -66,8 +66,8 @@ At the prompt type
 
   cmake --build . -j2
 
-CMake will then compile the code and dependencies. The `-j2` flag tells CMake
-to use 2 processes to speed up compilation. The first time you call :code:`make`,
+CMake will then compile the code and dependencies. The ``-j2`` flag tells CMake
+to use 2 processes to speed up compilation. The first time you call :code:`cmake --build .`
 you should see a list of all the source AMReX files being compiled:
 
 .. image:: ./images_tutorial/Cmake_make.png
