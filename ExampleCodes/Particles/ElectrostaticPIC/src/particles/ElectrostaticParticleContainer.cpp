@@ -72,9 +72,8 @@ ElectrostaticParticleContainer::DepositCharge (const Vector<MultiFab*>& rho) {
     }
 
     // now we average down fine to crse
-    IntVect ratio(D_DECL(2, 2, 2));  // FIXME
     for (int lev = finest_level - 1; lev >= 0; --lev) {
-        FieldSolver::sumFineToCrseNodal(*rho[lev+1], *rho[lev], m_gdb->Geom(lev), ratio);
+        FieldSolver::sumFineToCrseNodal(*rho[lev+1], *rho[lev], m_gdb->Geom(lev), m_gdb->refRatio(lev));
     }
 
     for (int lev = 0; lev < num_levels; ++lev) {
