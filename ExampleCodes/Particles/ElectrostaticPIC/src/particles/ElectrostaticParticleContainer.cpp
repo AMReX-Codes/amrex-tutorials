@@ -100,7 +100,6 @@ FieldGather (const Vector<std::array<const MultiFab*, AMREX_SPACEDIM> >& E,
         for (MyParIter pti(*this, lev); pti.isValid(); ++pti) {
             auto& particles = pti.GetArrayOfStructs();
             auto p_ptr = particles().data();
-            int nstride = particles.dataShape().first;
             const Long np  = pti.numParticles();
 
             auto& attribs = pti.GetAttribs();
@@ -136,7 +135,6 @@ FieldGather (const Vector<std::array<const MultiFab*, AMREX_SPACEDIM> >& E,
 
         for (MyParIter pti(*this, lev); pti.isValid(); ++pti) {
             const auto& particles = pti.GetArrayOfStructs();
-            int nstride = particles.dataShape().first;
             const Long np  = pti.numParticles();
 
             auto& attribs = pti.GetAttribs();
@@ -220,7 +218,6 @@ void ElectrostaticParticleContainer::pushX (const Real& dt) {
         const RealBox& prob_domain = gm.ProbDomain();
         for (MyParIter pti(*this, lev); pti.isValid(); ++pti) {
             auto& particles = pti.GetArrayOfStructs();
-            int nstride = particles.dataShape().first;
             const Long np  = pti.numParticles();
 
             auto& attribs = pti.GetAttribs();
