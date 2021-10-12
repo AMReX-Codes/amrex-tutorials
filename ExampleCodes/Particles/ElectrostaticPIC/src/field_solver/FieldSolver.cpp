@@ -169,10 +169,14 @@ Vector<std::unique_ptr<iMultiFab> > getLevelMasks
         BoxArray nba = grids[lev];
         nba.surroundingNodes();
 
+        // tmp_mask has 1 in uncovered ghost cells or cells outside the physical boundary.
         FabArray<BaseFab<int> > tmp_mask(nba, dmap[lev], 1, ncells);
         tmp_mask.BuildMask(geom[lev].Domain(), geom[lev].periodicity(),
                            covered, notcovered, physbnd, interior);
         masks[lev].reset(new iMultiFab(nba, dmap[lev], 1, 0));
+
+        // convert to something slightly different - 1 if within ncells of either the level boundary
+        // or the physical domain.
         for (MFIter mfi(tmp_mask); mfi.isValid(); ++mfi) {
             const Box& bx = mfi.validbox();
             const auto tmp_arr = tmp_mask[mfi].array();

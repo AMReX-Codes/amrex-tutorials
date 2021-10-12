@@ -41,6 +41,13 @@ void zero_out_bndry (int i, int j, int,
     }
 }
 
+/**
+   tmp_mask stores 1 if a ghost cell is either uncovered or outside the
+   physical domain.
+
+   On exit, mask will be 1 for cells with ncells of either of those conditions,
+   zero otherwise.
+ */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void build_mask (int i, int j, int,
                  amrex::Array4<int const> tmp_mask,
