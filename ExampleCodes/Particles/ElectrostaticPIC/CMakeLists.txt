@@ -1,5 +1,8 @@
 if (NOT AMReX_SPACEDIM EQUAL 2)
-   return()
+  message("-----------------------------------------------------------------------------")
+  message([WARNING] "ElectrostaticPIC Tutorial only avaiable in 2D, set AMReX_SPACEDIM=2")
+  message("-----------------------------------------------------------------------------")
+  return()
 endif ()
 
 set(_sources main.cpp)
