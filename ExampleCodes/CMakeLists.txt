@@ -79,32 +79,26 @@ endif()
 #
 set( AMREX_TUTORIALS_SUBDIRS Amr Basic ForkJoin)
 
-# doesn't produce directory
 if (AMReX_SENSEI)
    list(APPEND AMREX_TUTORIALS_SUBDIRS SENSEI)
 endif()
 
-# doesn't produce directory
 if (AMReX_ASCENT)
    list(APPEND AMREX_TUTORIALS_SUBDIRS Blueprint)
 endif ()
 
-# seems to work
 if (AMReX_EB)
    list(APPEND AMREX_TUTORIALS_SUBDIRS EB)
 endif ()
 
-# always gets built?
 if (AMReX_LINEAR_SOLVERS)
    list(APPEND AMREX_TUTORIALS_SUBDIRS LinearSolvers)
 endif ()
 
-# seems to work
 if (AMReX_PARTICLES)
    list(APPEND AMREX_TUTORIALS_SUBDIRS Particles)
 endif ()
 
-# seems to not work
 if (AMReX_FORTRAN_INTERFACES)
    list(APPEND AMREX_TUTORIALS_SUBDIRS FortranInterface)
 endif ()
