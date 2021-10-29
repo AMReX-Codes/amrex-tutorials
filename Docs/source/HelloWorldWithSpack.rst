@@ -4,33 +4,41 @@
 .. _hello_world_with_spack:
 
 
-Build HelloWorld with SPACK
+Build HelloWorld with Spack
 ===========================
 
 .. admonition:: **Time to Complete**: 2 mins
    :class: warning
 
    **GOALS:**
-     - Install AMReX with SPACK
+     - Install AMReX with Spack
      - Build with CMake
      - Run HelloWorld
 
 This tutorial will walk through the steps involved for install AMReX with
-SPACK. The source code of this example can be found  at ``amrex-tutorials/GuidedTutorials/HelloWorld/``
+Spack. The source code of this example can be found  at ``amrex-tutorials/GuidedTutorials/HelloWorld/``
 and is shown below.
 
-SPACK
+Spack
 -----
 
-SPACK is a package manager for HPC. To install SPACK on your system follow the
-directions here..
+Spack is a package manager for HPC. To install Spack on your system follow the
+directions:   
 
+Once Spack is installed,  the Spack environment
+
+Install Spack: 
+Integrate Spack into your shell:
+
+After these steps are completed, you can type spack commands at the shell prompt. 
+For example, the command,
 
 ::
 
    spack install amrex %gcc@9.3.0 +shared dimensions="2"
 
-This command will tell SPACE to install AMReX with the shared library option enabled.
+will tell Spack to install AMReX with the shared library option enabled, 
+and AMReX_SPACEDIM=2.
 
 
 .. table:: Available build options
@@ -76,6 +84,8 @@ This command will tell SPACE to install AMReX with the shared library option ena
 Build HelloWorld
 ----------------
 
+Step 1: Install AMReX via Spack
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ::
 
    spack install amrex %gcc@9.3.0
@@ -86,9 +96,24 @@ need to know where the files were installed. To do this, type:
 
 ::
 
-  spack find -px amrex
+  spack location -i amrex
 
 Note the path of the install directory. At the end, add ``/lib/cmake/AMReX``.
+
+
+.. note::
+   Spack's install paths can be long. A nifty way to deal with this ist to store
+   the install directory as a variable. To do this, use the command: 
+   ::
+
+      AMREX_INSTALLDIR=$(spack location -i amrex)
+
+   The path stored in this variable can then be referrenced later in the install
+   process.
+
+
+Step 2
+~~~~~~
 
 Navigate to ``GuidedTutorials/HelloWorld/``. Then create and enter a build directory.
 
@@ -100,7 +125,7 @@ Navigate to ``GuidedTutorials/HelloWorld/``. Then create and enter a build direc
 
 Next call CMake within the build directory. It's necessary to specific the
 location of the configuration file to ensure the version of AMReX installed by
-SPACK is used. If CMake cannot find the installed package, it will error or attempt
+Spack is used. If CMake cannot find the installed package, it will error or attempt
 to download its own copy of AMReX from Git. To build with the install instance of
 AMReX type the command:
 
