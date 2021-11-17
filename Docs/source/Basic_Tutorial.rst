@@ -4,10 +4,15 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/Basic
+.. include:: <isonum.txt>
+
+
+.. _tutorials_basic:
+
+Basic
 ==========================
 
-The tutorials in amrex/Tutorials/Basic demonstrate the most fundamental
+The tutorials in ``amrex_tutorials/ExampleCodes/Basic`` demonstrate the most fundamental
 operations supported by AMReX.
 
 **HelloWorld**
@@ -26,6 +31,7 @@ which are Fortran wrappers for the underlying C++ data strutures and
 iterators.  Here, for example, rather than calling amrex::Print() in C++, we
 test on whether amrex_parallel_ioprocessor() is true, and if so, invoke
 the usual Fortran print call.
+
 
 **main**
 ----------------

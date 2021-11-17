@@ -4,7 +4,9 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/Forkjoin
+.. _tutorials_forkjoin:
+
+Forkjoin
 ==================
 
 There are two examples in the Tutorials/ForkJoin directory.

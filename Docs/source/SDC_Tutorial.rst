@@ -4,7 +4,10 @@
 .. role:: fortran(code)
    :language: fortran
 
-Tutorials/SDC
+
+.. _tutorials_sdc:
+
+SDC
 ==========================
 
 **MISDC_ADR_2d**
