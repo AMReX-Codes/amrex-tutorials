@@ -24,7 +24,7 @@ void sum_fine_to_crse_nodal (int i, int j, int,
                           fine(ii,jj-1,0,0) + fine(ii,jj+1,0,0))           +
 // ... and these four are shared by four...
         amrex::Real(0.25)*(fine(ii-1,jj-1,0,0) + fine(ii-1,jj+1,0,0)       +
-                           fine(ii+1,jj+1,0,0) + fine(ii+1,jj+1,0,0));
+                           fine(ii+1,jj-1,0,0) + fine(ii+1,jj+1,0,0));
 // ... note that we have 9 nodes in total...
     crse(i,j,0,0) = crse(i,j,0,0) / amrex::Real(4.0);
 }
