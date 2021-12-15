@@ -1,14 +1,14 @@
 ML/PYTORCH
 ==========
 
-This code code demonstrates usage of a pre-trained PyTorch model within the AMReX framework. PyTorch is a commonly used machine learning package with a C++ API library. Located in the directory ``amrex-tutorials/ExampleCodes/ML/PYTORCH``, this example uses a machine learning model to solve a radioactive beta decay problem. It begins by initializing data on a MultiFab, then that data is copied into a PyTorch tensor, then we call the pre-trained model to evolve the data, and finally we load the result back into a MultiFab. The program runs on either only the CPU or both the CPU and GPU.
+This code demonstrates usage of a pre-trained PyTorch model within the AMReX framework. PyTorch is a commonly used machine learning package with a C++ API library called LibTorch. Located in the directory ``amrex-tutorials/ExampleCodes/ML/PYTORCH``, this example uses a machine learning model to solve a radioactive beta decay problem. It begins by initializing data on a MultiFab, then that data is copied into a PyTorch tensor, then we call the pre-trained model to evolve the data, and finally we load the result back into a MultiFab. The program runs on either only the CPU or both the CPU and GPU.
 
 **Running an AMReX application with a PyTorch model**
 -----------------------------------------------------
 
 Below is a step-by-step guide to successfully run an AMReX program that uses a PyTorch model. It is based on ``ML/PYTORCH/README.md`` and will require the model to have been saved as a TorchScript. In this example the TorchScript file is ``model.pt``. For more information on TorchScript, please see their `intro tutorial <https://pytorch.org/tutorials/beginner/Intro_to_TorchScript_tutorial.html>`_.
 
-   1. Before compiling, either a CPU or GPU version of LibTorch (PyTorch C++ library) must be downloaded into ``ML/PYTORCH/``. An example of downloading the CUDA 11.1 version of ``libtorch`` for and renaming it to ``libtorch_cuda`` is shown here:
+   1. Before compiling, either a CPU or GPU version of LibTorch (PyTorch C++ library) must be downloaded into ``ML/PYTORCH/``. An example of downloading the CUDA 11.1 version of ``libtorch`` and renaming it to ``libtorch_cuda`` is shown here:
 
       .. code-block:: console
 
