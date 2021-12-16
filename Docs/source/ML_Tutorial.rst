@@ -1,7 +1,14 @@
 ML/PYTORCH
 ==========
 
-This code demonstrates usage of a pre-trained PyTorch model within the AMReX framework. PyTorch is a commonly used machine learning package with a C++ API library called LibTorch. Located in the directory ``amrex-tutorials/ExampleCodes/ML/PYTORCH``, this example uses a machine learning model to solve a radioactive beta decay problem. It begins by initializing data on a MultiFab, then that data is copied into a PyTorch tensor, then we call the pre-trained model to evolve the data, and finally we load the result back into a MultiFab. The program runs on either only the CPU or both the CPU and GPU.
+The overall goal of machine learning models in this context is to accelerate computationally expensive kernels/routines as part of an AMReX simulation.
+This tutorial demonstrates how to interface a pre-trained PyTorch machine learning model to an AMReX simulation by querying inputs from and supplying outputs to an AMReX MultiFab.
+Here we use a 1-input, 2-output model to illustrate the interface between the PyTorch model and a MultiFab.
+
+PyTorch is a commonly used machine learning package with a C++ API library called LibTorch.
+Located in the directory ``amrex-tutorials/ExampleCodes/ML/PYTORCH``, this example uses a machine learning model to solve a radioactive beta decay problem.
+To begin, we initialize data on a MultiFab, then copy the data into a PyTorch tensor, then we call the pre-trained model to compute the outputs, and finally we load the result back into a MultiFab.
+The program runs on either only the CPU or both the CPU and GPU.
 
 **Running an AMReX application with a PyTorch model**
 -----------------------------------------------------
