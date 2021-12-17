@@ -20,7 +20,7 @@ Below is a step-by-step guide to successfully run an AMReX program that uses a P
       .. code-block:: console
 
          wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.9.0%2Bcpu.zip
-	 unzip libtorch-cxx11-abi-shared-with-deps-1.9.0+cpu.zip
+         unzip libtorch-cxx11-abi-shared-with-deps-1.9.0+cpu.zip
          mv libtorch libtorch_cpu
 
       Similarly, the CUDA 11.1 version of ``libtorch`` can be downloaded and renamed to ``libtorch_cuda``:
