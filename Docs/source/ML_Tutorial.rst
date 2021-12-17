@@ -13,9 +13,17 @@ The program runs on either only the CPU or both the CPU and GPU.
 **Running an AMReX application with a PyTorch model**
 -----------------------------------------------------
 
-Below is a step-by-step guide to successfully run an AMReX program that uses a PyTorch model. It is based on ``ML/PYTORCH/README.md`` and will require the model to have been saved as a TorchScript. In this example the TorchScript file is ``model.pt``. For more information on TorchScript, please see their `intro tutorial <https://pytorch.org/tutorials/beginner/Intro_to_TorchScript_tutorial.html>`_.
+Below is a step-by-step guide to successfully run an AMReX program that uses a PyTorch model. It will require the model to have been saved as a TorchScript. In this example the TorchScript file is ``model.pt``. For more information on TorchScript, please see their `intro tutorial <https://pytorch.org/tutorials/beginner/Intro_to_TorchScript_tutorial.html>`_.
 
-   1. Before compiling, either a CPU or GPU version of LibTorch (PyTorch C++ library) must be downloaded into ``ML/PYTORCH/``. An example of downloading the CUDA 11.1 version of ``libtorch`` and renaming it to ``libtorch_cuda`` is shown here:
+   1. Before compiling, either a CPU or CUDA version of LibTorch (PyTorch C++ library) must be downloaded into ``ML/PYTORCH/``. To download the CPU-only version of ``libtorch`` and rename it to ``libtorch_cpu``:
+
+      .. code-block:: console
+
+         wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.9.0%2Bcpu.zip
+	 unzip libtorch-cxx11-abi-shared-with-deps-1.9.0+cpu.zip
+         mv libtorch libtorch_cpu
+
+      Similarly, the CUDA 11.1 version of ``libtorch`` can be downloaded and renamed to ``libtorch_cuda``:
 
       .. code-block:: console
 
