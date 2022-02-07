@@ -1,6 +1,3 @@
-..
-   TODO: add a one liner to store this location
-
 HYPRE for ABecLaplacian_C Tutorial
 ==================================
 
@@ -130,7 +127,8 @@ AMReX with Hypre via Spack
       spack load amrex +hypre +fortran
 
 #. Identify the location of the installed version of AMReX. Because the location is
-   usually quite long, we will store the result from Spack as a shell variable.
+   usually quite long, we will store the result from Spack as the shell variable,
+   ``AMREX_DIR``.
 
    .. code-block::
 
