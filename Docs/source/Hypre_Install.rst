@@ -2,7 +2,7 @@ HYPRE for ABecLaplacian_C Tutorial
 ==================================
 
 The following directions explain how to configure, build and run
-the ABecLaplacian_C example using the external solver library HYPRE.
+the ``ABecLaplacian_C`` example using the external solver library HYPRE.
 HYPRE is a library of scalable linear solvers and multigrid methods. For
 more information about HYPRE see their website_. More information on
 setting HYPRE options within AMReX is available in the User's Guide in
@@ -36,7 +36,7 @@ Building with Hypre via GNUMake
 
    This will compile the code with HYPRE enabled using 4 processes.
 
-#. To run the HYPRE enabled example use the ``inputs.hypre`` file
+#. To run the HYPRE enabled example, use the ``inputs.hypre`` file
    as input.
 
    .. code-block::
@@ -150,21 +150,21 @@ AMReX with Hypre via Spack
    These configuration commands do the following:
 
       - AMReX_DIR: Tells CMake where to find the installed version of
-        AMReX. If this is not supplied CMake may be unable to locate
-        the AMReX files or download the file from the latest release on
-        GitHub.
+        AMReX. If this is not supplied, CMake may be unable to locate
+        the AMReX files or it may download the file from the latest release
+        from GitHub.
 
       - AMReX_HYPRE: Enables AMReX to use HYPRE.
 
-      - AMReX_FORTRAN: Compile
+      - AMReX_FORTRAN: Enables Fortran for AMReX.
 
-      - AMReX_FORTRAN_INTERFACES:
+      - AMReX_FORTRAN_INTERFACES: Enables the Fortran API.
 
-      - AMReX_LINEAR_SOLVERS: This command is specific to the examples
-        codes install configuration, i.e. CMakeLists.txt. It tells CMake
+      - AMReX_LINEAR_SOLVERS: This command is specific to the
+        ``ExamplesCodes`` install configuration, i.e. CMakeLists.txt. It tells CMake
         to compile all the linear solver examples.
 
-#. After setting up the configuration we build the executables with
+#. After setting up the configuration, we build the executables with
    CMake. This command will build the files according to the configuration
    in the current directory using 4 processes (``-j4``).
 
