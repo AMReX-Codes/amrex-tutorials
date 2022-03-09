@@ -66,8 +66,8 @@ void run_espic ()
         is_periodic[i] = 0;
     }
 
-    IntVect dom_lo(IntVect(D_DECL(0,0,0)));
-    IntVect dom_hi(IntVect(D_DECL(n_cell-1, n_cell-1, n_cell-1)));
+    IntVect dom_lo(IntVect(AMREX_D_DECL(0,0,0)));
+    IntVect dom_hi(IntVect(AMREX_D_DECL(n_cell-1, n_cell-1, n_cell-1)));
     Box domain(dom_lo, dom_hi);
 
     // make Geometry for each level
@@ -83,8 +83,8 @@ void run_espic ()
     grids[0].define(domain);
     if (num_levels > 1) {
         int n_fine = n_cell*rr[0];
-        IntVect refined_lo(D_DECL(3*n_fine/8,3*n_fine/8,3*n_fine/8));
-        IntVect refined_hi(D_DECL(5*n_fine/8-1,5*n_fine/8-1,5*n_fine/8-1));
+        IntVect refined_lo(AMREX_D_DECL(3*n_fine/8,3*n_fine/8,3*n_fine/8));
+        IntVect refined_hi(AMREX_D_DECL(5*n_fine/8-1,5*n_fine/8-1,5*n_fine/8-1));
 
         // Build a box for the level 1 domain
         Box refined_patch(refined_lo, refined_hi);

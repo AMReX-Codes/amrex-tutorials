@@ -44,7 +44,7 @@ void computePhi (const Vector<const MultiFab*>& rhs,
         MultiFab::Copy(*tmp_rhs[lev], *rhs[lev], 0, 0, 1, 0);
     }
 
-    IntVect ratio(D_DECL(2, 2, 2));
+    IntVect ratio(AMREX_D_DECL(2, 2, 2));
     fixRHSForSolve(GetVecOfPtrs(tmp_rhs), masks, geom, ratio);
 
     int verbose = 2;
@@ -100,7 +100,7 @@ void computePhi (const Vector<const MultiFab*>& rhs,
             amrex::InterpFromCoarseLevel(*phi[lev+1], 0.0, *phi[lev],
                                          0, 0, 1, geom[lev], geom[lev+1],
                                          cphysbc, 0, fphysbc, 0,
-                                         IntVect(D_DECL(2, 2, 2)), &mapper, bcs, 0);
+                                         IntVect(AMREX_D_DECL(2, 2, 2)), &mapper, bcs, 0);
         }
     }
 
