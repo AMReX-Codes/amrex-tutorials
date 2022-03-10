@@ -30,7 +30,7 @@ Building with HYPRE via GNUMake
    .. note::
 
       If HYPRE fails the configure step, it may be necessary to manually specify
-      several options. This can be done during the configure step. For example,
+      several options. This can be done during the configure step (see ``./configure -h``). For example,
       one might replace :code:`./configure` with,
 
       .. code-block:: bash
