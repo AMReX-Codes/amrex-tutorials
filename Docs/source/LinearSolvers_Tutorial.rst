@@ -16,9 +16,7 @@ This example shows how to use either hypre or PETSc as a bottom-solver (or to so
 the equation at the finest level if you set the "max coarsening level" to 0.
 
 Step-by-step instructions for configuring AMReX to use HYPRE for this example are availble
-here_.
-
-.. _here: file:///home/erik/AMReX/amrex-tutorials/Docs/build/html/Hypre_Install.html
+:ref:`here <HYPRE>`.
 
 ``ABecLaplacian_F`` demonstrates how to solve with cell-centered data using the Fortran interfaces.
 

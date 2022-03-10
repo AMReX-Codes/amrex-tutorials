@@ -1,3 +1,5 @@
+.. _HYPRE:
+
 HYPRE for ABecLaplacian_C Tutorial
 ==================================
 
@@ -12,12 +14,12 @@ the `External Solvers`_ section.
 
 .. _`External Solvers`: https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#external-solvers
 
-Building with Hypre via GNUMake
+Building with HYPRE via GNUMake
 -------------------------------
 
 #. Clone, configure, make install and set the ``HYPRE_DIR`` environment variable:
 
-   .. code-block::
+   .. code-block:: bash
 
       git clone https://github.com/hypre-space/hypre.git
       cd hypre/src
@@ -25,12 +27,23 @@ Building with Hypre via GNUMake
       make install
       export HYPRE_DIR=/path_to_hypre_dir/hypre/src/hypre
 
+   .. note::
+
+      If HYPRE fails the configure step, it may be necessary to manually specify
+      several options. This can be done during the configure step. For example,
+      one might replace :code:`./configure` with,
+
+      .. code-block:: bash
+
+         ./configure CXX=CC CC=cc FC=ftn --with-MPI
+
+
 #. Navigate to the location of the ABecLaplacian_C example,
    ``amrex-tutorials/ExampleCodes/LinearSolvers/ABecLaplacian_C``.
 
 #. Make the executable by typing,
 
-   .. code-block::
+   .. code-block:: bash
 
       make -j4 USE_HYPRE=TRUE
 
@@ -39,13 +52,13 @@ Building with Hypre via GNUMake
 #. To run the HYPRE enabled example, use the ``inputs.hypre`` file
    as input.
 
-   .. code-block::
+   .. code-block:: bash
 
       ./ABecLaplacian_C inputs.hypre
 
 #. To verify the HYPRE solver has been used, look for the line,
 
-   .. code-block::
+   .. code-block:: literal
 
       HYPRE BoomerAMG: Num. iterations = 4; Relative residual = 3.92236062e-05
 
@@ -54,7 +67,7 @@ Building with Hypre via GNUMake
    with the AMReX finalized output.
 
 
-Building with Hypre via CMake
+Building with HYPRE via CMake
 -----------------------------
 
 #. Follow the directions above for cloning, configuring, make installing
@@ -67,7 +80,7 @@ Building with Hypre via CMake
 
 #. From the build directory, call CMake with the following configuration:
 
-   .. code-block::
+   .. code-block:: bash
 
       cmake .. -DAMReX_HYPRE=ON \
       -DHYPRE_LIBRARIES=${HYPRE_DIR}\lib\libHYPRE.a \
@@ -85,7 +98,7 @@ Building with Hypre via CMake
 
 #. Next we can build the executable with,
 
-   .. code-block::
+   .. code-block:: bash
 
       cmake --build . -j8
 
@@ -95,13 +108,13 @@ Building with Hypre via CMake
    ``build/LinearSolvers/ABecLaplacian_C`` folder inside our build directory, and typing
    the name of the executable followed by the inputs file, ``inputs.hypre``.
 
-   .. code-block::
+   .. code-block:: bash
 
       ./ABecLaplacian_C inputs.hypre
 
 #. To verify the HYPRE solver has been used, look for the line,
 
-   .. code-block::
+   .. code-block:: literal
 
       HYPRE BoomerAMG: Num. iterations = 4; Relative residual = 3.92236062e-05
 
@@ -109,20 +122,20 @@ Building with Hypre via CMake
    only a handful of iterations at each step. The code successfully completes
    with the AMReX finalized output.
 
-AMReX with Hypre via Spack
+AMReX with HYPRE via Spack
 --------------------------
 
 
 #. Using Spack, install AMReX with HYPRE and Fortran
    options selected.
 
-   .. code-block::
+   .. code-block:: bash
 
       spack install amrex +hypre +fortran
 
 #. Load the desired version of AMReX.
 
-   .. code-block::
+   .. code-block:: bash
 
       spack load amrex +hypre +fortran
 
@@ -130,7 +143,7 @@ AMReX with Hypre via Spack
    usually quite long, we will store the result from Spack as the shell variable,
    ``AMREX_DIR``.
 
-   .. code-block::
+   .. code-block:: bash
 
       AMREX_DIR=$(spack location -i amrex +hypre +fortran)
 
@@ -139,7 +152,7 @@ AMReX with Hypre via Spack
    directory. Then create a build folder to store the compiled files. Inside
    this folder we'll use CMake to compile the code.
 
-   .. code-block::
+   .. code-block:: bash
 
       cmake .. -DAMReX_DIR=${AMREX_DIR} \
                -DAMReX_HYPRE=ON \
@@ -168,7 +181,7 @@ AMReX with Hypre via Spack
    CMake. This command will build the files according to the configuration
    in the current directory using 4 processes (``-j4``).
 
-   .. code-block::
+   .. code-block:: bash
 
       cmake --build . -j4
 
@@ -176,13 +189,13 @@ AMReX with Hypre via Spack
    ``path_to_base_dir/ExampleCodes/build/LinearSolvers/ABecLaplacian_C``
    and call the executable with the ``inputs.hypre`` file as input.
 
-   .. code-block::
+   .. code-block:: bash
 
       ./ABecLaplacian_C inputs.hypre
 
 #. To verify the HYPRE solver has been used, look for the line,
 
-   .. code-block::
+   .. code-block:: literal
 
       HYPRE BoomerAMG: Num. iterations = 4; Relative residual = 3.92236062e-05
 
