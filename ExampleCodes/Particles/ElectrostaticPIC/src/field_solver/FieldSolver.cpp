@@ -91,8 +91,8 @@ void computePhi (const Vector<const MultiFab*>& rhs,
 
             PhysBCFunctNoOp cphysbc, fphysbc;
 
-            int lo_bc[] = {INT_DIR, INT_DIR};
-            int hi_bc[] = {INT_DIR, INT_DIR};
+            int lo_bc[] = {BCType::int_dir, BCType::int_dir};
+            int hi_bc[] = {BCType::int_dir, BCType::int_dir};
 
             Vector<BCRec> bcs(1, BCRec(lo_bc, hi_bc));
             NodeBilinear mapper;
