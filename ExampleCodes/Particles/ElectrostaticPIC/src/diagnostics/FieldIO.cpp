@@ -56,7 +56,7 @@ void WritePlotFile (const Vector<const MultiFab*>& rhs,
 
     Vector<IntVect> outputRR(output_levs);
     for (int lev = 0; lev < output_levs; ++lev) {
-        outputRR[lev] = IntVect(D_DECL(2, 2, 2));
+        outputRR[lev] = IntVect(AMREX_D_DECL(2, 2, 2));
     }
 
     const std::string& pltfile = amrex::Concatenate("plt", nstep, 5);

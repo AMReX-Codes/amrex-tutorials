@@ -2,7 +2,6 @@
 #include "mykernel.H"
 #include <AMReX_BCRec.H>
 #include <AMReX_BCUtil.H>
-#include <AMReX_BC_TYPES.H>
 
 void advance (MultiFab& phi_old,
               MultiFab& phi_new,
