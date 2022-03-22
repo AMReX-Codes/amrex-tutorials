@@ -28,7 +28,6 @@ function (setup_tutorial _srcs  _inputs)
    #HACK
    message("Executable name: ${_exe_name}")
 
-
    target_sources( ${_exe_name} PRIVATE ${${_srcs}} )
 
    set_target_properties( ${_exe_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${_exe_dir} )
@@ -55,7 +54,10 @@ function (setup_tutorial _srcs  _inputs)
          ${CMAKE_CURRENT_BINARY_DIR}/${_exe_name}_mod_files )
    endif ()
 
-   target_link_libraries( ${_exe_name} AMReX::amrex )
+   target_link_libraries( ${_exe_name} PUBLIC SUNDIALS::nvecmanyvector)
+   target_link_libraries( ${_exe_name} PUBLIC SUNDIALS::cvode)
+   target_link_libraries( ${_exe_name} PUBLIC SUNDIALS::arkode)
+   target_link_libraries( ${_exe_name} PUBLIC AMReX::amrex )
 
    if (AMReX_CUDA)
       setup_target_for_cuda_compilation( ${_exe_name} )
