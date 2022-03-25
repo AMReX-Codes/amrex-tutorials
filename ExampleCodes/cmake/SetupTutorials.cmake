@@ -54,7 +54,7 @@ function (setup_tutorial _srcs  _inputs)
          ${CMAKE_CURRENT_BINARY_DIR}/${_exe_name}_mod_files )
    endif ()
 
-   if (AMREX_SUNDIALS)
+   if (AMReX_SUNDIALS)
       target_link_libraries( ${_exe_name} PUBLIC SUNDIALS::nvecmanyvector)
       target_link_libraries( ${_exe_name} PUBLIC SUNDIALS::cvode)
       target_link_libraries( ${_exe_name} PUBLIC SUNDIALS::arkode)
