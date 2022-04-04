@@ -12,9 +12,8 @@ include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
 include ../Source/Make.package
 VPATH_LOCATIONS  += ../Source
-INCLUDE_LOCATIONS += ./Source
+INCLUDE_LOCATIONS += ../Source
 
-CPPFLAGS += -Werror -Wsuggest-override
 
 ifeq ($(USE_SUNDIALS),TRUE)
 SUNDIALS_ROOT ?= $(TOP)/../../../../../sundials/instdir
@@ -35,3 +34,4 @@ endif
 include $(AMREX_HOME)/Src/Base/Make.package
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
+
