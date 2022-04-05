@@ -326,7 +326,7 @@ void MCNodalLinOp::buildMasks ()
     {
         int amrlev = 0;
         int mglev = m_num_mg_levels[amrlev]-1;
-        const iMultiFab& omask = *m_owner_mask[amrlev][mglev];
+        const iMultiFab& omask = *m_owner_mask_bottom;
         m_bottom_dot_mask.define(omask.boxArray(), omask.DistributionMap(), 1, 0);
 
         const Geometry& geom = m_geom[amrlev][mglev];
