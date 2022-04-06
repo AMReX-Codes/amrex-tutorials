@@ -17,6 +17,14 @@ set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake )
 set ( AMReX_GIT_REPO "https://github.com/AMReX-Codes/amrex.git/"
     CACHE STRING "The URL identifying the repo to fetchg AMReX from" )
 
+#
+# Fetch and compile AMReX or link to an existing CMake build install of libamrex.
+# If AMReX_DIR is passed then we link to the library found there. Otherwise
+# the sources are fetched and compiled from the repo pointed to by AMReX_GIT_REPO
+#
+set ( SUNDIALS_GIT_REPO "https://github.com/LLNL/sundials.git"
+    CACHE STRING "The URL identifying the repo to fetch SUNDIALS from" )
+
 if( NOT DEFINED AMReX_DIR )
    #
    # Fetch amrex repo
@@ -43,6 +51,99 @@ if( NOT DEFINED AMReX_DIR )
        # available to the entire project
        include(AMReXOptions)
 
+if( AMReX_SUNDIALS )
+if( NOT DEFINED SUNDIALS_DIR )
+   #
+   # Fetch sundials repo
+   #
+   message(STATUS "Fetching from ${SUNDIALS_GIT_REPO} branch ${AMReX_GIT_BRANCH}" )
+
+   set(SUNDIALS_GIT_BRANCH "develop" CACHE STRING "The SUNDIALS branch to checkout")
+
+   include(FetchContent)
+   set(FETCHCONTENT_QUIET OFF)  # Verbose ON
+
+   FetchContent_Declare( sundials
+       GIT_REPOSITORY ${SUNDIALS_GIT_REPO}
+       GIT_TAG        ${SUNDIALS_GIT_BRANCH}
+       )
+
+   if(NOT ${sundials}_POPULATED)
+       FetchContent_Populate(sundials)
+#       set(SUNDIALS_DIR ${sundials_SOURCE_DIR})
+   # Set build options for subproject
+   set(EXAMPLES_ENABLE_C            OFF                        CACHE INTERNAL "" )
+   set(EXAMPLES_ENABLE_CXX          OFF                        CACHE INTERNAL "" )
+   set(EXAMPLES_ENABLE_CUDA         OFF                        CACHE INTERNAL "" )
+   set(EXAMPLES_ENABLE_F77          OFF                        CACHE INTERNAL "" )
+   set(EXAMPLES_ENABLE_F90          OFF                        CACHE INTERNAL "" )
+   set(EXAMPLES_ENABLE_F2003        OFF                        CACHE INTERNAL "" )
+   set(EXAMPLES_INSTALL             OFF                        CACHE INTERNAL "" )
+   set(ENABLE_MPI                   OFF                        CACHE INTERNAL "" )
+   set(ENABLE_OPENMP                ${ERF_ENABLE_OMP}                 CACHE INTERNAL "" )
+   if (AMReX_GPU_BACKEND STREQUAL CUDA)
+     set(ENABLE_CUDA                  ON                      CACHE INTERNAL "" )
+     set(SUNDIALS_INDEX_SIZE          32                      CACHE INTERNAL "" )
+     set(SUNDIALS_BUILD_PACKAGE_FUSED_KERNELS     ON          CACHE INTERNAL "" )
+    else ()
+      set(ENABLE_CUDA                  OFF                     CACHE INTERNAL "" )
+      if (AMReX_GPU_BACKEND STREQUAL HIP)
+    set(ENABLE_HIP                   ON                      CACHE INTERNAL "" )
+    set(AMDGPU_TARGETS               ${AMReX_AMD_ARCH}       CACHE INTERNAL "" )
+#        set(SUNDIALS_BUILD_PACKAGE_FUSED_KERNELS     ON          CACHE INTERNAL "" )
+      endif ()
+      if (AMReX_GPU_BACKEND STREQUAL SYCL)
+    set(ENABLE_SYCL                  ON                      CACHE INTERNAL "" )
+    set(CMAKE_CXX_STANDARD           17                      CACHE INTERNAL "" )
+      endif ()
+   endif ()
+   set(BUILD_ARKODE                 ON                         CACHE INTERNAL "" )
+   set(BUILD_KINSOL                 OFF                        CACHE INTERNAL "" )
+   set(BUILD_IDA                    OFF                        CACHE INTERNAL "" )
+   set(BUILD_IDAS                   OFF                        CACHE INTERNAL "" )
+   set(BUILD_CVODES                 OFF                        CACHE INTERNAL "" )
+endif ()
+   list(APPEND CMAKE_MODULE_PATH ${sundials_SOURCE_DIR})
+
+#  Add  SUNDIALS sources to the build
+   add_subdirectory(${sundials_SOURCE_DIR})
+
+   # This is to use the same target name uses by the sundials exported targets
+   add_library(SUNDIALS::cvode      ALIAS sundials_cvode_static)
+   add_library(SUNDIALS::arkode     ALIAS sundials_arkode_static)
+   add_library(SUNDIALS::nvecmanyvector ALIAS sundials_nvecmanyvector_static)
+
+   if (AMReX_GPU_BACKEND STREQUAL CUDA)
+      add_library(SUNDIALS::nveccuda ALIAS sundials_nveccuda_static)
+   elseif (AMReX_GPU_BACKEND STREQUAL HIP)
+      add_library(SUNDIALS::nvechip ALIAS sundials_nvechip_static)
+   elseif (AMReX_GPU_BACKEND STREQUAL SYCL)
+      add_library(SUNDIALS::nvecsycl ALIAS sundials_nvecsycl_static)
+   else ()
+     add_library(SUNDIALS::nvecserial ALIAS sundials_nvecserial_static)
+   endif ()
+
+   set(SUNDIALS_FOUND TRUE)
+
+else ()
+   # This is to use the same target name uses by the sundials exported targets
+   add_library(SUNDIALS::cvode      ALIAS sundials_cvode_static)
+   add_library(SUNDIALS::arkode     ALIAS sundials_arkode_static)
+   add_library(SUNDIALS::nvecmanyvector ALIAS sundials_nvecmanyvector_static)
+
+   if (AMReX_GPU_BACKEND STREQUAL CUDA)
+      add_library(SUNDIALS::nveccuda ALIAS sundials_nveccuda_static)
+   elseif (AMReX_GPU_BACKEND STREQUAL HIP)
+      add_library(SUNDIALS::nvechip ALIAS sundials_nvechip_static)
+   elseif (AMReX_GPU_BACKEND STREQUAL SYCL)
+      add_library(SUNDIALS::nvecsycl ALIAS sundials_nvecsycl_static)
+   else ()
+     add_library(SUNDIALS::nvecserial ALIAS sundials_nvecserial_static)
+   endif ()
+
+   set(SUNDIALS_FOUND TRUE)
+endif ()
+endif ()
        if(AMReX_FORTRAN)
           enable_language(Fortran)
        endif ()
