@@ -14,7 +14,14 @@ repo, under the parent directory ``amrex-tutorials/GuidedTutorials``.
 This tutorial explains how to build AMReX HelloWorld.
 
 
-.. _`Hello World`: HelloWorld.html
+---------
+
+:ref:`The MultiFab<multifab_tutorial>`
+--------------------------------------
+
+This tutorial introduces the AMReX MultiFab class. It demonstrates
+how to create a MultiFab, fill it with data and write that data
+to a plotfile.
 
 
 ---------
@@ -26,8 +33,6 @@ A complete build-run-visualize workflow walk-through. This simplified introducti
 covers several basic components of AMReX while minimizing required knowledge of C++
 syntax.
 
-.. _`Heat Equation -- Simple`: HeatEquation_Simple.html
-
 |
 
 :ref:`Heat Equation<guided_heat>`
@@ -36,8 +41,6 @@ syntax.
 This tutorial revisits AMReX's approach to heat equation in additional detail with
 preprocessor variables, scoped namespaces, and multiple source files
 to demonstrate additional convenience and functionality.
-
-.. _`Heat Equation`: HeatEquation_EX1_C.html
 
 
 -------------
