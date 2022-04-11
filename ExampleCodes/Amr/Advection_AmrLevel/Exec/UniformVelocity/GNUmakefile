@@ -11,8 +11,6 @@ DIM        = 2
 
 COMP	   = gnu
 
-#USE_PARTICLES = TRUE
-
 USE_MPI    = TRUE
 USE_OMP    = FALSE
 
