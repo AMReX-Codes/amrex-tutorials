@@ -58,7 +58,7 @@ Building with HYPRE via GNUMake
 
 #. To verify the HYPRE solver has been used, look for the line,
 
-   .. code-block:: literal
+   .. code-block:: console
 
       HYPRE BoomerAMG: Num. iterations = 4; Relative residual = 3.92236062e-05
 
@@ -114,7 +114,7 @@ Building with HYPRE via CMake
 
 #. To verify the HYPRE solver has been used, look for the line,
 
-   .. code-block:: literal
+   .. code-block:: console
 
       HYPRE BoomerAMG: Num. iterations = 4; Relative residual = 3.92236062e-05
 
@@ -195,7 +195,7 @@ AMReX with HYPRE via Spack
 
 #. To verify the HYPRE solver has been used, look for the line,
 
-   .. code-block:: literal
+   .. code-block:: console
 
       HYPRE BoomerAMG: Num. iterations = 4; Relative residual = 3.92236062e-05
 
