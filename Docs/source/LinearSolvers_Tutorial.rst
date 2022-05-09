@@ -18,6 +18,12 @@ the equation at the finest level if you set the "max coarsening level" to 0.
 Step-by-step instructions for configuring AMReX to use HYPRE for this example are availble
 :ref:`here <HYPRE>`.
 
+.. toctree::
+   :hidden:
+
+   Hypre_Install
+
+
 ``ABecLaplacian_F`` demonstrates how to solve with cell-centered data using the Fortran interfaces.
 
 ``NodalPoisson`` demonstrates how to set up and solve a variable coefficient Poisson equation
