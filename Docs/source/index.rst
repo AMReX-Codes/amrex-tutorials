@@ -53,6 +53,7 @@ sorted by the following categories:
 - :ref:`SDC<tutorials_sdc>`  -- Example usage of a "Multi-Implicit" Spectral Deferred Corrections (MISDC) integrator
   to solve a scalar advection-diffusion-reaction equation.
 - :ref:`SENSEI<tutorials_sensei>`  -- In situ data analysis and visualization through a unified interface.
+- :ref:`SUNDIALS<tutorials_sundials>`  -- Time integration with SUNDIALS backend and native AMReX types.
 - :ref:`SWFFT<tutorials_swfft>`  -- Demonstrates how to call the SWFFT wrapper to the FFTW3 (A distributed memory
   implementation of the discrete Fourier transform) solver.
 
@@ -72,6 +73,7 @@ sorted by the following categories:
    Particles_Tutorial
    SDC_Tutorial
    SENSEI_Tutorial
+   SUNDIALS_Tutorial
    SWFFT_Tutorial
 
 
