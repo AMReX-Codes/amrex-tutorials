@@ -35,6 +35,16 @@ syntax.
 
 |
 
+:ref:`Namespaces and Multidimensional Code<name_multidim>`
+----------------------------------------------------------
+
+This code expands upon the Heat Equation -- Simple tutorial by adding a
+namespace scope, macros and preprocessor directives to simplify syntax and enable
+2 or 3-dimensinal simulation from the same code. These additions bring the syntax
+closer to typical practice.
+
+|
+
 :ref:`Heat Equation<guided_heat>`
 ---------------------------------
 
