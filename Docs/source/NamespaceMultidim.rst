@@ -169,7 +169,8 @@ The inputs to ``is_preiodic`` are treated as above, giving:
    Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
 
 The ``AMREX_SPACEDIM`` macro in this statement will evaluate to 1, 2 or 3 depending on the
-dimension selected at compile time.
+dimension selected at compile time. Now, modify the line that defines
+the ``GpuArray dx`` in a similar way.
 
 
 Preprocessor Directives
