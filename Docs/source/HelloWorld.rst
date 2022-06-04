@@ -4,41 +4,49 @@
 .. _guided_hello_world:
 
 
-Hello World
-====================
+HelloWorld with GNU Make
+========================
 
 .. admonition:: **Time to Complete**: 10 mins
    :class: warning
 
    **GOALS:**
      - Introduce Basic AMReX Elements
-     - Build with GNUMake
-     - Build and run with MPI for parallelization
+     - Compile with GNU Make
+     - Compile and run with MPI for parallelization
 
 This tutorial will walk through the steps involved for building AMReX ``HelloWorld``
 with GNU make. Essential elements of the ``HelloWorld`` code will also be briefly
 discussed. The source code of this example can be found  at ``amrex-tutorials/GuidedTutorials/HelloWorld/``
 and is shown below.
 
-Source Code
------------
+.. figure:: images_tutorial/amrex-gnu-hello.gif
+   :width: 90%
+   :align: center
+   :alt: gif showing gnu make build of HelloWorld example.
 
-.. highlight:: c++
+   Animation showing how to build the HelloWorld example.
 
-::
+HelloWorld Source Code
+----------------------
 
-     #include <AMReX.H>
-     #include <AMReX_Print.H>
+The entire source code for the HelloWorld example is located in ``main.cpp``
+and shown below.
 
-     int main(int argc, char* argv[])
-     {
-         amrex::Initialize(argc,argv);
-         {
-             amrex::Print() << "Hello world from AMReX version "
-                            << amrex::Version() << "\n";
-         }
-         amrex::Finalize();
-     }
+.. code-block:: c++
+
+   #include <AMReX.H>
+   #include <AMReX_Print.H>
+
+   int main(int argc, char* argv[])
+   {
+       amrex::Initialize(argc,argv);
+       {
+           amrex::Print() << "Hello world from AMReX version "
+                          << amrex::Version() << "\n";
+       }
+       amrex::Finalize();
+   }
 
 The main body of this short example contains three statements.  Usually the
 first and last statements for the :cpp:`int main(...)` function of every
@@ -57,14 +65,83 @@ The example code includes two AMReX header files. Note that the name
 of all AMReX header files starts with ``AMReX_`` (or just AMReX in the case of
 AMReX.H). All AMReX C++ functions are in the :cpp:`amrex` namespace.
 
-Building the Code with GNU Make
--------------------------------
+Getting the Code
+-----------------
 
-You build the code in the ``amrex-tutorials/GuidedTutorials/HelloWorld/`` directory.
+To run the HelloWorld example we will need the AMReX source code and the code
+for the HelloWorld example. These two code sets can be conveniently downloaded
+with Git. To check to see if Git is available on your local machine type
+``git --version``. If needed,
+`install git <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_.
+
+Clone the AMReX Repo
+^^^^^^^^^^^^^^^^^^^^
+
+.. image:: images_tutorial/amrex_gitclone_instructions.png
+   :width: 50%
+   :align: right
+
+In a web browser, navigate to the `main AMReX repo <https://github.com/AMReX-Codes/amrex>`_.
+Click the green code button, and select HTTPS from the dropdown window. You can copy
+the html address of the repo by clicking on the overlayed squares next to it.
+
+|
+
+At a terminal, type the following:
+
+.. code-block:: bash
+
+   git clone https://github.com/AMReX-Codes/amrex.git
+
+and Git will download the AMReX repo into the folder ``./amrex``.
+
+.. note::
+
+   Development is done off of the development branch (default). If instead,
+   you want to install a release you can replace the command above
+   with:
+
+   .. code-block:: bash
+
+      git clone https://github.com/AMReX-Codes/amrex.git --branch 22.06
+
+
+Clone the AMReX-Tutorials Repo
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Next we will clone the AMReX-Tutorials repo. In order for the tutorial codes
+to find the AMReX source code, it is necessary to clone the tutorials
+directory at the same level as ``amrex``. i.e., we want a directory structure
+like,
+
+::
+
+   Parent/
+    ├──── amrex
+    └──── amrex-tutorials
+
+Alternatively, we can set the environment variable ``AMREX_HOME`` to the location of
+the ``amrex`` directory.
+
+At a terminal navigate to the parent directory above the directory for AMReX, and type:
+
+.. code-block::
+
+   git clone https://github.com/AMReX-Codes/amrex-tutorials.git
+
+This will download the contents of the tutorials into a directory named
+``amrex-tutorials``. At this point, we have all the source code we
+need in place and can continue to the compile and run steps.
+
+
+Compiling the Code with GNU Make
+--------------------------------
+
+Now move to the ``amrex-tutorials/GuidedTutorials/HelloWorld/`` directory to build the code.
 Typing ``make`` will start the compilation process and result in an executable
-named ``main3d.gnu.DEBUG.ex``. The name shows that the GNU compiler with debug
-options set by AMReX is used.  It also shows that the executable is built for
-3D. Although this simple example code is dimension independent, dimensionality
+named ``main3d.gnu.DEBUG.ex``. The name shows our example uses the GNU compiler with the debug
+option set.  It also shows that the executable is built for
+3D simulations. Although this simple example code is dimension independent, dimensionality
 does matter for all non-trivial examples. The build process can be adjusted by
 modifying the ``amrex-tutorials/GuidedTutorials/HelloWorld/GNUmakefile`` file.  More
 details on how to build AMReX can be found in :ref:`Chap:BuildingAMReX`.
@@ -103,13 +180,11 @@ parameter, the last instance takes precedence.
 Parallelization
 ---------------
 
-Now let's build with MPI by typing ``make USE_MPI=TRUE`` (alternatively you can
+Now let's compile the code to with MPI support by typing ``make USE_MPI=TRUE`` (alternatively you can
 set ``USE_MPI=TRUE`` in the GNUmakefile). This should make an executable named
 ``main3d.gnu.DEBUG.MPI.ex``. Note MPI in the file name. You can then run,
 
-.. highlight:: console
-
-::
+.. code-block:: console
 
       mpiexec -n 4 ./main3d.gnu.DEBUG.MPI.ex amrex.v=1
 
@@ -163,7 +238,7 @@ can then run,
 
       OMP_NUM_THREADS=4 mpiexec -n 2 ./main3d.gnu.DEBUG.MPI.OMP.ex
 
-The result may look like,
+The result will be,
 
 .. highlight:: console
 

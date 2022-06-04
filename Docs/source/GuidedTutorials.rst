@@ -8,11 +8,17 @@ The source code for these tutorials can be found in the ``AMReX-Codes/amrex-tuto
 repo, under the parent directory ``amrex-tutorials/GuidedTutorials``.
 
 
-:ref:`Hello World<guided_hello_world>`
---------------------------------------
+:ref:`HelloWorld with GNU Make<guided_hello_world>`
+---------------------------------------------------
 
-This tutorial explains how to build AMReX HelloWorld.
+Briefly describes Git and the HelloWorld source code. Then
+discusses how to compile with GNU Make.
 
+:ref:`HelloWorld with CMake<guided_helloworld_cmake>`
+------------------------------------------------------
+
+Describes how to use CMake to compile the HelloWorld
+example.
 
 ---------
 
