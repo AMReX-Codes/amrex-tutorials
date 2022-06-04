@@ -46,7 +46,7 @@ syntax.
 
 This code expands upon the Heat Equation -- Simple tutorial by adding a
 namespace scope, macros and preprocessor directives to simplify syntax and enable
-2 or 3-dimensinal simulation from the same code. These additions bring the syntax
+2 or 3-dimensional simulation from the same code. These additions bring the syntax
 closer to typical practice.
 
 |
