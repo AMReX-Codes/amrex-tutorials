@@ -15,7 +15,7 @@ There are five examples in the ``ExampleCodes/LinearSolvers`` directory.
 This example shows how to use either hypre or PETSc as a bottom-solver (or to solve
 the equation at the finest level if you set the "max coarsening level" to 0.
 
-Step-by-step instructions for configuring AMReX to use HYPRE for this example are availble
+Step-by-step instructions for configuring AMReX to use HYPRE for this example are available
 :ref:`here <HYPRE>`.
 
 .. toctree::
