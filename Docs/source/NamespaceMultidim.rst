@@ -162,7 +162,7 @@ When we arrive at the line
 we encounter a slightly different situation. This time we need to
 change the dimension of the Array as well as the number of inputs.
 For this we change the 3 in ``Array<int,3>``, to ``AMREX_SPACEDIM``.
-The inputs to ``is_preiodic`` are treated as above, giving:
+The inputs to ``is_periodic`` are treated as above, giving:
 
 .. code-block:: cpp
 
