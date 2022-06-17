@@ -234,7 +234,7 @@ Below is an example of typical usage of ``MFIter`` and ``ParallelFor`` to fill t
            amrex::Real x = (i+0.5) * dx[0];
            amrex::Real y = (j+0.5) * dx[1];
            amrex::Real z = (k+0.5) * dx[2];
-           amrex::Real rsquared = ((x-0.5)*(x-0.5) + (y-0.5)*(y-0.5) + (z-0.5)*(z-0.5));
+           amrex::Real rsquared = ((x-0.5)*(x-0.5) + (y-0.5)*(y-0.5) + (z-0.5)*(z-0.5))/0.01;
            mf_array(i,j,k) = 1.0 + std::exp(-rsquared);
 
        });
@@ -287,7 +287,7 @@ The remaining lines inside ``ParallelFor`` are,
    amrex::Real x = (i+0.5) * dx[0];
    amrex::Real y = (j+0.5) * dx[1];
    amrex::Real z = (k+0.5) * dx[2];
-   amrex::Real rsquared = ((x-0.5)*(x-0.5) + (y-0.5)*(y-0.5) + (z-0.5)*(z-0.5));
+   amrex::Real rsquared = ((x-0.5)*(x-0.5) + (y-0.5)*(y-0.5) + (z-0.5)*(z-0.5))/0.01;
    mf_array(i,j,k) = 1.0 + std::exp(-rsquared);
 
 The first three lines translate integer indices to their ``(x,y,z)`` location in the domain. In this case,
