@@ -63,11 +63,18 @@ At this point, we should add the ``using namespace amrex;``
 line at the top of our file and remove the ``amrex::`` prefix from all the
 commands that use it.
 
-.. note::
+.. admonition:: Note: C++ Standard Library Math Functions
+   :class: note
 
    When using math functions such as ``min`` or ``max`` from the C++ standard library,
    it is recommend that users prefix these commands with ``std::``, to have ``std::min``
    or ``std::max`` to avoid any conflicts with the ``amrex`` namespace.
+
+.. admonition:: Note: Best Practices
+   :class: note
+
+   It is good practice to avoid placing a ``using namespace`` command in
+   a header (``.H``) file.
 
 The rest of this tutorial will assume we implemented ``using namespace amrex;``
 and removed the ``amrex::`` prefixes.
@@ -360,6 +367,6 @@ table below.
 
 Please be aware that the plotfiles generated in each version of the code
 will have different requirements due to the difference in dimensions. For example,
-a plotfile from the 3D code will need, ``amrviz3d`` while the 2D code
-will need ``amrviz2d``.
+a plotfile from the 3D code will need, ``amrvis3d`` while the 2D code
+will need ``amrvis2d``.
 

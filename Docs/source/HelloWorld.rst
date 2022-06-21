@@ -159,13 +159,12 @@ The example code can be run as follows,
 
 The result may look like,
 
-.. highlight:: console
+.. code-block:: console
 
-::
+   AMReX (22.06-10-g18d0a2861d31) initialized
+   Hello world from AMReX version 22.06-10-g18d0a2861d31
+   AMReX (22.06-10-g18d0a2861d31) finalized
 
-      AMReX (17.05-30-g5775aed933c4-dirty) initialized
-      Hello world from AMReX version 17.05-30-g5775aed933c4-dirty
-      AMReX (17.05-30-g5775aed933c4-dirty) finalized
 
 The version string means the current commit 5775aed933c4 (note that the first
 letter g in g577.. is not part of the hash) is based on 17.05 with 30

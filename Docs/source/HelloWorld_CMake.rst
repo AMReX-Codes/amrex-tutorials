@@ -82,7 +82,7 @@ At this point, CMake should have successfully compiled our ``HelloWorld`` execut
 
 
 Running the ``HelloWorld`` Executable
-------------------------------------
+-------------------------------------
 
 To run the ``HelloWorld`` example type,
 
