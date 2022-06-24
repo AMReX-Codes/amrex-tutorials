@@ -14,6 +14,17 @@ jobs:
       USER_LIST: ${{ secrets.AUTH_LIST }}
       TRIGGER_STRING: 'Do.Tests'
     steps:
+      - name: Fail Notice Unauthorized User
+        if: ${{ (github.event.comment.body == env.TRIGGER_STRING) && !{{ contains( env.USER_LIST, github.event.comment.user.login) }} }}
+        uses: actions/github-script@v4
+        with:
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Username not found on list of authorized users.',
+            });
       - name: Initialization Notice
         if: ${{ (github.event.comment.body == env.TRIGGER_STRING) && contains( env.USER_LIST, github.event.comment.user.login) }}
         uses: actions/github-script@v4
@@ -23,7 +34,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Initiated Cori Compilation',
+              body: 'Tests Initiated.',
             });
       - name: Checkout
         if: ${{ (github.event.comment.body == env.TRIGGER_STRING) && contains( env.USER_LIST, github.event.comment.user.login) }}
