@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-GITHUB_EVENT_API_URL="https://api.github.com/repos/etpalmer63/AMReXTesting/events"
-GITHUB_PR_API="https://api.github.com/repos/etpalmer63/AMReXTesting/pulls"
+GITHUB_EVENT_API_URL="https://api.github.com/repos/AMReX-Codes/amrex-tutorials/events"
+GITHUB_PR_API="https://api.github.com/repos/AMReX-Codes/amrex-tutorials/pulls"
 MIRROR_TRIGGER_URL="https://software.nersc.gov/api/v4/projects/307/trigger/pipeline"
 
 
