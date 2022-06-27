@@ -162,13 +162,14 @@ The result may look like,
 .. code-block:: console
 
    AMReX (22.06-10-g18d0a2861d31) initialized
-   Hello world from AMReX version 22.06-10-g18d0a2861d31
+   Hello world from AMReX version 22.06-10-g8d0a2861d31
    AMReX (22.06-10-g18d0a2861d31) finalized
 
 
-The version string means the current commit 5775aed933c4 (note that the first
-letter g in g577.. is not part of the hash) is based on 17.05 with 30
-additional commits and the AMReX work tree is dirty (i.e. there are uncommitted
+The version string means the current commit 8d0a2861d31 (note that the first
+letter g in g8d0a... is not part of the hash) is based on 22.06 with 10
+additional commits. If the version string contains "-dirty" as in
+``22.06-10-g18d0a2861d31-dirty``, it means the AMReX work tree is dirty (i.e. there are uncommitted
 changes).
 
 In the GNU make file, ``GNUmakefile``,  there are compilation options for DEBUG mode (less optimized
@@ -194,9 +195,9 @@ The result may look like,
 ::
 
       MPI initialized with 4 MPI processes
-      AMReX (17.05-30-g5775aed933c4-dirty) initialized
-      Hello world from AMReX version 17.05-30-g5775aed933c4-dirty
-      AMReX (17.05-30-g5775aed933c4-dirty) finalized
+      AMReX (22.06-10-g18d0a2861d31) initialized
+      Hello world from AMReX version 22.06-10-g18d0a2861d31
+      AMReX (22.06-10-g18d0a2861d31) finalized
 
 If the compilation fails, you are referred to :ref:`Chap:BuildingAMReX` for
 more details on how to configure the build system.  The *optional* command line
@@ -224,9 +225,9 @@ The result may look like,
 ::
 
       OMP initialized with 4 OMP threads
-      AMReX (17.05-30-g5775aed933c4-dirty) initialized
-      Hello world from AMReX version 17.05-30-g5775aed933c4-dirty
-      AMReX (17.05-30-g5775aed933c4-dirty) finalized
+      AMReX (22.06-10-g18d0a2861d31) initialized
+      Hello world from AMReX version 22.06-10-g18d0a2861d31
+      AMReX (22.06-10-g18d0a2861d31) finalized
 
 Note that you can build with both ``USE_MPI=TRUE`` and ``USE_OMP=TRUE``.  You
 can then run,
@@ -245,6 +246,6 @@ The result will be,
 
       MPI initialized with 2 MPI processes
       OMP initialized with 4 OMP threads
-      AMReX (17.05-30-g5775aed933c4-dirty) initialized
-      Hello world from AMReX version 17.05-30-g5775aed933c4-dirty
-      AMReX (17.05-30-g5775aed933c4-dirty) finalized
+      AMReX (22.06-10-g18d0a2861d31) initialized
+      Hello world from AMReX version 22.06-10-g18d0a2861d31
+      AMReX (22.06-10-g18d0a2861d31y) finalized
