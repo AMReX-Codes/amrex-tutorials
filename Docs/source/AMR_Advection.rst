@@ -8,6 +8,10 @@
    |What time-stepping do I use?|Understand the difference between subcycling and not|It's a choice|
    |How do I visualize AMR results?|Use Visit and Paraview for AMReX vis|Visualization tools exist for AMR data.|
 
+   New Ideas: Introduction to two types of AMR -- AmrCore, dt held constant
+   and AmrLevel, where dx/dt is held constant
+
+
 .. _tutorial_advection:
 
 Tutorial: Multi-Level Scalar Advection
@@ -25,9 +29,51 @@ Tutorial: Multi-Level Scalar Advection
      - Subcycling
 
 
+This tutorial is a basic introduction to several adaptive mesh refinement (AMR)
+schemes supported by AMReX. The two methods we will present here are adaptive
+mesh refinement with subcycling in time and without.
 
-Background
-----------
+
+What is Adaptive Mesh Refinement?
+--------------------------------
+
+In this tutorial we define Adpative Mesh Refinement to be the practice
+of simulating PDEs on a mesh that contains grids with differing sized
+resolutions in space and or/time. The resolution of each grid can be coarsened
+or refined according to fixed locations or in dynamic response to a calculuated
+value. When grids are adaptively refined to change resolutions we used the term
+"level" to denote all grids with a certain resolution obtained via adaptive
+refinement. For example, if a grid on a mesh, was refined to a finer resolution,
+and then a subset of that grid was futher refined, we would say the mesh
+has three levels.
+
+The goal of this tutorial is to present two types of adaptive mesh refinement,
+one with subcycling (in time) and without. The AMR scheme without subcycling
+will refine the physical dimensions of each grid cell, but will advance the
+simulation on each different level (and size grid) with the same time step.
+Therefore the size of each grid's cell is indepdent of the time step taken.
+Conversely, the AMR scheme with subcycling (in time) will fix the ratio,
+:math:`\frac{d\bold{x}/dt}`, and
+adjust the time step in the simulation on each level according to the size of
+each grid cell.
+
+
+
+
+
+
+
+Terminolog
+-----------
+
+  - Grid
+  - Level
+  - Patch
+  - Coarse/Fine
+
+
+Eample Problem
+--------------
 
 Consider a drop of dye (we'll define :math:`\phi` to be the concentration of dye)
 in a thin incompressible fluid that is spinning
@@ -58,12 +104,6 @@ Note that because :math:`{\bf{u^{spec}}}` is defined as the curl of a scalar fie
 In this example we'll be using AMR to resolve the scalar field since the location of the dye is
 what we care most about.
 
-Terminology
------------
-
-  - Grid
-  - Level
-  - Patch
 
 
 
@@ -72,9 +112,9 @@ Terminology
 The AMR Algorithm
 -----------------
 
-To update the solution in a patch at a given level, we compute fluxes (:math:`{\bf u^{spec}} \phi`)
-on each face, and difference the fluxes to create the update to :math:`\phi`. The update routine
-in the code looks like:
+To update the solution in a patch at a given level, we compute fluxes
+(:math:`{\bf u^{spec}} \phi`) on each face, and difference the fluxes to create
+the update to :math:`\phi`. The update routine in the code looks like:
 
 .. code-block:: cpp
 
@@ -86,12 +126,14 @@ in the code looks like:
                               + (flxz(i,j,k) - flxz(i,j,k+1)) * dtdx[2] ) );
   }
 
-In this routine we use the macro ``AMREX_D_TERM`` so that we can write dimension-independent code.
-When compiled for 3D this returns the flux differences in all three directions, but for 2D it does not include
+In this routine we use the macro ``AMREX_D_TERM`` so that we can write
+dimension-independent code.  When compiled for 3D this returns the flux
+differences in all three directions, but for 2D it does not include
 the z-fluxes.
 
 
-Knowing how to resolve the solution at coarse-fine boundaries is essential in any AMR algorithm.
+Knowing how to resolve the solution at coarse-fine boundaries is essential in
+any AMR algorithm.
 
 .. code-block:: cpp
 
