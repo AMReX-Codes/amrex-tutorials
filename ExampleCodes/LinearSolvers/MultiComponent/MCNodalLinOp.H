@@ -93,7 +93,6 @@ public:
         for (int i = 0; i < mg_lev; i++) gntmp = gntmp/2;
         return gntmp;
     }
-    virtual void make (Vector<Vector<MultiFab> >& mf, int nc, IntVect const& /*ng*/) const override;
 
     // Return the number of components
     virtual int getNComp() const override final {return ncomp;}
