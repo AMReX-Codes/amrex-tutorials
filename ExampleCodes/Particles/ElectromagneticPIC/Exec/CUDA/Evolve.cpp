@@ -61,7 +61,7 @@ void evolve_electric_field(      MultiFab& Ex,       MultiFab& Ey,       MultiFa
 
         AMREX_PARALLEL_FOR_3D ( tbz, j, k, l,
         {
-            push_electric_field_y(j,k,l, Ezfab, Bxfab, Byfab, jzfab,
+            push_electric_field_z(j,k,l, Ezfab, Bxfab, Byfab, jzfab,
                                   mu_c2_dt, dtsdx, dtsdy);
         });
     }

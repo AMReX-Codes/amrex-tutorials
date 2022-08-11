@@ -87,7 +87,7 @@ void test_em_pic(const TestParams& parms)
         EMParticleContainer* electrons;
         electrons = new EMParticleContainer(geom, dm, ba,
                                                          0, -PhysConst::q_e, PhysConst::m_e);
-        electrons->InitParticles(parms.nppc, 0.01, 10.0, 1e25, real_box, parms.problem_type);
+        electrons->InitParticles(parms.nppc, 0.01, 10.0, 1e25, electron_bounds, parms.problem_type);
 
         RealBox H_ions_bounds = RealBox(AMREX_D_DECL(-20e-6, -20e-6, -20e-6),
                                         AMREX_D_DECL( 20e-6,  20e-6,  20e-6));
