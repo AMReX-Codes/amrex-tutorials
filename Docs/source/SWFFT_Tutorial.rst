@@ -14,7 +14,7 @@ This Tutorial demonstrates how to call the SWFFT wrapper to the FFTW3 solver.
 Note that the SWFFT source code was developed by Adrian Pope and colleagues and
 is available at:
 
-https://xgitlab.cels.anl.gov/hacc/SWFFT
+https://git.cels.anl.gov/hacc/SWFFT
 
 Please refer to the AMReX documentation at :ref:`amrex_docs:swfftdoc` for a brief explanation
 of how the SWFFT redistributes data into pencil grids.
