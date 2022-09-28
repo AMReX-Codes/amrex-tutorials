@@ -57,7 +57,7 @@ void main_main ()
     // determine whether boundary conditions are periodic
     Vector<int> is_periodic(AMREX_SPACEDIM,0);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        if (bc_lo[idim] == INT_DIR && bc_hi[idim] == INT_DIR) {
+        if (bc_lo[idim] == BCType::int_dir && bc_hi[idim] == BCType::int_dir) {
             is_periodic[idim] = 1;
         }
     }
@@ -118,13 +118,13 @@ void main_main ()
         {
 
             // lo-side BCs
-            if (bc_lo[idim] == INT_DIR) {
+            if (bc_lo[idim] == BCType::int_dir) {
                 bc[n].setLo(idim, BCType::int_dir);  // periodic uses "internal Dirichlet"
             }
-            else if (bc_lo[idim] == FOEXTRAP) {
+            else if (bc_lo[idim] == BCType::foextrap) {
                 bc[n].setLo(idim, BCType::foextrap); // first-order extrapolation
             }
-            else if (bc_lo[idim] == EXT_DIR) {
+            else if (bc_lo[idim] == BCType::ext_dir) {
                 bc[n].setLo(idim, BCType::ext_dir);  // external Dirichlet
             }
             else {
@@ -132,13 +132,13 @@ void main_main ()
             }
 
             // hi-side BCs
-            if (bc_hi[idim] == INT_DIR) {
+            if (bc_hi[idim] == BCType::int_dir) {
                 bc[n].setHi(idim, BCType::int_dir);  // periodic uses "internal Dirichlet"
             }
-            else if (bc_hi[idim] == FOEXTRAP) {
+            else if (bc_hi[idim] == BCType::foextrap) {
                 bc[n].setHi(idim, BCType::foextrap); // first-order extrapolation
             }
-            else if (bc_hi[idim] == EXT_DIR) {
+            else if (bc_hi[idim] == BCType::ext_dir) {
                 bc[n].setHi(idim, BCType::ext_dir);  // external Dirichlet
             }
             else {

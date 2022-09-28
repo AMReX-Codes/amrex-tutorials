@@ -1,0 +1,33 @@
+---
+
+name: PR Comment Trigger
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  comment-trigger:
+    runs-on: ubuntu-latest
+    env:
+      USER_LIST: ${{ secrets.AUTH_LIST }}
+      TRIGGER_STRING: 'Do.Tests'
+    steps:
+      - name: Initialization Notice
+        if: ${{ (github.event.comment.body == env.TRIGGER_STRING) && contains( env.USER_LIST, github.event.comment.user.login) }}
+        uses: actions/github-script@v4
+        with:
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Tests Initiated.',
+            });
+      - name: Checkout
+        if: ${{ (github.event.comment.body == env.TRIGGER_STRING) && contains( env.USER_LIST, github.event.comment.user.login) }}
+        uses: actions/checkout@v2
+      - name: Trigger GitHub Mirror
+        if: ${{ (github.event.comment.body == env.TRIGGER_STRING) && contains( env.USER_LIST, github.event.comment.user.login) }}
+        run: .github/workflows/id_most_recent_comment_on_PR.sh ${{secrets.GITLAB_TRIGGER_TOKEN}}

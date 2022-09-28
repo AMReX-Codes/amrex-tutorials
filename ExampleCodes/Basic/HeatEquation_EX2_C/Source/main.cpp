@@ -60,7 +60,7 @@ void main_main ()
 
     Vector<int> is_periodic(AMREX_SPACEDIM,0);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        if (bc_lo[idim] == INT_DIR && bc_hi[idim] == INT_DIR){
+        if (bc_lo[idim] == BCType::int_dir && bc_hi[idim] == BCType::int_dir){
             is_periodic[idim] = 1;
         }
     }
@@ -111,15 +111,15 @@ void main_main ()
         for(int idim = 0; idim < AMREX_SPACEDIM; ++idim)
         {
             //Internal Dirichlet Periodic Boundary conditions, or bc_lo = bc_hi = 0
-            if (bc_lo[idim] == INT_DIR) {
+            if (bc_lo[idim] == BCType::int_dir) {
                 bc[n].setLo(idim, BCType::int_dir);
             }
             //First Order Extrapolation for Neumann boundary conditions or bc_lo, bc_hi = 2
-            else if (bc_lo[idim] == FOEXTRAP) {
+            else if (bc_lo[idim] == BCType::foextrap) {
                 bc[n].setLo(idim, BCType::foextrap);
             }
             //External Dirichlet Boundary Condition, or bc_lo, bc_hi = 3
-            else if(bc_lo[idim] == EXT_DIR) {
+            else if(bc_lo[idim] == BCType::ext_dir) {
                 bc[n].setLo(idim, BCType::ext_dir);
             }
             else {
@@ -127,15 +127,15 @@ void main_main ()
             }
 
             //Internal Dirichlet Periodic Boundary conditions, or bc_lo = bc_hi = 0
-            if (bc_hi[idim] == INT_DIR) {
+            if (bc_hi[idim] == BCType::int_dir) {
                 bc[n].setHi(idim, BCType::int_dir);
             }
             //First Order Extrapolation for Neumann boundary conditions or bc_lo, bc_hi = 2
-            else if (bc_hi[idim] == FOEXTRAP) {
+            else if (bc_hi[idim] == BCType::foextrap) {
                 bc[n].setHi(idim, BCType::foextrap);
             }
             //External Dirichlet Boundary Condition, or bc_lo, bc_hi = 3
-            else if(bc_hi[idim] == EXT_DIR) {
+            else if(bc_hi[idim] == BCType::ext_dir) {
                 bc[n].setHi(idim, BCType::ext_dir);
             }
             else {

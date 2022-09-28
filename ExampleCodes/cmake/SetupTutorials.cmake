@@ -9,8 +9,7 @@ function (setup_tutorial _srcs  _inputs)
    if (_BASE_NAME)
       set(_base_name ${_BASE_NAME})
    else ()
-           #string(REGEX REPLACE ".*amrex-tutorials/" "" _base_name ${CMAKE_CURRENT_LIST_DIR})
-      message("Base Name: ${_base_name}")
+      #string(REGEX REPLACE ".*amrex-tutorials/" "" _base_name ${CMAKE_CURRENT_LIST_DIR})
       string(REGEX REPLACE ".*/" "" _base_name ${CMAKE_CURRENT_LIST_DIR})
       string(REPLACE "/" "_" _base_name ${_base_name})
    endif ()
@@ -26,8 +25,7 @@ function (setup_tutorial _srcs  _inputs)
 
    add_executable( ${_exe_name} )
    #HACK
-   message("Executable name: ${_exe_name}")
-
+   message("Executable Name: ${_exe_name}")
 
    target_sources( ${_exe_name} PRIVATE ${${_srcs}} )
 
@@ -55,7 +53,12 @@ function (setup_tutorial _srcs  _inputs)
          ${CMAKE_CURRENT_BINARY_DIR}/${_exe_name}_mod_files )
    endif ()
 
-   target_link_libraries( ${_exe_name} AMReX::amrex )
+   if (AMReX_SUNDIALS)
+      target_link_libraries( ${_exe_name} PUBLIC SUNDIALS::nvecmanyvector)
+      target_link_libraries( ${_exe_name} PUBLIC SUNDIALS::cvode)
+      target_link_libraries( ${_exe_name} PUBLIC SUNDIALS::arkode)
+   endif ()
+   target_link_libraries( ${_exe_name} PUBLIC AMReX::amrex )
 
    if (AMReX_CUDA)
       setup_target_for_cuda_compilation( ${_exe_name} )

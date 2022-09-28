@@ -11,7 +11,7 @@
 //     Here, `excutable` is the filename of the executable, `inputs_file` is the file containing
 //     runtime parameters used to build AMReX ParmParse database, and `parm=value` is an input
 //     parameter that will override its value in `inputs_file`.  Both `inputs_file` and
-//     `parm=value` are optional.  At most one `inputs_file` is allowed. Howeer, there can be
+//     `parm=value` are optional.  At most one `inputs_file` is allowed. However, there can be
 //     multiple `parm=value`s.
 //
 //     The parsing of the command line arguments is performed in amrex::Initialize.  Applications

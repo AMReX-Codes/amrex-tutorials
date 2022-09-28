@@ -53,8 +53,8 @@ AmrCoreAdv::AmrCoreAdv ()
 
 /*
     // walls (Neumann)
-    int bc_lo[] = {FOEXTRAP, FOEXTRAP, FOEXTRAP};
-    int bc_hi[] = {FOEXTRAP, FOEXTRAP, FOEXTRAP};
+    int bc_lo[] = {BCType::foextrap, BCType::foextrap, BCType::foextrap};
+    int bc_hi[] = {BCType::foextrap, BCType::foextrap, BCType::foextrap};
 */
 
     bcs.resize(1);     // Setup 1-component
@@ -624,7 +624,7 @@ AmrCoreAdv::timeStepNoSubcycling (Real time, int iteration)
         }
     }
 
-    DefineVelocityAllLevels(time);
+    DefineVelocityAllLevels(time+0.5_rt*dt[0]);
     AdvancePhiAllLevels (time, dt[0], iteration);
 
     // Make sure the coarser levels are consistent with the finer levels

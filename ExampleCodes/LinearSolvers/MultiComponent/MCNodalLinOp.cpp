@@ -326,7 +326,7 @@ void MCNodalLinOp::buildMasks ()
     {
         int amrlev = 0;
         int mglev = m_num_mg_levels[amrlev]-1;
-        const iMultiFab& omask = *m_owner_mask[amrlev][mglev];
+        const iMultiFab& omask = *m_owner_mask_bottom;
         m_bottom_dot_mask.define(omask.boxArray(), omask.DistributionMap(), 1, 0);
 
         const Geometry& geom = m_geom[amrlev][mglev];
@@ -796,21 +796,4 @@ MCNodalLinOp::correctionResidual (int amrlev, int mglev, MultiFab& resid, MultiF
     amrex::Geometry geom = m_geom[amrlev][mglev];
     resid.setMultiGhost(true);
     resid.FillBoundary();
-}
-
-void
-MCNodalLinOp::make (Vector<Vector<MultiFab> >& mf, int nc,IntVect const& /*ng*/) const
-{
-    mf.clear();
-    mf.resize(m_num_amr_levels);
-    for (int alev = 0; alev < m_num_amr_levels; ++alev)
-    {
-        mf[alev].resize(m_num_mg_levels[alev]);
-        for (int mlev = 0; mlev < m_num_mg_levels[alev]; ++mlev)
-        {
-            IntVect ng(getNGrow(alev,mlev));
-            const auto& ba = amrex::convert(m_grids[alev][mlev], m_ixtype);
-            mf[alev][mlev].define(ba, m_dmap[alev][mlev], nc, ng, MFInfo(), *m_factory[alev][mlev]);
-        }
-    }
 }

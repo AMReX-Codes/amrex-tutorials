@@ -1,4 +1,4 @@
-AMREX_HOME ?= ../../../../../amrex
+AMREX_HOME ?= ../../../../../../amrex
 USE_EB = FALSE
 PRECISION  = DOUBLE
 PROFILE    = FALSE
@@ -16,7 +16,8 @@ USE_PARTICLES = TRUE
 USE_MPI    = TRUE
 USE_OMP    = FALSE
 
-Bpack   := ./Make.package 
-Blocs   := . 
+Bpack   := ./Make.package
+Blocs   := .
 
 include ../Make.Adv
+

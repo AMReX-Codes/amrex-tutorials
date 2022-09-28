@@ -1,16 +1,35 @@
 #!/bin/bash -l
 #SBATCH -C gpu
-#SBATCH -t 01:00:00 
-#SBATCH -J AMReX_CNS
-#SBATCH -o AMReX_CNS.o%j
-#SBATCH -A m1759 
-#SBATCH -N 4 
-#SBATCH -c 32 
+#SBATCH -t 00:10:00
+#SBATCH -J AMReX
+#SBATCH -o AMReX.o%j
+#SBATCH -e AMReX.e%j
+#SBATCH -A mXXXX_g
+#SBATCH -N 4
+#SBATCH -c 32
 #SBATCH --ntasks-per-node=4
 #SBATCH --gpus-per-task=1
-#SBATCH --gpu-bind=single:1
+#SBATCH --gpu-bind=map_gpu:0,1,2,3
+###SBATCH --gpu-bind=single:1
 
-# ============
+EXE=./main3d.gnu.TPROF.MPI.CUDA.ex
+INPUTS=inputs
+
+# Basic job submissions:
+# =============================
+
+# Run inside the current salloc session using available resources.
+# Change parameters to match available resources & run with "./run.saul"
+# srun -n 16 --ntasks-per-node=4 --gpus-per-task=1 --gpu-bind=map_gpu:0,1,2,3 ${EXE} ${INPUTS}
+
+# Submit with the SBATCH configuration above to the gpu queue: "sbatch run.corigpu"
+# Can also be ran with "./run.corigpu" to run with 1 CPU and 1 GPU.
+srun ${EXE} ${INPUTS}
+
+
+# Overview of Slurm parameters:
+# =============================
+
 # -N =                 nodes
 # -n =                 tasks (MPI ranks, usually = G)
 # -G =                 GPUs (full Perlmutter node, 4)
@@ -22,11 +41,11 @@
 #
 # --gpu-bind=single:1  sets only one GPU to be visible to each MPI rank
 #                         (quiets AMReX init warnings)
+# --gpu-bind=map_gpu:0,1,2,3  same as above but may yield more accurate NUMA distribution
 #
-# Recommend using --ntasks-per-node=4, --gpus-per-task=1 and --gpu-bind=single:1,
+# Recommend using --ntasks-per-node=4, --gpus-per-task=1 and --gpu-bind=map_gpu:0,1,2,3
 # as they are fixed values and allow for easy scaling with less adjustments.
 #
-# ============
 # e.g.
 # For one node:  -N 1, -n 4, -c 32, --gpus-per-node=4, --ntasks-per-node=4
 # For two nodes: -N 2, -n 8, -c 32, --gpus-per-node=4, --ntasks-per-node=4
@@ -34,26 +53,9 @@
 # salloc commands:
 # ================
 # Single node:
-# salloc -N 1 --ntasks-per-node=4 -t 2:00:00 -C gpu -c 32 -G 4 -A m1759 
+# salloc -N 1 --ntasks-per-node=4 -t 2:00:00 -C gpu -c 32 -G 4 -A mXXXX_g -p interactive
 # Multi node:
-# salloc -N 2 --ntasks-per-node=4 -t 2:00:00 -C gpu -c 32 -G 8 -A m1759
-
-EXE=../WarpX/build/bin/warpx.3d.MPI.CUDA.DP.OPMD.QED
-#EXE=./main3d.gnu.TPROF.MPI.CUDA.ex
-INPUTS=inputs_small
-
-# Basic job submissions:
-# =============================
-# Run inside the current salloc session using available resources.
-# Change parameters to match available resources & run with "./run.corigpu"
-# srun -n 16 --ntasks-per-node=4 --gpus-per-task=1 --gpu-bind=single:1 ${EXE} ${INPUTS}
-
-# Submit with the SBATCH configuration above to the gpu queue: "sbatch run.corigpu"
-# Can also be ran with "./run.corigpu" to run with 1 CPU and 1 GPU.
-srun ${EXE} ${INPUTS}
-
-
-
+# salloc -N 2 --ntasks-per-node=4 -t 2:00:00 -C gpu -c 32 -G 8 -A mXXXX_g -p interactive
 
 
 # ==============================

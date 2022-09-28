@@ -55,8 +55,8 @@ AmrCoreAdv::AmrCoreAdv ()
 
     /*
     // walls (Neumann)
-    int bc_lo[] = {FOEXTRAP, FOEXTRAP, FOEXTRAP};
-    int bc_hi[] = {FOEXTRAP, FOEXTRAP, FOEXTRAP};
+    int bc_lo[] = {BCType::foextrap, BCType::foextrap, BCType::foextrap};
+    int bc_hi[] = {BCType::foextrap, BCType::foextrap, BCType::foextrap};
     */
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
