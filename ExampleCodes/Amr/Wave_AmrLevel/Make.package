@@ -1,0 +1,2 @@
+CEXE_sources += AmrWave.cpp AmrLevelWave.cpp LevelBldWave.cpp main.cpp Wave_init.cpp Wave_advance.cpp
+CEXE_headers += AmrWave.H AmrLevelWave.H
