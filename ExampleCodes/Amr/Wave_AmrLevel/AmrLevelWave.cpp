@@ -177,8 +177,6 @@ AmrLevelWave::post_timestep (int iteration)
         // Need to fill one ghost cell for the high-order interpolation below
         FillPatch(fine_level, S_fine, 1, t, State_Type, 0, ncomp);
 
-        // For simplicity, we use amrex::average_down. We could do higher order
-        // interpolation if we want.
         static_assert(AMREX_SPACEDIM == 2,
                       "AmrLevelWave::post_timestep: only 2D is implemented");
         AMREX_ALWAYS_ASSERT(parent->refRatio(Level()) == 2);
