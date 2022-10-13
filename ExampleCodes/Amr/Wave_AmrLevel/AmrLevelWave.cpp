@@ -26,13 +26,7 @@ namespace {
             // external Dirichlet BC.
             const int ilo = geom.Domain().smallEnd(0);
             const int ihi = geom.Domain().bigEnd(0);
-            int i = iv[0];
-            int j = iv[1];
-#if (AMREX_SPACEDIM == 3)
-            int k = iv[2];
-#else
-            int k = 0;
-#endif
+            const auto [i,j,k] = iv.dim3();
             if (i < ilo) {
                 dest(i,j,k,0) = -dest(2*ilo-i-1,j,k,0);
                 dest(i,j,k,1) = -dest(2*ilo-i-1,j,k,1);
