@@ -28,7 +28,11 @@ namespace {
             const int ihi = geom.Domain().bigEnd(0);
             int i = iv[0];
             int j = iv[1];
-            int k = 0; // This code is 2D.
+#if (AMREX_SPACEDIM == 3)
+            int k = iv[2];
+#else
+            int k = 0;
+#endif
             if (i < ilo) {
                 dest(i,j,k,0) = -dest(2*ilo-i-1,j,k,0);
                 dest(i,j,k,1) = -dest(2*ilo-i-1,j,k,1);
@@ -174,53 +178,14 @@ AmrLevelWave::post_timestep (int iteration)
         MultiFab& S_crse =      this->get_new_data(State_Type);
         Real t = get_state_data(State_Type).curTime();
 
-        // Need to fill one ghost cell for the high-order interpolation below
-        FillPatch(fine_level, S_fine, 1, t, State_Type, 0, ncomp);
-
-        static_assert(AMREX_SPACEDIM == 2,
-                      "AmrLevelWave::post_timestep: only 2D is implemented");
-        AMREX_ALWAYS_ASSERT(parent->refRatio(Level()) == 2);
-
-        MultiFab Stmp(amrex::coarsen(S_fine.boxArray(), parent->refRatio(Level())),
-                      S_fine.DistributionMap(), S_fine.nComp(), 0);
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        {
-            FArrayBox tmpfab;
-            for (MFIter mfi(Stmp,TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-                Box const& bx = mfi.tilebox();
-                Box tmpbx = bx;
-                tmpbx.refine(IntVect(1,2)).grow(1,1);//refine and grow in y-direction
-                tmpfab.resize(tmpbx,ncomp);
-                Elixir tmpeli = tmpfab.elixir();
-
-                // Interpolate in x-direction first
-                auto const& sf = S_fine.const_array(mfi);
-                auto const& stmp = tmpfab.array();
-                amrex::ParallelFor(tmpbx, ncomp,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) noexcept
-                {
-                    int ii = 2*i;
-                    stmp(i,j,k,n) = (1./16) * (9.*(sf(ii,j,k,n)+sf(ii+1,j,k,n))
-                                             - sf(ii-1,j,k,n) - sf(ii+2,j,k,n));
-                });
-
-                // Interpolate in y-direction
-                auto const& stmpc = tmpfab.const_array();
-                auto const& sc = Stmp.array(mfi);
-                amrex::ParallelFor(bx, ncomp,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) noexcept
-                {
-                    int jj = 2*j;
-                    sc(i,j,k,n) = (1./16) * (9.*(stmpc(i,jj,k,n)+stmpc(i,jj+1,k,n))
-                                             - stmpc(i,jj-1,k,n)-stmpc(i,jj+2,k,n));
-                });
-            }
+        IntVect ratio = parent->refRatio(Level());
+        AMREX_ASSERT(ratio == 2 || ratio == 4);
+        if (ratio == 2) {
+            // Need to fill one ghost cell for the high-order interpolation below
+            FillPatch(fine_level, S_fine, 1, t, State_Type, 0, ncomp);
         }
 
-        S_crse.ParallelCopy(Stmp);
+        FourthOrderInterpFromFineToCoarse(S_crse, 0, 2, S_fine, ratio);
     }
 
     AmrLevel::post_timestep(iteration);

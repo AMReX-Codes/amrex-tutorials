@@ -24,10 +24,12 @@ AmrLevelWave::advance (Real time, Real dt, int iteration, int ncycle)
 void
 AmrLevelWave::computeRHS (MultiFab& dSdt, MultiFab const& S)
 {
-    static_assert(AMREX_SPACEDIM == 2, "This is 2D only");
     const auto dxinv = Geom().InvCellSizeArray();
     Real dx2inv = dxinv[0]*dxinv[0];
     Real dy2inv = dxinv[1]*dxinv[1];
+#if (AMREX_SPACEDIM == 3)
+    Real dz2inv = dxinv[2]*dxinv[2];
+#endif
     auto const& sa = S.const_arrays();
     auto const& sdot = dSdt.arrays();
     amrex::ParallelFor(S,
@@ -39,7 +41,12 @@ AmrLevelWave::computeRHS (MultiFab& dSdt, MultiFab const& S)
         f(i,j,k,1) = dx2inv*(-2.5*s(i,j,k,0) + (4./3.)*(s(i-1,j,k,0)+s(i+1,j,k,0))
                              -                (1./12.)*(s(i-2,j,k,0)+s(i+2,j,k,0)))
             +        dy2inv*(-2.5*s(i,j,k,0) + (4./3.)*(s(i,j-1,k,0)+s(i,j+1,k,0))
-                             -                (1./12.)*(s(i,j-2,k,0)+s(i,j+2,k,0)));
+                             -                (1./12.)*(s(i,j-2,k,0)+s(i,j+2,k,0)))
+#if (AMREX_SPACEDIM == 3)
+            +        dz2inv*(-2.5*s(i,j,k,0) + (4./3.)*(s(i,j,k-1,0)+s(i,j,k+1,0))
+                             -                (1./12.)*(s(i,j,k-2,0)+s(i,j,k+2,0)))
+#endif
+            ;
     });
     Gpu::streamSynchronize();
 }
