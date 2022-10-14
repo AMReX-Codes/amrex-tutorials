@@ -13,7 +13,8 @@ AmrLevelWave::advance (Real time, Real dt, int iteration, int ncycle)
     }
 
     AmrLevel::RK(rk_order, State_Type, time, dt, iteration, ncycle,
-    [&] (int /*stage*/, MultiFab& dSdt, MultiFab const& S, Real /*dtsub*/)
+                 [&] (int /*stage*/, MultiFab& dSdt, MultiFab const& S,
+                      Real /*t*/, Real /*dtsub*/)
     {
         computeRHS(dSdt, S);
     });
