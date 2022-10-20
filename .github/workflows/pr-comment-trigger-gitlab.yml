@@ -27,7 +27,7 @@ jobs:
             });
       - name: Checkout
         if: ${{ (github.event.comment.body == env.TRIGGER_STRING) && contains( env.USER_LIST, github.event.comment.user.login) }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Trigger GitHub Mirror
         if: ${{ (github.event.comment.body == env.TRIGGER_STRING) && contains( env.USER_LIST, github.event.comment.user.login) }}
         run: .github/workflows/id_most_recent_comment_on_PR.sh ${{secrets.GITLAB_TRIGGER_TOKEN}}

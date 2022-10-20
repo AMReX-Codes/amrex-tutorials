@@ -8,7 +8,7 @@ jobs:
     name: MSVC C++17 w/o Fortran w/o MPI
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build & Install
       run: |
         cd ExampleCodes
@@ -28,7 +28,7 @@ jobs:
     name: Clang C++17 w/o Fortran w/o MPI
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Build & Install
       shell: cmd
