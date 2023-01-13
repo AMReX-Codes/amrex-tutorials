@@ -34,22 +34,16 @@ void test_em_pic(const TestParams& parms)
 
     BL_PROFILE_VAR_START(blp_init);
 
-    RealBox real_box;
-    for (int n = 0; n < BL_SPACEDIM; n++)
-    {
-        real_box.setLo(n, -20e-6);
-        real_box.setHi(n,  20e-6);
-    }
+    RealBox real_box({AMREX_D_DECL(-20e-6, -20e-6, -20e-6)},
+                     {AMREX_D_DECL( 20e-6,  20e-6,  20e-6)});
 
     IntVect domain_lo(AMREX_D_DECL(0, 0, 0));
     IntVect domain_hi(AMREX_D_DECL(parms.ncell[0]-1,parms.ncell[1]-1,parms.ncell[2]-1));
     const Box domain(domain_lo, domain_hi);
 
     int coord = 0;
-    int is_per[BL_SPACEDIM];
-    for (int i = 0; i < BL_SPACEDIM; i++)
-        is_per[i] = 1;
-    Geometry geom(domain, &real_box, coord, is_per);
+    IntArray is_periodic {AMREX_D_DECL(1,1,1)};
+    Geometry geom(domain, real_box, coord, is_periodic);
 
     BoxArray ba(domain);
     ba.maxSize(parms.max_grid_size);
@@ -82,19 +76,14 @@ void test_em_pic(const TestParams& parms)
     {
         num_species = 2;
 
-        RealBox electron_bounds = RealBox(AMREX_D_DECL(-20e-6, -20e-6, -20e-6),
-                                          AMREX_D_DECL( 20e-6, 20e-6, 20e-6));
         EMParticleContainer* electrons;
-        electrons = new EMParticleContainer(geom, dm, ba,
-                                                         0, -PhysConst::q_e, PhysConst::m_e);
-        electrons->InitParticles(parms.nppc, 0.01, 10.0, 1e25, electron_bounds, parms.problem_type);
-
-        RealBox H_ions_bounds = RealBox(AMREX_D_DECL(-20e-6, -20e-6, -20e-6),
-                                        AMREX_D_DECL( 20e-6,  20e-6,  20e-6));
         EMParticleContainer* H_ions;
-        H_ions = new EMParticleContainer(geom, dm, ba,
-                                                      1, PhysConst::q_e, PhysConst::m_p);
-        H_ions->InitParticles(parms.nppc, 0.01, 10.0, 1e25, H_ions_bounds, parms.problem_type);
+
+        electrons = new EMParticleContainer(geom, dm, ba, 0, -PhysConst::q_e, PhysConst::m_e);
+        H_ions    = new EMParticleContainer(geom, dm, ba, 1,  PhysConst::q_e, PhysConst::m_p);
+
+        electrons->InitParticles(parms.nppc, 0.01, 10.0, 1e25, real_box, parms.problem_type);
+        H_ions   ->InitParticles(parms.nppc, 0.01, 10.0, 1e25, real_box, parms.problem_type);
 
         particles[0].reset(electrons);
         particles[1].reset(H_ions);
@@ -103,12 +92,11 @@ void test_em_pic(const TestParams& parms)
     {
         num_species = 1;
 
-        RealBox electron_bounds = RealBox(AMREX_D_DECL(-20e-6, -20e-6, -20e-6),
-                                          AMREX_D_DECL( 0.0,    20e-6,  20e-6));
         EMParticleContainer* electrons;
-        electrons = new EMParticleContainer(geom, dm, ba,
-                                                         0, -PhysConst::q_e, PhysConst::m_e);
-        electrons->InitParticles(parms.nppc, 0.01, 10.0, 1e25, electron_bounds, parms.problem_type);
+
+        electrons = new EMParticleContainer(geom, dm, ba, 0, -PhysConst::q_e, PhysConst::m_e);
+
+        electrons->InitParticles(parms.nppc, 0.01, 10.0, 1e25, real_box, parms.problem_type);
 
         particles[0].reset(electrons);
     }

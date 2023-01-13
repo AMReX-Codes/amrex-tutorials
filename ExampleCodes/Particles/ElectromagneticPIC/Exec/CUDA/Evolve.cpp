@@ -128,8 +128,6 @@ void check_solution(const MultiFab& jx, const Geometry& geom, Real time)
 {
     BL_PROFILE("check_solution");
 
-    const Real* dx = geom.CellSize();
-
     Box test_box = geom.Domain();
     test_box.setSmall(IntVect(AMREX_D_DECL(2, 2, 2)));
     test_box.setBig(IntVect(AMREX_D_DECL(30, 30, 30)));
