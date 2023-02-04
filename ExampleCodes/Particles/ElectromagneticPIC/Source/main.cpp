@@ -167,7 +167,7 @@ void test_em_pic(const TestParams& parms)
 
         if (parms.problem_type == Langmuir)
         {
-            check_solution(jx, geom, time);
+            check_solution(jx, geom, time - 0.5*dt);
         } else
         {
             amrex::Print() << "Not computing error - no exact solution" << std::endl;
