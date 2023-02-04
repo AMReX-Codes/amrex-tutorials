@@ -308,7 +308,7 @@ check_langmuir_solution (amrex::Box const& bx, amrex::Box const& test_box,
     amrex::Real error = 0.0;
 
     const amrex::Box b = bx & test_box;
-    amrex::Loop(bx, [=,&error] (int j, int k, int l) noexcept
+    amrex::Loop(b, [=,&error] (int j, int k, int l) noexcept
     {
         error = amrex::max(error, std::abs((jx(j,k,l) - j_exact) / j_exact));
     });
