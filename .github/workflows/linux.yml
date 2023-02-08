@@ -30,7 +30,7 @@ jobs:
 
   # Build all tutorials
   tutorials_cxx20:
-    name: GNU@10.1 C++20 OMP [tutorials]
+    name: GNU@10.3 C++20 OMP [tutorials]
     runs-on: ubuntu-18.04
     env: {CXXFLAGS: "-Werror -Wno-error=deprecated-declarations -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:

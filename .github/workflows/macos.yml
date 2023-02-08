@@ -8,7 +8,7 @@ env:
 jobs:
   # Build all tutorials
   tests-macos:
-    name: AppleClang@11.0 GFortran@9.3 [tutorials]
+    name: AppleClang@14.0 GFortran@12.2 [tutorials]
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
