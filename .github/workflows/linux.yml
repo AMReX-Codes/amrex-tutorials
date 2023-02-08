@@ -135,38 +135,6 @@ jobs:
             -DAMReX_FORTRAN=OFF
         make -j 2
 
-  # Build all tutorials with CUDA 10.2
-  tutorials-cuda10:
-    name: CUDA@10.2 GNU@6.5.0 C++14 Release [tutorials]
-    runs-on: ubuntu-18.04
-    env: {CXXFLAGS: "-fno-operator-names"}
-    steps:
-    - uses: actions/checkout@v3
-    - name: Dependencies
-      run: .github/workflows/dependencies/dependencies_nvcc10.sh
-    - name: Build & Install
-      run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
-        which nvcc || echo "nvcc not in PATH!"
-        cd ExampleCodes
-        mkdir build
-        cd build
-        cmake ..                                           \
-            -DCMAKE_VERBOSE_MAKEFILE=ON                    \
-            -DAMReX_LINEAR_SOLVERS=ON     \
-            -DAMReX_FORTRAN=ON          \
-            -DAMReX_FORTRAN_INTERFACES=ON \
-            -DAMReX_PARTICLES=ON                           \
-            -DAMReX_GPU_BACKEND=CUDA                       \
-            -DCMAKE_C_COMPILER=$(which gcc-6)              \
-            -DCMAKE_CXX_COMPILER=$(which g++-6)            \
-            -DCMAKE_CUDA_HOST_COMPILER=$(which g++-6)      \
-            -DCMAKE_Fortran_COMPILER=$(which gfortran-6)   \
-            -DAMReX_CUDA_ARCH=7.0 \
-            -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON
-        make -j 2
-
   # Build all tutorials with CUDA 11.0.2 (recent supported)
   tutorials-cuda11:
     name: CUDA@11.2 GNU@9.3.0 C++17 Release [tutorials]
