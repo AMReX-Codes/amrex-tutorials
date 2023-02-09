@@ -9,4 +9,6 @@ problem_type = Langmuir #has exact solution, good for checking accuracy
 
 nsteps = 10
 
+cfl = 1.0
+
 write_plot = false
