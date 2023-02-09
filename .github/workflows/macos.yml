@@ -8,7 +8,7 @@ env:
 jobs:
   # Build all tutorials
   tests-macos:
-    name: AppleClang@11.0 GFortran@9.3 [tutorials]
+    name: AppleClang@14.0 GFortran@12.2 [tutorials]
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
@@ -16,6 +16,8 @@ jobs:
       run: .github/workflows/dependencies/dependencies_mac.sh
     - name: Build & Install
       run: |
+        export LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/current
+
         cd ExampleCodes
         cmake -S . -B build             \
             -DBUILD_SHARED_LIBS=ON      \
