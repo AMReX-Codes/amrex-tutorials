@@ -169,15 +169,17 @@ void test_em_pic(const TestParams& parms)
         if (parms.problem_type == Langmuir)
         {
             check_solution(jx, geom, time - 0.5*dt);
-        } else
-        {
-            amrex::Print() << "Not computing error - no exact solution" << std::endl;
         }
     }
 
     amrex::Print() << "Done. " << std::endl;
 
     BL_PROFILE_VAR_STOP(blp_evolve);
+
+    if (parms.problem_type == UniformPlasma)
+    {
+        amrex::Print() << "Not computing error - no exact solution" << std::endl;
+    }
 
     if (parms.write_plot)
     {
