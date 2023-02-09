@@ -19,6 +19,7 @@ struct TestParams
     int max_grid_size;
     int nsteps;
     int problem_type;
+    Real cfl;
     bool write_plot;
 };
 
@@ -108,7 +109,7 @@ void test_em_pic(const TestParams& parms)
     amrex::Print() << "Starting main PIC loop... " << std::endl;
 
     int nsteps = parms.nsteps;
-    const Real dt = compute_dt(geom);
+    const Real dt = compute_dt(geom, parms.cfl);
     bool synchronized = true;
 
     BL_PROFILE_VAR_STOP(blp_init);
@@ -168,15 +169,17 @@ void test_em_pic(const TestParams& parms)
         if (parms.problem_type == Langmuir)
         {
             check_solution(jx, geom, time - 0.5*dt);
-        } else
-        {
-            amrex::Print() << "Not computing error - no exact solution" << std::endl;
         }
     }
 
     amrex::Print() << "Done. " << std::endl;
 
     BL_PROFILE_VAR_STOP(blp_evolve);
+
+    if (parms.problem_type == UniformPlasma)
+    {
+        amrex::Print() << "Not computing error - no exact solution" << std::endl;
+    }
 
     if (parms.write_plot)
     {
@@ -200,6 +203,7 @@ int main(int argc, char* argv[])
     pp.get("max_grid_size", parms.max_grid_size);
     pp.get("nsteps", parms.nsteps);
     pp.get("write_plot", parms.write_plot);
+    pp.get("cfl", parms.cfl);
 
     std::string problem_name;
     pp.get("problem_type", problem_name);

@@ -6,7 +6,7 @@
 #include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
 
-amrex::Real compute_dt(const amrex::Geometry& geom);
+amrex::Real compute_dt(const amrex::Geometry& geom, const amrex::Real& cfl);
 
 void evolve_electric_field(amrex::MultiFab& Ex, amrex::MultiFab& Ey, amrex::MultiFab& Ez,
                            const amrex::MultiFab& Bx,
