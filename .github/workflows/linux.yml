@@ -7,7 +7,7 @@ jobs:
   # Build all tutorials
   tutorials_build:
     name: GNU@7.5 C++14 [tutorials]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v3
@@ -31,7 +31,7 @@ jobs:
   # Build all tutorials
   tutorials_cxx20:
     name: GNU@10.3 C++20 OMP [tutorials]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env: {CXXFLAGS: "-Werror -Wno-error=deprecated-declarations -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v3
@@ -59,7 +59,7 @@ jobs:
 
   tutorials_clang:
     name: Clang@6.0 C++14 SP Particles DP Mesh Debug [tutorials]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v3
@@ -90,7 +90,7 @@ jobs:
   # Build all tutorials w/o MPI
   tutorials-nonmpi:
     name: GNU@7.5 C++14 NOMPI [tutorials]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v3
@@ -115,7 +115,7 @@ jobs:
   # Build all tutorials
   tutorials-nofortran:
     name: GNU@7.5 C++14 w/o Fortran [tutorials]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v3
