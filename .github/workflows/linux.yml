@@ -195,9 +195,9 @@ jobs:
             -DAMReX_EB=ON                 \
             -DAMReX_PARTICLES=ON                           \
             -DAMReX_GPU_BACKEND=SYCL                       \
-            -DCMAKE_C_COMPILER=$(which clang)              \
-            -DCMAKE_CXX_COMPILER=$(which dpcpp)            \
-            -DCMAKE_Fortran_COMPILER=$(which gfortran)
+            -DCMAKE_C_COMPILER=$(which icx)                \
+            -DCMAKE_CXX_COMPILER=$(which icpx)             \
+            -DCMAKE_Fortran_COMPILER=$(which ifx)
         cmake --build build --parallel 2
     # note: setting the CXX compiler ID is a work-around for
     # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
