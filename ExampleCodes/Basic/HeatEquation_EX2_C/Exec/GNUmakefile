@@ -9,7 +9,7 @@ DIM       = 3
 
 USE_CUDA  = FALSE
 USE_HIP   = FALSE
-USE_DPCPP = FALSE
+USE_SYCL  = FALSE
 
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs

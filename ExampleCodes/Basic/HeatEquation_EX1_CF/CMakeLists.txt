@@ -21,7 +21,7 @@ unset( _input_files  )
 
 
 
-# if ( (NOT AMReX_CUDA) AND (NOT AMReX_DPCPP) )
+# if ( (NOT AMReX_CUDA) AND (NOT AMReX_SYCL) )
 
 #    add_custom_target( run_${EXENAME}
 #       COMMAND
