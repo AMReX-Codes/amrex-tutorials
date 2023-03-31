@@ -110,7 +110,6 @@ void test_em_pic(const TestParams& parms)
 
     int nsteps = parms.nsteps;
     const Real dt = compute_dt(geom, parms.cfl);
-    bool synchronized = true;
 
     BL_PROFILE_VAR_STOP(blp_init);
 
@@ -121,23 +120,9 @@ void test_em_pic(const TestParams& parms)
     {
         amrex::Print() << "    Time step: " <<  step << std::endl;
 
-        if (synchronized)
-        {
-            for (int i = 0; i < num_species; ++i)
-            {
-                particles[i]->PushParticleMomenta(Ex, Ey, Ez, Bx, By, Bz, -0.5*dt);
-            }
-            synchronized = false;
-        }
-        else
-        {
-            fill_boundary_electric_field(Ex, Ey, Ez, geom);
-            evolve_magnetic_field(Ex, Ey, Ez, Bx, By, Bz, geom, 0.5*dt);
-            fill_boundary_magnetic_field(Bx, By, Bz, geom);
-        }
-
         jx.setVal(0.0); jy.setVal(0.0), jz.setVal(0.0);
-        for (int i = 0; i < num_species; ++i) {
+        for (int i = 0; i < num_species; ++i)
+        {
             particles[i]->PushAndDeposeParticles(Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, dt);
         }
         jx.SumBoundary(geom.periodicity());
@@ -148,16 +133,10 @@ void test_em_pic(const TestParams& parms)
         fill_boundary_magnetic_field(Bx, By, Bz, geom);
 
         evolve_electric_field(Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, geom, dt);
+        fill_boundary_electric_field(Ex, Ey, Ez, geom);
 
-        if (step == nsteps - 1)
-        {
-            evolve_magnetic_field(Ex, Ey, Ez, Bx, By, Bz, geom, 0.5*dt);
-            for (int i = 0; i < num_species; ++i)
-            {
-                particles[i]->PushParticleMomenta(Ex, Ey, Ez, Bx, By, Bz, 0.5*dt);
-            }
-            synchronized = true;
-        }
+        evolve_magnetic_field(Ex, Ey, Ez, Bx, By, Bz, geom, 0.5*dt);
+        fill_boundary_magnetic_field(Bx, By, Bz, geom);
 
         for (int i = 0; i < num_species; ++i)
         {
@@ -170,6 +149,12 @@ void test_em_pic(const TestParams& parms)
         {
             check_solution(jx, geom, time - 0.5*dt);
         }
+    }
+
+    jx.setVal(0.0); jy.setVal(0.0), jz.setVal(0.0);
+    for (int i = 0; i < num_species; ++i)
+    {
+        particles[i]->PushAndDeposeParticles(Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, 0.5*dt);
     }
 
     amrex::Print() << "Done. " << std::endl;
