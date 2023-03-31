@@ -2,6 +2,7 @@
 #include <AMReX_PlotFileUtil.H>
 
 #include "IO.H"
+#include "EMParticleContainer.H"
 
 using namespace amrex;
 
@@ -60,4 +61,17 @@ WritePlotFile (const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
     dcomp += 3;
 
     amrex::WriteSingleLevelPlotfile(plotfilename, mf, varnames, geom, time, step);
+}
+
+void
+WriteParticleFile (const EMParticleContainer& PC, const std::string& name, int step)
+{
+    BL_PROFILE("WriteParticleFile()");
+
+    Vector<int> real_comp_mask(PIdx::nattribs, 0);
+    Vector<int> int_comp_mask{};
+
+    const std::string& plotdirectory = Concatenate("plt", step);
+
+    PC.WritePlotFile(plotdirectory, name, real_comp_mask, int_comp_mask);
 }

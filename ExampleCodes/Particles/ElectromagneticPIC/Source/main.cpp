@@ -21,6 +21,7 @@ struct TestParams
     int problem_type;
     Real cfl;
     bool write_plot;
+    bool write_particles;
 };
 
 enum ProblemType {UniformPlasma = 0, Langmuir};
@@ -78,16 +79,16 @@ void test_em_pic(const TestParams& parms)
         num_species = 2;
 
         EMParticleContainer* electrons;
-        EMParticleContainer* H_ions;
+        EMParticleContainer* protons;
 
         electrons = new EMParticleContainer(geom, dm, ba, 0, -PhysConst::q_e, PhysConst::m_e);
-        H_ions    = new EMParticleContainer(geom, dm, ba, 1,  PhysConst::q_e, PhysConst::m_p);
+        protons   = new EMParticleContainer(geom, dm, ba, 1,  PhysConst::q_e, PhysConst::m_p);
 
         electrons->InitParticles(parms.nppc, 0.01, 10.0, 1e25, real_box, parms.problem_type);
-        H_ions   ->InitParticles(parms.nppc, 0.01, 10.0, 1e25, real_box, parms.problem_type);
+        protons  ->InitParticles(parms.nppc, 0.01, 10.0, 1e25, real_box, parms.problem_type);
 
         particles[0].reset(electrons);
-        particles[1].reset(H_ions);
+        particles[1].reset(protons);
     }
     else if (parms.problem_type == Langmuir)
     {
@@ -184,6 +185,18 @@ void test_em_pic(const TestParams& parms)
     if (parms.write_plot)
     {
         WritePlotFile(Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, geom, time, nsteps);
+        if (parms.write_particles)
+        {
+            if (parms.problem_type == UniformPlasma)
+            {
+                WriteParticleFile(*particles[0], "electrons", nsteps);
+                WriteParticleFile(*particles[1], "protons",   nsteps);
+            }
+            else if (parms.problem_type == Langmuir)
+            {
+                WriteParticleFile(*particles[0], "electrons", nsteps);
+            }
+        }
     }
 }
 
@@ -203,6 +216,7 @@ int main(int argc, char* argv[])
     pp.get("max_grid_size", parms.max_grid_size);
     pp.get("nsteps", parms.nsteps);
     pp.get("write_plot", parms.write_plot);
+    pp.get("write_particles", parms.write_particles);
     pp.get("cfl", parms.cfl);
 
     std::string problem_name;
