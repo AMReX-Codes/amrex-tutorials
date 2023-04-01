@@ -184,9 +184,9 @@ void test_em_pic(const TestParams& parms)
 
     if (parms.write_plot)
     {
-        WritePlotFile(Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, geom, time, nsteps);
         if (parms.write_particles)
         {
+            WritePlotFile(Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, geom, nsteps, nsteps);
             if (parms.problem_type == UniformPlasma)
             {
                 WriteParticleFile(*particles[0], "electrons", nsteps);
@@ -196,6 +196,10 @@ void test_em_pic(const TestParams& parms)
             {
                 WriteParticleFile(*particles[0], "electrons", nsteps);
             }
+        }
+        else
+        {
+            WritePlotFile(Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, geom, time, nsteps);
         }
     }
 }
