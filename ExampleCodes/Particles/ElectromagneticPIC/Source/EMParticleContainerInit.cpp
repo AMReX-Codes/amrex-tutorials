@@ -171,7 +171,7 @@ InitParticles(const IntVect& a_num_particles_per_cell,
                     z >= a_bounds.hi(2) || z < a_bounds.lo(2) ) continue;
 
                 ParticleType& p = pstruct[pidx];
-                p.id()   = 0;
+                p.id()   = pidx + 1;
                 p.cpu()  = procID;
                 p.pos(0) = x;
                 p.pos(1) = y;
