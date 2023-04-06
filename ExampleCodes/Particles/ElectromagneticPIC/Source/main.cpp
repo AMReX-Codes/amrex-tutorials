@@ -126,6 +126,7 @@ void test_em_pic(const TestParams& parms)
         {
             for (int i = 0; i < num_species; ++i)
             {
+                // u(time/dt = -0.5). For readability only since fields null.
                 particles[i]->PushParticleMomenta(Ex, Ey, Ez, Bx, By, Bz, -0.5*dt);
             }
             synchronized = false;
@@ -133,28 +134,34 @@ void test_em_pic(const TestParams& parms)
         else
         {
             fill_boundary_electric_field(Ex, Ey, Ez, geom);
+            // B(time/dt = step).
             evolve_magnetic_field(Ex, Ey, Ez, Bx, By, Bz, geom, 0.5*dt);
             fill_boundary_magnetic_field(Bx, By, Bz, geom);
         }
 
         jx.setVal(0.0); jy.setVal(0.0), jz.setVal(0.0);
         for (int i = 0; i < num_species; ++i) {
+            // u(time/dt = step + 0.5). x(time/dt = step + 1). j(time/dt = step + 0.5).
             particles[i]->PushAndDeposeParticles(Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, dt);
         }
         jx.SumBoundary(geom.periodicity());
         jy.SumBoundary(geom.periodicity());
         jz.SumBoundary(geom.periodicity());
 
+        // B(time/dt = step + 0.5).
         evolve_magnetic_field(Ex, Ey, Ez, Bx, By, Bz, geom, 0.5*dt);
         fill_boundary_magnetic_field(Bx, By, Bz, geom);
 
+        // E(time/dt = step + 1).
         evolve_electric_field(Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, geom, dt);
 
         if (step == nsteps - 1)
         {
+            // B(time/dt = step + 1).
             evolve_magnetic_field(Ex, Ey, Ez, Bx, By, Bz, geom, 0.5*dt);
             for (int i = 0; i < num_species; ++i)
             {
+                // u(time/dt = step + 1).
                 particles[i]->PushParticleMomenta(Ex, Ey, Ez, Bx, By, Bz, 0.5*dt);
             }
             synchronized = true;
@@ -165,12 +172,12 @@ void test_em_pic(const TestParams& parms)
             particles[i]->RedistributeLocal();
         }
 
-        time += dt;
-
         if (parms.problem_type == Langmuir)
         {
-            check_solution(jx, geom, time - 0.5*dt);
+            check_solution(jx, geom, time + 0.5*dt);
         }
+
+        time += dt;
     }
 
     amrex::Print() << "Done. " << std::endl;
@@ -186,15 +193,21 @@ void test_em_pic(const TestParams& parms)
     {
         if (parms.write_particles)
         {
-            WritePlotFile(Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, geom, nsteps, nsteps);
+            // Since, with ParaView, the particle file will be indexed over
+            // the naturals, starting from zero, we do the same with the mesh
+            // data. This is useful when the user executes the code in
+            // succession with nsteps = 1, 2, 3, 4, 5... and wishes to
+            // visualise the fields in tandem with the particles.
+            // Note that the current is half a step behind.
+            WritePlotFile(Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, geom, nsteps - 1, nsteps - 1);
             if (parms.problem_type == UniformPlasma)
             {
-                WriteParticleFile(*particles[0], "electrons", nsteps);
-                WriteParticleFile(*particles[1], "protons",   nsteps);
+                WriteParticleFile(*particles[0], "electrons", nsteps - 1);
+                WriteParticleFile(*particles[1], "protons",   nsteps - 1);
             }
             else if (parms.problem_type == Langmuir)
             {
-                WriteParticleFile(*particles[0], "electrons", nsteps);
+                WriteParticleFile(*particles[0], "electrons", nsteps - 1);
             }
         }
         else
