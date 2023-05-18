@@ -1,0 +1,33 @@
+ESPIC_DIR  ?= ../../ElectrostaticPIC
+
+TOP := $(ESPIC_DIR)
+
+EBASE := main
+
+include $(AMREX_HOME)/Tools/GNUMake/Make.defs
+
+include $(TOP)/src/Make.package
+INCLUDE_LOCATIONS += $(TOP)/src
+VPATH_LOCATIONS   += $(TOP)/src
+
+include $(TOP)/src/diagnostics/Make.package
+INCLUDE_LOCATIONS += $(TOP)/src/diagnostics
+VPATH_LOCATIONS   += $(TOP)/src/diagnostics
+
+include $(TOP)/src/field_solver/Make.package
+INCLUDE_LOCATIONS += $(TOP)/src/field_solver
+VPATH_LOCATIONS   += $(TOP)/src/field_solver
+
+include $(TOP)/src/particles/Make.package
+INCLUDE_LOCATIONS += $(TOP)/src/particles
+VPATH_LOCATIONS   += $(TOP)/src/particles
+
+Pdirs             := Base Boundary Particle AmrCore LinearSolvers/MLMG
+Ppack             += $(foreach dir, $(Pdirs), $(AMREX_HOME)/Src/$(dir)/Make.package)
+
+include $(Ppack)
+
+all: $(executable)
+	@echo SUCCESS
+
+include $(AMREX_HOME)/Tools/GNUMake/Make.rules

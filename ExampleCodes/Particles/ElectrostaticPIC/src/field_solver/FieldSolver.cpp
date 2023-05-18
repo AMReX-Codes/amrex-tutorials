@@ -2,13 +2,13 @@
 #define PARTICLE_PUSHER_H_
 
 #include "field_solver/FieldSolver.H"
+#include "field_solver/FieldSolver_K.H"
 
 #include <AMReX_FillPatchUtil.H>
 #include <AMReX_InterpBndryData.H>
 #include <AMReX_Interpolater.H>
 #include <AMReX_MLNodeLaplacian.H>
 #include <AMReX_MLMG.H>
-#include <AMReX_MacBndry.H>
 #include <AMReX_PhysBCFunct.H>
 
 using namespace amrex;

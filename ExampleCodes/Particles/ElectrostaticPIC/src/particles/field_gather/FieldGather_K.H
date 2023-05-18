@@ -1,5 +1,5 @@
 #ifndef INTERPOLATION_K_H_
-#define INTERPOLATION_K_H
+#define INTERPOLATION_K_H_
 
 #include <AMReX_Array.H>
 #include <AMReX_IntVect.H>
