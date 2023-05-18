@@ -22,7 +22,7 @@ class MyParIter
 {
 public:
     using amrex::ParIter<0, 0, PIdx::nattribs>::ParIter;
-    using RealVector = ParIter::ContainerType::RealVector;
+    using RealVector = amrex::ParIter<0, 0, PIdx::nattribs>::ContainerType::RealVector;
 
     const std::array<RealVector, PIdx::nattribs>& GetAttribs () const {
         return GetStructOfArrays().GetRealData();

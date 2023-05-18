@@ -1,8 +1,6 @@
 #ifndef FIELD_SOLVER_H_
 #define FIELD_SOLVER_H_
 
-#include "FieldSolver_K.H"
-
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_iMultiFab.H>
