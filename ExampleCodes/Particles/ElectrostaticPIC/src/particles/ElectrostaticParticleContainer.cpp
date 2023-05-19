@@ -68,7 +68,7 @@ ElectrostaticParticleContainer::DepositCharge (const Vector<MultiFab*>& rho) {
                                    });
         }
 
-        rho[lev]->SumBoundary(gm.periodicity());
+        rho[lev]->SumBoundary(0, 1, IntVect(1), gm.periodicity());
     }
 
     // now we average down fine to crse

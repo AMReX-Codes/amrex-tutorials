@@ -119,14 +119,19 @@ void sumFineToCrseNodal (const MultiFab& fine, MultiFab& crse,
     coarsened_fine_BA.coarsen(ratio);
 
     MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, 1, 0);
-    coarsened_fine_data.setVal(0.0);
+    auto mask = OwnerMask(coarsened_fine_data, cgeom.periodicity());
 
     for (MFIter mfi(coarsened_fine_data); mfi.isValid(); ++mfi) {
         const Box& bx = mfi.validbox();
         auto crse_data = coarsened_fine_data[mfi].array();
         const auto fine_data = fine[mfi].array();
+	const auto mskfab = mask->const_array(mfi);
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-                                   sum_fine_to_crse_nodal(i, j, k, crse_data, fine_data, ratio);
+                                   if (mskfab(i,j,k)) {
+                                       sum_fine_to_crse_nodal(i, j, k, crse_data, fine_data, ratio);
+                                   } else {
+                                       crse_data(i,j,k) = Real(0.0);
+                                   }
                                });
     }
 
