@@ -125,7 +125,7 @@ void sumFineToCrseNodal (const MultiFab& fine, MultiFab& crse,
         const Box& bx = mfi.validbox();
         auto crse_data = coarsened_fine_data[mfi].array();
         const auto fine_data = fine[mfi].array();
-	const auto mskfab = mask->const_array(mfi);
+    const auto mskfab = mask->const_array(mfi);
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
                                    if (mskfab(i,j,k)) {
                                        sum_fine_to_crse_nodal(i, j, k, crse_data, fine_data, ratio);
