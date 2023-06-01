@@ -3,7 +3,6 @@
 #include <AMReX_Print.H>
 
 #include "myfunc.H"
-//#include "myfunc_F.H"  // includes advance.cpp
 
 using namespace amrex;
 
