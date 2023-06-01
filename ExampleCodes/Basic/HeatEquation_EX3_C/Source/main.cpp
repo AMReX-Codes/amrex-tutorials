@@ -1,10 +1,9 @@
-
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
 #include "myfunc.H"
-#include "myfunc_F.H"  // includes advance.cpp
+//#include "myfunc_F.H"  // includes advance.cpp
 
 using namespace amrex;
 
@@ -99,16 +98,9 @@ void main_main ()
     MultiFab phi_old(ba, dm, Ncomp, Nghost);
     MultiFab phi_new(ba, dm, Ncomp, Nghost);
 
-    // Initialize phi_new by calling a Fortran routine.
-    // MFIter = MultiFab Iterator
-    for ( MFIter mfi(phi_new); mfi.isValid(); ++mfi )
-    {
-        const Box& bx = mfi.validbox();
+    GpuArray<Real, AMREX_SPACEDIM> dx = geom.CellSizeArray();
 
-        init_phi(BL_TO_FORTRAN_BOX(bx),
-                 BL_TO_FORTRAN_ANYD(phi_new[mfi]),
-                 geom.CellSize(), geom.ProbLo(), geom.ProbHi());
-    }
+    init_phi(phi_new, geom);
 
     // Set up BCRec; see Src/Base/AMReX_BC_TYPES.H for supported types
     Vector<BCRec> bc(phi_old.nComp());
@@ -150,7 +142,7 @@ void main_main ()
 
     // Compute the time step
     // Implicit time step is imFactor*(explicit time step)
-    const Real* dx = geom.CellSize();
+    //const Real* dx = geom.CellSize();
     Real cfl = 0.9;
     Real coeff = AMREX_D_TERM(   1./(dx[0]*dx[0]),
                                + 1./(dx[1]*dx[1]),

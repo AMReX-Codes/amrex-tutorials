@@ -16,4 +16,7 @@ void advance (amrex::MultiFab& phi_old,
               const amrex::DistributionMapping& dmap,
               const amrex::Vector<amrex::BCRec>& bc);
 
+void init_phi (amrex::MultiFab& phi_new,
+               amrex::Geometry const& geom);
+
 #endif

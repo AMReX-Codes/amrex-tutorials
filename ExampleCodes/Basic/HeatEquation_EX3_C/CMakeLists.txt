@@ -1,9 +1,5 @@
-if ( NOT CMAKE_Fortran_COMPILER_LOADED OR (AMReX_SPACEDIM EQUAL 1))
-   return()
-endif ()
-
 # List of source files
-set(_sources main.cpp advance.cpp myfunc_F.H myfunc.H init_phi_${AMReX_SPACEDIM}d.f90)
+set(_sources main.cpp advance.cpp init_phi.cpp myfunc.H mykernel.H)
 list(TRANSFORM _sources PREPEND "Source/")
 
 # List of input files

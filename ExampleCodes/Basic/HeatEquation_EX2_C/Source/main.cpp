@@ -58,6 +58,11 @@ void main_main ()
         pp.queryarr("bc_hi", bc_hi);
     }
 
+    // ttnguyen2:
+    //      After parsing the parameters, the lines 65-70 do the following:
+    //      First, a vector 'is_periodic' is created based on the spatial dimensions, initially assigned a value 0;
+    //      Then, a for loop checks the value of both 'bc_lo' and 'bc_hi' arrays and compare with 'int_dir' (implies periodic)
+    //      If true, 'is_periodic' value is changed to 1, reflecting the periodic boundary
     Vector<int> is_periodic(AMREX_SPACEDIM,0);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         if (bc_lo[idim] == BCType::int_dir && bc_hi[idim] == BCType::int_dir){
