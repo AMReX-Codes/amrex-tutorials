@@ -141,7 +141,6 @@ void main_main ()
 
     // Compute the time step
     // Implicit time step is imFactor*(explicit time step)
-    //const Real* dx = geom.CellSize();
     Real cfl = 0.9;
     Real coeff = AMREX_D_TERM(   1./(dx[0]*dx[0]),
                                + 1./(dx[1]*dx[1]),
