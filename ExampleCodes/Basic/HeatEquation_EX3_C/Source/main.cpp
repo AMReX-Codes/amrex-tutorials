@@ -159,6 +159,7 @@ void main_main ()
 
     for (int n = 1; n <= nsteps; ++n)
     {
+        // copying new solution into the old
         MultiFab::Copy(phi_old, phi_new, 0, 0, 1, 0);
 
         // new_phi = (I-dt)^{-1} * old_phi + dt
