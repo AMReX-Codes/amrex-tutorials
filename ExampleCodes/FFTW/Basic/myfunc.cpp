@@ -11,7 +11,7 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
     For any cells with i index >= Nx/2, these values are complex conjugates of the corresponding
     entry where (Nx-i,Ny-j,Nz-k) UNLESS that index is zero, in which case you use 0.
 
-    e.g. for an 8^3 domain, any cell with i index 
+    e.g. for an 8^3 domain, any cell with i index
 
     Cell (6,2,3) is complex conjugate of (2,6,5)
 
@@ -58,7 +58,7 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
 #endif
       dft(ip,jp,kp) = dft_temp(i,j,k);
     });
-    
+
   }
-  
+
 }

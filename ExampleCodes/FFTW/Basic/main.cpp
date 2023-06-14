@@ -294,7 +294,7 @@ int main (int argc, char* argv[])
 
     // shift data
     ShiftFFT(phi_dft_real_onegrid,geom,zero_avg);
-    ShiftFFT(phi_dft_imag_onegrid,geom,zero_avg);    
+    ShiftFFT(phi_dft_imag_onegrid,geom,zero_avg);
 
     // **********************************
     // COPY DFT INTO THE DISTRIBUTED MULTIFAB
