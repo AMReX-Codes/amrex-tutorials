@@ -3,22 +3,22 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
 
-/*
 #ifdef AMREX_USE_CUDA
 #include <cufft.h>
 #else
 #include <fftw3.h>
 #include <fftw3-mpi.h>
 #endif
-*/
+
+using namespace amrex;
 
 int main (int argc, char* argv[])
 {
     
-    amrex::Initialize(argc,argv);
+    Initialize(argc,argv);
 
     // store the current time so we can later compute total run time.
-    amrex::Real start_time = amrex::ParallelDescriptor::second();
+    Real start_time = ParallelDescriptor::second();
 
     // **********************************
     // DECLARE SIMULATION PARAMETERS
@@ -38,7 +38,7 @@ int main (int argc, char* argv[])
         // ParmParse is way of reading inputs from the inputs file
         // pp.get means we require the inputs file to have it
         // pp.query means we optionally need the inputs file to have it - but we must supply a default here
-        amrex::ParmParse pp;
+        ParmParse pp;
 
         // We need to get n_cell from the inputs file - this is the number of cells on each side of
         //   a square (or cubic) domain.
@@ -56,80 +56,263 @@ int main (int argc, char* argv[])
     // ba will contain a list of boxes that cover the domain
     // geom contains information such as the physical domain size,
     // number of points in the domain, and periodicity
-    amrex::BoxArray ba;
-    amrex::Geometry geom;
+    BoxArray ba;
+    Geometry geom;
 
     // define lower and upper indices
-    amrex::IntVect dom_lo(AMREX_D_DECL(       0,        0,        0));
-    amrex::IntVect dom_hi(AMREX_D_DECL(n_cell-1, n_cell-1, n_cell-1));
+    IntVect dom_lo(AMREX_D_DECL(       0,        0,        0));
+    IntVect dom_hi(AMREX_D_DECL(n_cell-1, n_cell-1, n_cell-1));
 
     // Make a single box that is the entire domain
-    amrex::Box domain(dom_lo, dom_hi);
+    Box domain(dom_lo, dom_hi);
 
     // Initialize the boxarray "ba" from the single box "domain"
     ba.define(domain);
 
     // Break up boxarray "ba" into chunks no larger than "max_grid_size" along a direction
     ba.maxSize(max_grid_size);
+    
+    // How Boxes are distrubuted among MPI processes
+    DistributionMapping dm(ba);
 
     // This defines the physical box, [0,1] in each direction.
-    amrex::RealBox real_box({ AMREX_D_DECL(0., 0., 0.)},
+    RealBox real_box({ AMREX_D_DECL(0., 0., 0.)},
                             { AMREX_D_DECL(1., 1., 1.)} );
 
     // periodic in all direction
-    amrex::Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
+    Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
 
     // This defines a Geometry object
-    geom.define(domain, real_box, amrex::CoordSys::cartesian, is_periodic);
+    geom.define(domain, real_box, CoordSys::cartesian, is_periodic);
 
     // extract dx from the geometry object
-    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
+    GpuArray<Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
 
-    // Nghost = number of ghost cells for each array
-    int Nghost = 0;
-
-    // Ncomp = number of components for each array
-    int Ncomp = 1;
-
-    // How Boxes are distrubuted among MPI processes
-    amrex::DistributionMapping dm(ba);
-
-    // we allocate two phi multifabs; one will store the old state, the other the new.
-    amrex::MultiFab phi(ba, dm, Ncomp, Nghost);
+    // MultiFab storage for phi, and the real and imaginary parts of the dft
+    MultiFab phi         (ba, dm, 1, 0);
+    MultiFab phi_dft_real(ba, dm, 1, 0);
+    MultiFab phi_dft_imag(ba, dm, 1, 0);
 
     // **********************************
     // INITIALIZE DATA
     // **********************************
 
     // loop over boxes
-    for (amrex::MFIter mfi(phi); mfi.isValid(); ++mfi)
+    for (MFIter mfi(phi); mfi.isValid(); ++mfi)
     {
-        const amrex::Box& bx = mfi.validbox();
+        const Box& bx = mfi.validbox();
 
-        const amrex::Array4<amrex::Real>& phi_ptr = phi.array(mfi);
+        const Array4<Real>& phi_ptr = phi.array(mfi);
 
         // set phi = 1 + e^(-(r-0.5)^2)
-        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
+        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
             // **********************************
             // SET VALUES FOR EACH CELL
             // **********************************
 
-            amrex::Real x = (i+0.5) * dx[0];
-            amrex::Real y = (j+0.5) * dx[1];
-            amrex::Real z = (k+0.5) * dx[2];
-            amrex::Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;
+            Real x = (i+0.5) * dx[0];
+            Real y = (j+0.5) * dx[1];
+            Real z = (k+0.5) * dx[2];
+            Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;
             phi_ptr(i,j,k) = 1. + std::exp(-rsquared);
         });
     }
 
     // **********************************
-    // WRITE INITIAL DATA TO PLOT FILE
+    // COPY PHI INTO A MULTIFAB WITH ONE BOX
     // **********************************
 
-    // Write a plotfile of the initial data 
-    int step = 0;
-    amrex::Real time = 0.;
+    // create a new BoxArray and DistributionMapping for a MultiFab with 1 grid
+    BoxArray ba_onegrid(geom.Domain());
+    DistributionMapping dm_onegrid(ba_onegrid);
+
+    // storage for phi and the dft
+    MultiFab phi_onegrid         (ba_onegrid, dm_onegrid, 1, 0);
+    MultiFab phi_dft_real_onegrid(ba_onegrid, dm_onegrid, 1, 0);
+    MultiFab phi_dft_imag_onegrid(ba_onegrid, dm_onegrid, 1, 0);
+
+    // copy phi into phi_onegrid
+    phi_onegrid.ParallelCopy(phi, 0, 0, 1);
+    
+    // **********************************
+    // COMPUTE FFT
+    // **********************************
+    
+#ifdef AMREX_USE_CUDA
+    using FFTplan = cufftHandle;
+    using FFTcomplex = cuDoubleComplex;
+#else
+    using FFTplan = fftw_plan;
+    using FFTcomplex = fftw_complex;
+#endif
+    
+    // number of points in the domain
+    long npts = domain.numPts();
+    Real sqrtnpts = std::sqrt(npts);
+
+    // contain to store FFT - note it is shrunk by "half" in x
+    Vector<std::unique_ptr<BaseFab<GpuComplex<Real> > > > spectral_field;
+
+    Vector<FFTplan> forward_plan;
+
+    for (MFIter mfi(phi_onegrid); mfi.isValid(); ++mfi) {
+
+      // grab a single box including ghost cell range
+      Box realspace_bx = mfi.fabbox();
+
+      // size of box including ghost cell range
+      IntVect fft_size = realspace_bx.length(); // This will be different for hybrid FFT
+
+      // this is the size of the box, except the 0th component is 'halved plus 1'
+      IntVect spectral_bx_size = fft_size;
+      spectral_bx_size[0] = fft_size[0]/2 + 1;
+
+      // spectral box
+      Box spectral_bx = Box(IntVect(0), spectral_bx_size - IntVect(1));
+
+      spectral_field.emplace_back(new BaseFab<GpuComplex<Real> >(spectral_bx,1,
+								 The_Device_Arena()));
+      spectral_field.back()->setVal<RunOn::Device>(0.0); // touch the memory
+
+      FFTplan fplan;
+
+#ifdef AMREX_USE_CUDA
+
+#if (AMREX_SPACEDIM == 2)
+      cufftResult result = cufftPlan2d(&fplan, fft_size[1], fft_size[0], CUFFT_D2Z);
+      if (result != CUFFT_SUCCESS) {
+	AllPrint() << " cufftplan2d forward failed! Error: "
+			  << cufftErrorToString(result) << "\n";
+      }
+#elif (AMREX_SPACEDIM == 3)
+      cufftResult result = cufftPlan3d(&fplan, fft_size[2], fft_size[1], fft_size[0], CUFFT_D2Z);
+      if (result != CUFFT_SUCCESS) {
+	AllPrint() << " cufftplan3d forward failed! Error: "
+			  << cufftErrorToString(result) << "\n";
+      }
+#endif
+
+#else // host
+
+#if (AMREX_SPACEDIM == 2)
+      fplan = fftw_plan_dft_r2c_2d(fft_size[1], fft_size[0],
+				   phi_onegrid[mfi].dataPtr(),
+				   reinterpret_cast<FFTcomplex*>
+				   (spectral_field.back()->dataPtr()),
+				   FFTW_ESTIMATE);
+#elif (AMREX_SPACEDIM == 3)
+      fplan = fftw_plan_dft_r2c_3d(fft_size[2], fft_size[1], fft_size[0],
+				   phi_onegrid[mfi].dataPtr(),
+				   reinterpret_cast<FFTcomplex*>
+				   (spectral_field.back()->dataPtr()),
+				   FFTW_ESTIMATE);
+#endif
+
+#endif
+
+      forward_plan.push_back(fplan);
+    }
+    
+    ParallelDescriptor::Barrier();
+
+    // ForwardTransform
+    for (MFIter mfi(phi_onegrid); mfi.isValid(); ++mfi) {
+      int i = mfi.LocalIndex();
+#ifdef AMREX_USE_CUDA
+      cufftSetStream(forward_plan[i], Gpu::gpuStream());
+      cufftResult result = cufftExecD2Z(forward_plan[i],
+					phi_onegrid[mfi].dataPtr(),
+					reinterpret_cast<FFTcomplex*>
+					(spectral_field[i]->dataPtr()));
+      if (result != CUFFT_SUCCESS) {
+	AllPrint() << " forward transform using cufftExec failed! Error: "
+			  << cufftErrorToString(result) << "\n";
+      }
+#else
+      fftw_execute(forward_plan[i]);
+#endif
+    }
+
+    // copy data to a full-sized MultiFab
+    // this involves copying the complex conjugate from the half-sized field
+    // into the appropriate place in the full MultiFab
+    for (MFIter mfi(phi_dft_real_onegrid); mfi.isValid(); ++mfi) {
+
+      Array4< GpuComplex<Real> > spectral = (*spectral_field[0]).array();
+
+      Array4<Real> const& realpart = phi_dft_real_onegrid.array(mfi);
+      Array4<Real> const& imagpart = phi_dft_imag_onegrid.array(mfi);
+
+      Box bx = mfi.fabbox();
+
+      ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+      {
+	if (i <= bx.length(0)/2) {
+	  // copy value
+	  realpart(i,j,k) = spectral(i,j,k).real();
+	  imagpart(i,j,k) = spectral(i,j,k).imag();
+	} else {
+	  // copy complex conjugate
+	  int iloc = bx.length(0)-i;
+	  int jloc, kloc;
+
+	  jloc = (j == 0) ? 0 : bx.length(1)-j;
+#if (AMREX_SPACEDIM == 2)
+	  kloc = 0;
+#elif (AMREX_SPACEDIM == 3)
+	  kloc = (k == 0) ? 0 : bx.length(2)-k;
+#endif
+                   
+	  realpart(i,j,k) =  spectral(iloc,jloc,kloc).real();
+	  imagpart(i,j,k) = -spectral(iloc,jloc,kloc).imag();
+	}
+
+	realpart(i,j,k) /= sqrtnpts;
+	imagpart(i,j,k) /= sqrtnpts;
+      });
+    }
+
+//        phi_dft_real.ParallelCopy(phi_dft_real_onegrid,0,comp,1);
+//        phi_dft_imag.ParallelCopy(phi_dft_imag_onegrid,0,comp,1);
+
+    // destroy fft plan
+    for (int i = 0; i < forward_plan.size(); ++i) {
+#ifdef AMREX_USE_CUDA
+        cufftDestroy(forward_plan[i]);
+#else
+        fftw_destroy_plan(forward_plan[i]);
+#endif
+    }
+
+    // **********************************
+    // SHIFT DATA
+    // **********************************
+
+
+    // **********************************
+    // COPY DFT INTO THE DISTRIBUTED MULTIFAB
+    // **********************************
+
+    phi_dft_real.ParallelCopy(phi_dft_real_onegrid, 0, 0, 1);
+    phi_dft_imag.ParallelCopy(phi_dft_imag_onegrid, 0, 0, 1);
+    
+    // **********************************
+    // WRITE DATA AND FFT TO PLOT FILE
+    // **********************************
+
+    // storage for variables to write to plotfile
+    MultiFab plotfile(ba, dm, 3, 0);
+
+    // copy phi, phi_dft_real, and phi_dft_imag into plotfile
+    MultiFab::Copy(plotfile, phi         , 0, 0, 1, 0);
+    MultiFab::Copy(plotfile, phi_dft_real, 0, 1, 1, 0);
+    MultiFab::Copy(plotfile, phi_dft_imag, 0, 2, 1, 0);
+    
+    // time and step are dummy variables required to WriteSingleLevelPlotfile
+    Real time = 0.;
+    int step = 0;     
+    
     // arguments
     // 1: name of plotfile
     // 2: MultiFab containing data to plot
@@ -137,33 +320,15 @@ int main (int argc, char* argv[])
     // 4: geometry object
     // 5: "time" of plotfile; not relevant in this example
     // 6: "time step" of plotfile; not relevant in this example
-    WriteSingleLevelPlotfile("phi", phi, {"phi"}, geom, time, step);
-
-    // **********************************
-    // COMPUTE FFT
-    // **********************************
-
-    // number of points in the domain
-    long npts = domain.numPts();
-    amrex::Real sqrtnpts = std::sqrt(npts);
-
-
-    // **********************************
-    // WRITE FFT TO PLOT FILE
-    // **********************************
-
-
-
-
+    WriteSingleLevelPlotfile("plt", plotfile, {"phi", "phi_dft_real", "phi_dft_imag"}, geom, time, step);
     
-
     // Call the timer again and compute the maximum difference between the start time 
     // and stop time over all processors
-    amrex::Real stop_time = amrex::ParallelDescriptor::second() - start_time;
-    amrex::ParallelDescriptor::ReduceRealMax(stop_time);
-    amrex::Print() << "Run time = " << stop_time << std::endl;
+    Real stop_time = ParallelDescriptor::second() - start_time;
+    ParallelDescriptor::ReduceRealMax(stop_time);
+    Print() << "Run time = " << stop_time << std::endl;
     
-    amrex::Finalize();
+    Finalize();
 }
 
 
