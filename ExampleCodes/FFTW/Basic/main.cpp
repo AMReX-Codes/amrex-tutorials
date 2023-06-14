@@ -14,7 +14,7 @@ using namespace amrex;
 
 int main (int argc, char* argv[])
 {
-    
+
     Initialize(argc,argv);
 
     // store the current time so we can later compute total run time.
@@ -71,13 +71,13 @@ int main (int argc, char* argv[])
 
     // Break up boxarray "ba" into chunks no larger than "max_grid_size" along a direction
     ba.maxSize(max_grid_size);
-    
+
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
     // This defines the physical box, [0,1] in each direction.
     RealBox real_box({ AMREX_D_DECL(0., 0., 0.)},
-                            { AMREX_D_DECL(1., 1., 1.)} );
+                     { AMREX_D_DECL(1., 1., 1.)} );
 
     // periodic in all direction
     Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
@@ -134,11 +134,11 @@ int main (int argc, char* argv[])
 
     // copy phi into phi_onegrid
     phi_onegrid.ParallelCopy(phi, 0, 0, 1);
-    
+
     // **********************************
     // COMPUTE FFT
     // **********************************
-    
+
 #ifdef AMREX_USE_CUDA
     using FFTplan = cufftHandle;
     using FFTcomplex = cuDoubleComplex;
@@ -146,7 +146,7 @@ int main (int argc, char* argv[])
     using FFTplan = fftw_plan;
     using FFTcomplex = fftw_complex;
 #endif
-    
+
     // number of points in the domain
     long npts = domain.numPts();
     Real sqrtnpts = std::sqrt(npts);
@@ -172,7 +172,7 @@ int main (int argc, char* argv[])
       Box spectral_bx = Box(IntVect(0), spectral_bx_size - IntVect(1));
 
       spectral_field.emplace_back(new BaseFab<GpuComplex<Real> >(spectral_bx,1,
-								 The_Device_Arena()));
+                                 The_Device_Arena()));
       spectral_field.back()->setVal<RunOn::Device>(0.0); // touch the memory
 
       FFTplan fplan;
@@ -182,14 +182,14 @@ int main (int argc, char* argv[])
 #if (AMREX_SPACEDIM == 2)
       cufftResult result = cufftPlan2d(&fplan, fft_size[1], fft_size[0], CUFFT_D2Z);
       if (result != CUFFT_SUCCESS) {
-	AllPrint() << " cufftplan2d forward failed! Error: "
-			  << cufftErrorToString(result) << "\n";
+    AllPrint() << " cufftplan2d forward failed! Error: "
+              << cufftErrorToString(result) << "\n";
       }
 #elif (AMREX_SPACEDIM == 3)
       cufftResult result = cufftPlan3d(&fplan, fft_size[2], fft_size[1], fft_size[0], CUFFT_D2Z);
       if (result != CUFFT_SUCCESS) {
-	AllPrint() << " cufftplan3d forward failed! Error: "
-			  << cufftErrorToString(result) << "\n";
+    AllPrint() << " cufftplan3d forward failed! Error: "
+              << cufftErrorToString(result) << "\n";
       }
 #endif
 
@@ -197,23 +197,23 @@ int main (int argc, char* argv[])
 
 #if (AMREX_SPACEDIM == 2)
       fplan = fftw_plan_dft_r2c_2d(fft_size[1], fft_size[0],
-				   phi_onegrid[mfi].dataPtr(),
-				   reinterpret_cast<FFTcomplex*>
-				   (spectral_field.back()->dataPtr()),
-				   FFTW_ESTIMATE);
+                   phi_onegrid[mfi].dataPtr(),
+                   reinterpret_cast<FFTcomplex*>
+                   (spectral_field.back()->dataPtr()),
+                   FFTW_ESTIMATE);
 #elif (AMREX_SPACEDIM == 3)
       fplan = fftw_plan_dft_r2c_3d(fft_size[2], fft_size[1], fft_size[0],
-				   phi_onegrid[mfi].dataPtr(),
-				   reinterpret_cast<FFTcomplex*>
-				   (spectral_field.back()->dataPtr()),
-				   FFTW_ESTIMATE);
+                   phi_onegrid[mfi].dataPtr(),
+                   reinterpret_cast<FFTcomplex*>
+                   (spectral_field.back()->dataPtr()),
+                   FFTW_ESTIMATE);
 #endif
 
 #endif
 
       forward_plan.push_back(fplan);
     }
-    
+
     ParallelDescriptor::Barrier();
 
     // ForwardTransform
@@ -222,12 +222,12 @@ int main (int argc, char* argv[])
 #ifdef AMREX_USE_CUDA
       cufftSetStream(forward_plan[i], Gpu::gpuStream());
       cufftResult result = cufftExecD2Z(forward_plan[i],
-					phi_onegrid[mfi].dataPtr(),
-					reinterpret_cast<FFTcomplex*>
-					(spectral_field[i]->dataPtr()));
+                    phi_onegrid[mfi].dataPtr(),
+                    reinterpret_cast<FFTcomplex*>
+                    (spectral_field[i]->dataPtr()));
       if (result != CUFFT_SUCCESS) {
-	AllPrint() << " forward transform using cufftExec failed! Error: "
-			  << cufftErrorToString(result) << "\n";
+    AllPrint() << " forward transform using cufftExec failed! Error: "
+              << cufftErrorToString(result) << "\n";
       }
 #else
       fftw_execute(forward_plan[i]);
@@ -248,28 +248,28 @@ int main (int argc, char* argv[])
 
       ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
       {
-	if (i <= bx.length(0)/2) {
-	  // copy value
-	  realpart(i,j,k) = spectral(i,j,k).real();
-	  imagpart(i,j,k) = spectral(i,j,k).imag();
-	} else {
-	  // copy complex conjugate
-	  int iloc = bx.length(0)-i;
-	  int jloc, kloc;
+    if (i <= bx.length(0)/2) {
+      // copy value
+      realpart(i,j,k) = spectral(i,j,k).real();
+      imagpart(i,j,k) = spectral(i,j,k).imag();
+    } else {
+      // copy complex conjugate
+      int iloc = bx.length(0)-i;
+      int jloc, kloc;
 
-	  jloc = (j == 0) ? 0 : bx.length(1)-j;
+      jloc = (j == 0) ? 0 : bx.length(1)-j;
 #if (AMREX_SPACEDIM == 2)
-	  kloc = 0;
+      kloc = 0;
 #elif (AMREX_SPACEDIM == 3)
-	  kloc = (k == 0) ? 0 : bx.length(2)-k;
+      kloc = (k == 0) ? 0 : bx.length(2)-k;
 #endif
-                   
-	  realpart(i,j,k) =  spectral(iloc,jloc,kloc).real();
-	  imagpart(i,j,k) = -spectral(iloc,jloc,kloc).imag();
-	}
 
-	realpart(i,j,k) /= sqrtnpts;
-	imagpart(i,j,k) /= sqrtnpts;
+      realpart(i,j,k) =  spectral(iloc,jloc,kloc).real();
+      imagpart(i,j,k) = -spectral(iloc,jloc,kloc).imag();
+    }
+
+    realpart(i,j,k) /= sqrtnpts;
+    imagpart(i,j,k) /= sqrtnpts;
       });
     }
 
@@ -296,7 +296,7 @@ int main (int argc, char* argv[])
 
     phi_dft_real.ParallelCopy(phi_dft_real_onegrid, 0, 0, 1);
     phi_dft_imag.ParallelCopy(phi_dft_imag_onegrid, 0, 0, 1);
-    
+
     // **********************************
     // WRITE DATA AND FFT TO PLOT FILE
     // **********************************
@@ -308,11 +308,11 @@ int main (int argc, char* argv[])
     MultiFab::Copy(plotfile, phi         , 0, 0, 1, 0);
     MultiFab::Copy(plotfile, phi_dft_real, 0, 1, 1, 0);
     MultiFab::Copy(plotfile, phi_dft_imag, 0, 2, 1, 0);
-    
+
     // time and step are dummy variables required to WriteSingleLevelPlotfile
     Real time = 0.;
-    int step = 0;     
-    
+    int step = 0;
+
     // arguments
     // 1: name of plotfile
     // 2: MultiFab containing data to plot
@@ -321,13 +321,13 @@ int main (int argc, char* argv[])
     // 5: "time" of plotfile; not relevant in this example
     // 6: "time step" of plotfile; not relevant in this example
     WriteSingleLevelPlotfile("plt", plotfile, {"phi", "phi_dft_real", "phi_dft_imag"}, geom, time, step);
-    
-    // Call the timer again and compute the maximum difference between the start time 
+
+    // Call the timer again and compute the maximum difference between the start time
     // and stop time over all processors
     Real stop_time = ParallelDescriptor::second() - start_time;
     ParallelDescriptor::ReduceRealMax(stop_time);
     Print() << "Run time = " << stop_time << std::endl;
-    
+
     Finalize();
 }
 
