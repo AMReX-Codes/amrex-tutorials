@@ -98,7 +98,7 @@ int main (int argc, char* argv[])
     amrex::MultiFab phi(ba, dm, Ncomp, Nghost);
 
     // **********************************
-    // INITIALIZE DATA LOOP
+    // INITIALIZE DATA
     // **********************************
 
     // loop over boxes
@@ -111,7 +111,6 @@ int main (int argc, char* argv[])
         // set phi = 1 + e^(-(r-0.5)^2)
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
-
             // **********************************
             // SET VALUES FOR EACH CELL
             // **********************************
@@ -125,7 +124,7 @@ int main (int argc, char* argv[])
     }
 
     // **********************************
-    // WRITE PLOT FILE
+    // WRITE INITIAL DATA TO PLOT FILE
     // **********************************
 
     // Write a plotfile of the initial data 
@@ -140,12 +139,18 @@ int main (int argc, char* argv[])
     // 6: "time step" of plotfile; not relevant in this example
     WriteSingleLevelPlotfile("phi", phi, {"phi"}, geom, time, step);
 
-    // compute fft
+    // **********************************
+    // COMPUTE FFT
+    // **********************************
+
+    // number of points in the domain
+    long npts = domain.numPts();
+    amrex::Real sqrtnpts = std::sqrt(npts);
 
 
-
-
-    // write fft
+    // **********************************
+    // WRITE FFT TO PLOT FILE
+    // **********************************
 
 
 
