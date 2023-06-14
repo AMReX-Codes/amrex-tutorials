@@ -145,7 +145,7 @@ void main_main ()
     Real coeff = AMREX_D_TERM(   1./(dx[0]*dx[0]),
                                + 1./(dx[1]*dx[1]),
                                + 1./(dx[2]*dx[2]) );
-    const int imFactor = pow(10, AMREX_SPACEDIM-1);
+    auto imFactor = std::pow(10, AMREX_SPACEDIM-1);
     Real dt = imFactor*cfl/(2.0*coeff);
 
     // Write a plotfile of the initial data if plot_int > 0 (plot_int was defined in the inputs file)

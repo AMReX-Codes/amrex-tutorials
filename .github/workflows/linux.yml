@@ -245,6 +245,7 @@ jobs:
             -DAMReX_GPU_BACKEND=HIP                       \
             -DAMReX_AMD_ARCH=gfx908                       \
             -DCMAKE_C_COMPILER=$(which clang)             \
-            -DCMAKE_CXX_COMPILER=$(which clang++)
+            -DCMAKE_CXX_COMPILER=$(which clang++)         \
+            -DCMAKE_CXX_STANDARD=17
         cmake --build build_nofortran -j 2
 
