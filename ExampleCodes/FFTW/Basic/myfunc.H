@@ -3,6 +3,10 @@
 
 #include <AMReX_MultiFabUtil.H>
 
+#ifdef AMREX_USE_CUDA
+#include <cufft.h>
+#endif
+
 using namespace amrex;
 
 void ShiftFFT(MultiFab& dft_out, const Geometry& geom, const int& zero_avg);
