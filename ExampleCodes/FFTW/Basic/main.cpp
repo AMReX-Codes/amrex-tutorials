@@ -250,28 +250,28 @@ int main (int argc, char* argv[])
 
       ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
       {
-    if (i <= bx.length(0)/2) {
-      // copy value
-      realpart(i,j,k) = spectral(i,j,k).real();
-      imagpart(i,j,k) = spectral(i,j,k).imag();
-    } else {
-      // copy complex conjugate
-      int iloc = bx.length(0)-i;
-      int jloc, kloc;
+          if (i <= bx.length(0)/2) {
+              // copy value
+              realpart(i,j,k) = spectral(i,j,k).real();
+              imagpart(i,j,k) = spectral(i,j,k).imag();
+          } else {
+              // copy complex conjugate
+              int iloc = bx.length(0)-i;
+              int jloc, kloc;
 
-      jloc = (j == 0) ? 0 : bx.length(1)-j;
+              jloc = (j == 0) ? 0 : bx.length(1)-j;
 #if (AMREX_SPACEDIM == 2)
-      kloc = 0;
+              kloc = 0;
 #elif (AMREX_SPACEDIM == 3)
-      kloc = (k == 0) ? 0 : bx.length(2)-k;
+              kloc = (k == 0) ? 0 : bx.length(2)-k;
 #endif
 
-      realpart(i,j,k) =  spectral(iloc,jloc,kloc).real();
-      imagpart(i,j,k) = -spectral(iloc,jloc,kloc).imag();
-    }
+              realpart(i,j,k) =  spectral(iloc,jloc,kloc).real();
+              imagpart(i,j,k) = -spectral(iloc,jloc,kloc).imag();
+          }
 
-    realpart(i,j,k) /= sqrtnpts;
-    imagpart(i,j,k) /= sqrtnpts;
+          realpart(i,j,k) /= sqrtnpts;
+          imagpart(i,j,k) /= sqrtnpts;
       });
     }
 
