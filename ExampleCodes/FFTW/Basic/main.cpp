@@ -10,6 +10,8 @@
 #include <fftw3-mpi.h>
 #endif
 
+#include "myfunc.H"
+
 using namespace amrex;
 
 int main (int argc, char* argv[])
@@ -273,9 +275,6 @@ int main (int argc, char* argv[])
       });
     }
 
-//        phi_dft_real.ParallelCopy(phi_dft_real_onegrid,0,comp,1);
-//        phi_dft_imag.ParallelCopy(phi_dft_imag_onegrid,0,comp,1);
-
     // destroy fft plan
     for (int i = 0; i < forward_plan.size(); ++i) {
 #ifdef AMREX_USE_CUDA
@@ -289,6 +288,13 @@ int main (int argc, char* argv[])
     // SHIFT DATA
     // **********************************
 
+    // zero_avg=0 means set the k=0 value to zero,
+    // otherwise it sets the k=0 value to the average value of the signal in real space
+    int zero_avg = 1;
+
+    // shift data
+    ShiftFFT(phi_dft_real_onegrid,geom,zero_avg);
+    ShiftFFT(phi_dft_imag_onegrid,geom,zero_avg);    
 
     // **********************************
     // COPY DFT INTO THE DISTRIBUTED MULTIFAB
