@@ -1,5 +1,7 @@
 #include <AMReX.H>
 
+#include <cmath>
+
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
 
@@ -116,8 +118,8 @@ int main (int argc, char* argv[])
             Real x = (i+0.5) * dx[0];
             Real y = (j+0.5) * dx[1];
             Real z = (k+0.5) * dx[2];
-            Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;
-            phi_ptr(i,j,k) = 1. + std::exp(-rsquared);
+	    Real rsquared = (( x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;//((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5))/.01; 
+            phi_ptr(i,j,k) =  cos(8*M_PI*rsquared) + cos(2*M_PI*rsquared); //  1. + std::exp(-rsquared); CAN CHANGE THE FUNCTION HERE!!!!!!!!!!!!!!!!!!!!
         });
     }
 
@@ -279,7 +281,7 @@ int main (int argc, char* argv[])
     for (int i = 0; i < forward_plan.size(); ++i) {
 #ifdef AMREX_USE_CUDA
         cufftDestroy(forward_plan[i]);
-#else
+else
         fftw_destroy_plan(forward_plan[i]);
 #endif
     }
@@ -307,13 +309,50 @@ int main (int argc, char* argv[])
     // WRITE DATA AND FFT TO PLOT FILE
     // **********************************
 
-    // storage for variables to write to plotfile
-    MultiFab plotfile(ba, dm, 3, 0);
+    Print() << "phi: " << phi_dft_imag[0] << std::endl;
+
+
+    // storage for magnitude and phase angle
+    MultiFab phi_dft_magn(ba, dm, 1, 0);
+    MultiFab phi_dft_phase(ba, dm, 1, 0);	
+
+
+    for (MFIter mfi(phi_dft_real); mfi.isValid(); ++mfi)
+    {
+	// Setup the magnitud, phase, real, and imaginary pointers
+        const Array4<Real>& phi_dft_magn_ptr = phi_dft_magn.array(mfi);
+        const Array4<Real>& phi_dft_phase_ptr = phi_dft_phase.array(mfi);
+        const Array4<Real>& phi_dft_real_ptr = phi_dft_real.array(mfi);
+	const Array4<Real>& phi_dft_imag_ptr = phi_dft_imag.array(mfi);
+
+	const Box& bx = mfi.validbox();
+
+       	// Set the value of the magnitude and phase angle using the real and imaginary parts of the dft  
+        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
+        {
+            // **********************************
+            // SET VALUES FOR EACH CELL
+            // **********************************
+            Real x = (i+0.5) * dx[0];
+            Real y = (j+0.5) * dx[1];
+            Real z = (k+0.5) * dx[2];
+            Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;//(x-0.5)*(x-0.5)+(y-0.5)*(y-0.5))/.01;/
+	    double re = phi_dft_real_ptr(i,j,k);
+	    double im = phi_dft_imag_ptr(i,j,k);	
+            phi_dft_magn_ptr(i,j,k) = std::sqrt(re*re + im*im); // Here we want to store the values of the magnitude
+            phi_dft_phase_ptr(i,j,k) = std::atan(im/re); // Here we want to store the values of the phase angle 
+	});
+     }
+
+     // storage for variables to write to plotfile
+     MultiFab plotfile(ba, dm, 5, 0);  // Need to accommadate five items in his plotfile so we change from three to five
 
     // copy phi, phi_dft_real, and phi_dft_imag into plotfile
     MultiFab::Copy(plotfile, phi         , 0, 0, 1, 0);
     MultiFab::Copy(plotfile, phi_dft_real, 0, 1, 1, 0);
     MultiFab::Copy(plotfile, phi_dft_imag, 0, 2, 1, 0);
+    MultiFab::Copy(plotfile, phi_dft_magn, 0, 3, 1, 0);
+    MultiFab::Copy(plotfile, phi_dft_phase, 0, 4, 1, 0);
 
     // time and step are dummy variables required to WriteSingleLevelPlotfile
     Real time = 0.;
@@ -326,7 +365,7 @@ int main (int argc, char* argv[])
     // 4: geometry object
     // 5: "time" of plotfile; not relevant in this example
     // 6: "time step" of plotfile; not relevant in this example
-    WriteSingleLevelPlotfile("plt", plotfile, {"phi", "phi_dft_real", "phi_dft_imag"}, geom, time, step);
+    WriteSingleLevelPlotfile("plt", plotfile, {"phi", "phi_dft_real", "phi_dft_imag","phi_dft_magn","phi_dft_phase"}, geom, time, step);
 
     // Call the timer again and compute the maximum difference between the start time
     // and stop time over all processors
