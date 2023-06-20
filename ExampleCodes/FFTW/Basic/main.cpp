@@ -119,7 +119,7 @@ int main (int argc, char* argv[])
             Real y = (j+0.5) * dx[1];
             Real z = (k+0.5) * dx[2];
         Real rsquared = (( x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;//((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5))/.01;
-            phi_ptr(i,j,k) =  cos(8*M_PI*rsquared) + cos(2*M_PI*rsquared); //  1. + std::exp(-rsquared); CAN CHANGE THE FUNCTION HERE!!!!!!!!!!!!!!!!!!!!
+            phi_ptr(i,j,k) = 1. + std::exp(-rsquared); // cos(8*M_PI*rsquared) + cos(2*M_PI*rsquared); //  1. + std::exp(-rsquared); CAN CHANGE THE FUNCTION HERE!!!!!!!!!!!!!!!!!!!!
         });
     }
 
@@ -281,7 +281,7 @@ int main (int argc, char* argv[])
     for (int i = 0; i < forward_plan.size(); ++i) {
 #ifdef AMREX_USE_CUDA
         cufftDestroy(forward_plan[i]);
-else
+#else
         fftw_destroy_plan(forward_plan[i]);
 #endif
     }
@@ -320,7 +320,7 @@ else
     for (MFIter mfi(phi_dft_real); mfi.isValid(); ++mfi)
     {
     // Setup the magnitud, phase, real, and imaginary pointers
-        const Array4<Real>& phi_dft_magn_ptr = phi_dft_magn.array(mfi);
+ const Array4<Real>& phi_dft_magn_ptr = phi_dft_magn.array(mfi);
         const Array4<Real>& phi_dft_phase_ptr = phi_dft_phase.array(mfi);
         const Array4<Real>& phi_dft_real_ptr = phi_dft_real.array(mfi);
     const Array4<Real>& phi_dft_imag_ptr = phi_dft_imag.array(mfi);
@@ -330,9 +330,6 @@ else
            // Set the value of the magnitude and phase angle using the real and imaginary parts of the dft
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
-            // **********************************
-            // SET VALUES FOR EACH CELL
-            // **********************************
             Real x = (i+0.5) * dx[0];
             Real y = (j+0.5) * dx[1];
             Real z = (k+0.5) * dx[2];
