@@ -334,7 +334,7 @@ int main (int argc, char* argv[])
             Real y = (j+0.5) * dx[1];
             Real z = (k+0.5) * dx[2];
             Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;//(x-0.5)*(x-0.5)+(y-0.5)*(y-0.5))/.01;/
-        double re = phi_dft_real_ptr(i,j,k);
+            double re = phi_dft_real_ptr(i,j,k);
         double im = phi_dft_imag_ptr(i,j,k);
             phi_dft_magn_ptr(i,j,k) = std::sqrt(re*re + im*im); // Here we want to store the values of the magnitude
             phi_dft_phase_ptr(i,j,k) = std::atan(im/re); // Here we want to store the values of the phase angle
