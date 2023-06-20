@@ -118,7 +118,7 @@ int main (int argc, char* argv[])
             Real x = (i+0.5) * dx[0];
             Real y = (j+0.5) * dx[1];
             Real z = (k+0.5) * dx[2];
-	    Real rsquared = (( x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;//((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5))/.01; 
+        Real rsquared = (( x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;//((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5))/.01;
             phi_ptr(i,j,k) =  cos(8*M_PI*rsquared) + cos(2*M_PI*rsquared); //  1. + std::exp(-rsquared); CAN CHANGE THE FUNCTION HERE!!!!!!!!!!!!!!!!!!!!
         });
     }
@@ -314,20 +314,20 @@ else
 
     // storage for magnitude and phase angle
     MultiFab phi_dft_magn(ba, dm, 1, 0);
-    MultiFab phi_dft_phase(ba, dm, 1, 0);	
+    MultiFab phi_dft_phase(ba, dm, 1, 0);
 
 
     for (MFIter mfi(phi_dft_real); mfi.isValid(); ++mfi)
     {
-	// Setup the magnitud, phase, real, and imaginary pointers
+    // Setup the magnitud, phase, real, and imaginary pointers
         const Array4<Real>& phi_dft_magn_ptr = phi_dft_magn.array(mfi);
         const Array4<Real>& phi_dft_phase_ptr = phi_dft_phase.array(mfi);
         const Array4<Real>& phi_dft_real_ptr = phi_dft_real.array(mfi);
-	const Array4<Real>& phi_dft_imag_ptr = phi_dft_imag.array(mfi);
+    const Array4<Real>& phi_dft_imag_ptr = phi_dft_imag.array(mfi);
 
-	const Box& bx = mfi.validbox();
+    const Box& bx = mfi.validbox();
 
-       	// Set the value of the magnitude and phase angle using the real and imaginary parts of the dft  
+           // Set the value of the magnitude and phase angle using the real and imaginary parts of the dft
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
             // **********************************
@@ -337,11 +337,11 @@ else
             Real y = (j+0.5) * dx[1];
             Real z = (k+0.5) * dx[2];
             Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;//(x-0.5)*(x-0.5)+(y-0.5)*(y-0.5))/.01;/
-	    double re = phi_dft_real_ptr(i,j,k);
-	    double im = phi_dft_imag_ptr(i,j,k);	
+        double re = phi_dft_real_ptr(i,j,k);
+        double im = phi_dft_imag_ptr(i,j,k);
             phi_dft_magn_ptr(i,j,k) = std::sqrt(re*re + im*im); // Here we want to store the values of the magnitude
-            phi_dft_phase_ptr(i,j,k) = std::atan(im/re); // Here we want to store the values of the phase angle 
-	});
+            phi_dft_phase_ptr(i,j,k) = std::atan(im/re); // Here we want to store the values of the phase angle
+    });
      }
 
      // storage for variables to write to plotfile
