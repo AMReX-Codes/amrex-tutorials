@@ -101,6 +101,8 @@ int main (int argc, char* argv[])
     // INITIALIZE DATA
     // **********************************
 
+    double omega = M_PI/2.0;
+
     // loop over boxes
     for (MFIter mfi(phi); mfi.isValid(); ++mfi)
     {
@@ -118,8 +120,8 @@ int main (int argc, char* argv[])
             Real x = (i+0.5) * dx[0];
             Real y = (j+0.5) * dx[1];
             Real z = (k+0.5) * dx[2];
-        Real rsquared = (( x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;//((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5))/.01;
-            phi_ptr(i,j,k) = 1. + std::exp(-rsquared); // cos(8*M_PI*rsquared) + cos(2*M_PI*rsquared); //  1. + std::exp(-rsquared); CAN CHANGE THE FUNCTION HERE!!!!!!!!!!!!!!!!!!!!
+        Real rsquared = (( x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;
+            phi_ptr(i,j,k) = sin(2*M_PI*x + omega)*sin(4*M_PI*y + omega); //  CAN CHANGE THE FUNCTION HERE!!!!!!!!!!!!!!!!!!!!
         });
     }
 
@@ -333,6 +335,16 @@ int main (int argc, char* argv[])
             double re = phi_dft_real_ptr(i,j,k);
             double im = phi_dft_imag_ptr(i,j,k);
             phi_dft_magn_ptr(i,j,k) = std::sqrt(re*re + im*im); // Here we want to store the values of the magnitude
+	    
+	    if (re == 0) {
+	        if (im == 0){
+		    phi_dft_phase_ptr(i,j,k) = 0.0;
+		} else if (im > 0) {
+		    phi_dft_phase_ptr(i,j,k) = M_PI/2.0;
+		} else {
+		    phi_dft_phase_ptr(i,j,k) = -M_PI/2.0;
+		}
+	    }
             phi_dft_phase_ptr(i,j,k) = std::atan(im/re); // Here we want to store the values of the phase angle
     });
      }
