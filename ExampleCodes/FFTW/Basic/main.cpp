@@ -121,7 +121,7 @@ int main (int argc, char* argv[])
             Real y = (j+0.5) * dx[1];
             Real z = (k+0.5) * dx[2];
         Real rsquared = (( x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;
-            phi_ptr(i,j,k) = sin(2*M_PI*x + omega)*sin(4*M_PI*y + omega); //  CAN CHANGE THE FUNCTION HERE!!!!!!!!!!!!!!!!!!!!
+            phi_ptr(i,j,k) = sin(2*M_PI*x + omega)*sin(2*M_PI*y + omega)*sin(2*M_PI*z + omega);
         });
     }
 
@@ -311,13 +311,9 @@ int main (int argc, char* argv[])
     // WRITE DATA AND FFT TO PLOT FILE
     // **********************************
 
-    Print() << "phi: " << phi_dft_imag[0] << std::endl;
-
-
     // storage for magnitude and phase angle
     MultiFab phi_dft_magn(ba, dm, 1, 0);
     MultiFab phi_dft_phase(ba, dm, 1, 0);
-
 
     for (MFIter mfi(phi_dft_real); mfi.isValid(); ++mfi)
     {
@@ -329,56 +325,57 @@ int main (int argc, char* argv[])
 
         const Box& bx = mfi.validbox();
 
-           // Set the value of the magnitude and phase angle using the real and imaginary parts of the dft
+        // Set the value of the magnitude and phase angle using the real and imaginary parts of the dft
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
             double re = phi_dft_real_ptr(i,j,k);
             double im = phi_dft_imag_ptr(i,j,k);
             phi_dft_magn_ptr(i,j,k) = std::sqrt(re*re + im*im); // Here we want to store the values of the magnitude
-	    
-	    if (re == 0) {
-	        if (im == 0){
-		    phi_dft_phase_ptr(i,j,k) = 0.0;
-		} else if (im > 0) {
-		    phi_dft_phase_ptr(i,j,k) = M_PI/2.0;
-		} else {
-		    phi_dft_phase_ptr(i,j,k) = -M_PI/2.0;
-		}
-	    }
+           
+	    // Avoid division by zero
+            if (re == 0.0) {
+                if (im == 0.0){
+                    phi_dft_phase_ptr(i,j,k) = 0.0;
+                } else if (im > 0.0) {
+                    phi_dft_phase_ptr(i,j,k) = M_PI/2.0;
+                } else {
+                     phi_dft_phase_ptr(i,j,k) = -M_PI/2.0;
+                }
+            }
             phi_dft_phase_ptr(i,j,k) = std::atan(im/re); // Here we want to store the values of the phase angle
-    });
+        });
      }
 
      // storage for variables to write to plotfile
-     MultiFab plotfile(ba, dm, 5, 0);  // Need to accommadate five items in his plotfile so we change from three to five
+     MultiFab plotfile(ba, dm, 5, 0);
 
-    // copy phi, phi_dft_real, and phi_dft_imag into plotfile
-    MultiFab::Copy(plotfile, phi         , 0, 0, 1, 0);
-    MultiFab::Copy(plotfile, phi_dft_real, 0, 1, 1, 0);
-    MultiFab::Copy(plotfile, phi_dft_imag, 0, 2, 1, 0);
-    MultiFab::Copy(plotfile, phi_dft_magn, 0, 3, 1, 0);
-    MultiFab::Copy(plotfile, phi_dft_phase, 0, 4, 1, 0);
+     // copy phi, phi_dft_real, and phi_dft_imag into plotfile
+     MultiFab::Copy(plotfile, phi         , 0, 0, 1, 0);
+     MultiFab::Copy(plotfile, phi_dft_real, 0, 1, 1, 0);
+     MultiFab::Copy(plotfile, phi_dft_imag, 0, 2, 1, 0);
+     MultiFab::Copy(plotfile, phi_dft_magn, 0, 3, 1, 0);
+     MultiFab::Copy(plotfile, phi_dft_phase, 0, 4, 1, 0);
 
-    // time and step are dummy variables required to WriteSingleLevelPlotfile
-    Real time = 0.;
-    int step = 0;
+     // time and step are dummy variables required to WriteSingleLevelPlotfile
+     Real time = 0.;
+     int step = 0;
 
-    // arguments
-    // 1: name of plotfile
-    // 2: MultiFab containing data to plot
-    // 3: variables names
-    // 4: geometry object
-    // 5: "time" of plotfile; not relevant in this example
-    // 6: "time step" of plotfile; not relevant in this example
-    WriteSingleLevelPlotfile("plt", plotfile, {"phi", "phi_dft_real", "phi_dft_imag","phi_dft_magn","phi_dft_phase"}, geom, time, step);
+     // arguments
+     // 1: name of plotfile
+     // 2: MultiFab containing data to plot
+     // 3: variables names
+     // 4: geometry object
+     // 5: "time" of plotfile; not relevant in this example
+     // 6: "time step" of plotfile; not relevant in this example
+     WriteSingleLevelPlotfile("plt", plotfile, {"phi", "phi_dft_real", "phi_dft_imag","phi_dft_magn","phi_dft_phase"}, geom, time, step);
 
-    // Call the timer again and compute the maximum difference between the start time
-    // and stop time over all processors
-    Real stop_time = ParallelDescriptor::second() - start_time;
-    ParallelDescriptor::ReduceRealMax(stop_time);
-    Print() << "Run time = " << stop_time << std::endl;
+     // Call the timer again and compute the maximum difference between the start time
+     // and stop time over all processors
+     Real stop_time = ParallelDescriptor::second() - start_time;
+     ParallelDescriptor::ReduceRealMax(stop_time);
+     Print() << "Run time = " << stop_time << std::endl;
 
-    Finalize();
+     Finalize();
 }
 
 
