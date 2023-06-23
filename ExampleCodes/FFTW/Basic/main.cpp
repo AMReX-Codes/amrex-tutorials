@@ -353,7 +353,7 @@ int main (int argc, char* argv[])
      // storage for variables to write to plotfile
      MultiFab plotfile(ba, dm, 5, 0);
 
-     // copy phi, phi_dft_real, and phi_dft_imag into plotfile
+     // copy phi, phi_dft_real, and phi_dft_imag, phi_dft_magn, and phi_dft_phase into plotfile
      MultiFab::Copy(plotfile, phi         , 0, 0, 1, 0);
      MultiFab::Copy(plotfile, phi_dft_real, 0, 1, 1, 0);
      MultiFab::Copy(plotfile, phi_dft_imag, 0, 2, 1, 0);
