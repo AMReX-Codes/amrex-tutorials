@@ -331,8 +331,8 @@ int main (int argc, char* argv[])
             double re = phi_dft_real_ptr(i,j,k);
             double im = phi_dft_imag_ptr(i,j,k);
             phi_dft_magn_ptr(i,j,k) = std::sqrt(re*re + im*im); // Here we want to store the values of the magnitude
-           
-	    // Avoid division by zero
+
+            // Avoid division by zero
             if (re == 0.0) {
                 if (im == 0.0){
                     phi_dft_phase_ptr(i,j,k) = 0.0;
