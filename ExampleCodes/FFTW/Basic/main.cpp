@@ -344,8 +344,9 @@ int main (int argc, char* argv[])
                 } else {
                      phi_dft_phase_ptr(i,j,k) = -M_PI/2.0;
                 }
+            } else {
+                phi_dft_phase_ptr(i,j,k) = std::atan(im/re); // Here we want to store the values of the phase angle
             }
-            phi_dft_phase_ptr(i,j,k) = std::atan(im/re); // Here we want to store the values of the phase angle
         });
      }
 
