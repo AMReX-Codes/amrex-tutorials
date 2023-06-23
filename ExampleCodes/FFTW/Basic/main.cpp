@@ -1,7 +1,5 @@
 #include <AMReX.H>
 
-#include <cmath>
-
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
 
