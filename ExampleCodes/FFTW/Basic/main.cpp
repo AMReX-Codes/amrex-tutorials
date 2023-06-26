@@ -88,17 +88,9 @@ int main (int argc, char* argv[])
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
-    //Find the total domain dimensions so that we can scale each "real_box" the appropriate amount
-    int prob_high = n_cell_x*n_cell_y*n_cell_z;
-
     // This defines the physical box in each direction; which we want to be proportional to the domain in the appropriate direction
     RealBox real_box({ AMREX_D_DECL(0., 0., 0.)},
-                     { AMREX_D_DECL(1., 1., 1.)} );
-
-    //Maybe try:
-    //RealBox real_box({ AMREX_D_DECL(0., 0., 0.)},
-    //                 { AMREX_D_DECL(prob_high_x/prob_high, prob_high_y/prob_high, prob_high_z/prob_high)} );
-
+                     { AMREX_D_DECL(prob_hi_x, prob_hi_y, prob_hi_z)} );
     // periodic in all direction
     Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
 
