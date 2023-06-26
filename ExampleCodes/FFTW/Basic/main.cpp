@@ -53,10 +53,10 @@ int main (int argc, char* argv[])
         pp.get("n_cell_y",n_cell_y);
         pp.get("n_cell_z",n_cell_z);
 
-        // We need to get prob_high_ from the inputs file - this is the__________________
-        // pp.get("prob_high_x",prob_high_x);
-        // pp.get("prob_high_y", prob_high_y):
-        // pp.get("prob_high_z", prob_high_z):
+        // We need to get prob_hi_x/y/z from the inputs file - this is the  physical dimensions of the domain
+        pp.get("prob_hi_x",prob_hi_x);
+        pp.get("prob_hi_y", prob_hi_y):
+        pp.get("prob_hi_z", prob_hi_z):
 
         // The domain is broken into boxes of size max_grid_size
         pp.get("max_grid_size",max_grid_size);
