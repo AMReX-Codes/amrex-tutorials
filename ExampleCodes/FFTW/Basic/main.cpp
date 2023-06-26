@@ -90,7 +90,7 @@ int main (int argc, char* argv[])
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
-    // This defines the physical box in each direction; which we want to be proportional to the domain in the appropriate direction
+    // This defines the physical box size in each direction
     RealBox real_box({ AMREX_D_DECL(0., 0., 0.)},
                      { AMREX_D_DECL(prob_hi_x, prob_hi_y, prob_hi_z)} );
 
