@@ -1,4 +1,4 @@
 max_grid_size = 32
 n_cell_x = 64
 n_cell_y = 128
-n_cell_z = 32
+n_cell_z = 16
