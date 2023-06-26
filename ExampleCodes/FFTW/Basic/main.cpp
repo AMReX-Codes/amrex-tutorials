@@ -136,7 +136,7 @@ int main (int argc, char* argv[])
             Real x = (i+0.5) * dx[0];
             Real y = (j+0.5) * dx[1];
             Real z = (AMREX_SPACEDIM==3) ? (k+0.5) * dx[2] : 0.;
-            phi_ptr(i,j,k) = std::sin(4*M_PI*x + omega)*std::sin(124*M_PI*y + omega); 
+            phi_ptr(i,j,k) = std::sin(4*M_PI*x + omega)*std::sin(124*M_PI*y + omega);
             if (AMREX_SPACEDIM == 3) {
                 phi_ptr(i,j,k) *= std::sin(2*M_PI*z + omega);
             }
