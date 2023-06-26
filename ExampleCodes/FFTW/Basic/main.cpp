@@ -27,9 +27,14 @@ int main (int argc, char* argv[])
     // **********************************
 
     // number of cells on each side of the domain
-    int n_cell;
+    int n_cell_x;
+    int n_cell_y;
+    int n_cell_z;
 
-    // size of each box (or grid)
+    // dimensions of each box (or grid)
+    // int prob_high_x;
+    // int prob_high_y;
+    // int prob_high_z;
     int max_grid_size;
 
     // **********************************
@@ -42,9 +47,16 @@ int main (int argc, char* argv[])
         // pp.query means we optionally need the inputs file to have it - but we must supply a default here
         ParmParse pp;
 
-        // We need to get n_cell from the inputs file - this is the number of cells on each side of
-        //   a square (or cubic) domain.
-        pp.get("n_cell",n_cell);
+        // We need to get n_cell_ from the inputs file - this is the number of cells on each side of
+        //   a rectangular domain.
+        pp.get("n_cell_x",n_cell_x);
+        pp.get("n_cell_y",n_cell_y);
+        pp.get("n_cell_z",n_cell_z);
+
+        // We need to get prob_high_ from the inputs file - this is the__________________ 
+        // pp.get("prob_high_x",prob_high_x);
+        // pp.get("prob_high_y", prob_high_y):
+        // pp.get("prob_high_z", prob_high_z):
 
         // The domain is broken into boxes of size max_grid_size
         pp.get("max_grid_size",max_grid_size);
@@ -53,7 +65,6 @@ int main (int argc, char* argv[])
     // **********************************
     // DEFINE SIMULATION SETUP AND GEOMETRY
     // **********************************
-
     // make BoxArray and Geometry
     // ba will contain a list of boxes that cover the domain
     // geom contains information such as the physical domain size,
@@ -63,7 +74,7 @@ int main (int argc, char* argv[])
 
     // define lower and upper indices
     IntVect dom_lo(AMREX_D_DECL(       0,        0,        0));
-    IntVect dom_hi(AMREX_D_DECL(n_cell-1, n_cell-1, n_cell-1));
+    IntVect dom_hi(AMREX_D_DECL(n_cell_x-1, n_cell_y-1, n_cell_z-1));
 
     // Make a single box that is the entire domain
     Box domain(dom_lo, dom_hi);
@@ -77,9 +88,16 @@ int main (int argc, char* argv[])
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
-    // This defines the physical box, [0,1] in each direction.
+    //Find the total domain dimensions so that we can scale each "real_box" the appropriate amount
+    int prob_high = n_cell_x*n_cell_y*n_cell_z;
+
+    // This defines the physical box in each direction; which we want to be proportional to the domain in the appropriate direction
     RealBox real_box({ AMREX_D_DECL(0., 0., 0.)},
                      { AMREX_D_DECL(1., 1., 1.)} );
+
+    //Maybe try:
+    //RealBox real_box({ AMREX_D_DECL(0., 0., 0.)},
+    //                 { AMREX_D_DECL(prob_high_x/prob_high, prob_high_y/prob_high, prob_high_z/prob_high)} );
 
     // periodic in all direction
     Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
@@ -118,9 +136,9 @@ int main (int argc, char* argv[])
             Real x = (i+0.5) * dx[0];
             Real y = (j+0.5) * dx[1];
             Real z = (AMREX_SPACEDIM==3) ? (k+0.5) * dx[2] : 0.;
-            phi_ptr(i,j,k) = std::sin(2*M_PI*x + omega)*std::sin(2*M_PI*y + omega);
+            phi_ptr(i,j,k) = std::sin(4*M_PI*x + omega)*std::sin(124*M_PI*y + omega);
             if (AMREX_SPACEDIM == 3) {
-                phi_ptr *= std::sin(2*M_PI*z + omega);
+                phi_ptr(i,j,k) *= std::sin(2*M_PI*z + omega);
             }
         });
     }
