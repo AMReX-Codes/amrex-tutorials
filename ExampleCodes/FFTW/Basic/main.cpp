@@ -32,9 +32,11 @@ int main (int argc, char* argv[])
     int n_cell_z;
 
     // dimensions of each box (or grid)
-    // int prob_high_x;
-    // int prob_high_y;
-    // int prob_high_z;
+    Real prob_hi_x;
+    Real prob_hi_y;
+    Real prob_hi_z;
+
+    // This is the largest size a grid can be
     int max_grid_size;
 
     // **********************************
@@ -53,10 +55,10 @@ int main (int argc, char* argv[])
         pp.get("n_cell_y",n_cell_y);
         pp.get("n_cell_z",n_cell_z);
 
-        // We need to get prob_hi_x/y/z from the inputs file - this is the  physical dimensions of the domain
+        // We need to get prob_hi_x/y/z from the inputs file - this is the physical dimensions of the domain
         pp.get("prob_hi_x",prob_hi_x);
-        pp.get("prob_hi_y", prob_hi_y):
-        pp.get("prob_hi_z", prob_hi_z):
+        pp.get("prob_hi_y",prob_hi_y);
+        pp.get("prob_hi_z",prob_hi_z);
 
         // The domain is broken into boxes of size max_grid_size
         pp.get("max_grid_size",max_grid_size);
@@ -91,6 +93,7 @@ int main (int argc, char* argv[])
     // This defines the physical box in each direction; which we want to be proportional to the domain in the appropriate direction
     RealBox real_box({ AMREX_D_DECL(0., 0., 0.)},
                      { AMREX_D_DECL(prob_hi_x, prob_hi_y, prob_hi_z)} );
+
     // periodic in all direction
     Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
 
