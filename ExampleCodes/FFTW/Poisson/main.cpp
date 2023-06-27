@@ -108,6 +108,9 @@ int main (int argc, char* argv[])
     MultiFab phi_dft_real(ba, dm, 1, 0);
     MultiFab phi_dft_imag(ba, dm, 1, 0);
 
+    MultiFab phi_dft_real_unshifted(ba, dm, 1, 0);
+    MultiFab phi_dft_imag_unshifted(ba, dm, 1, 0);
+
     // we are going to put the inverse of the FFT here
     MultiFab phi_2       (ba, dm, 1, 0);
 
@@ -136,10 +139,13 @@ int main (int argc, char* argv[])
             Real x = (i+0.5) * dx[0];
             Real y = (j+0.5) * dx[1];
             Real z = (AMREX_SPACEDIM==3) ? (k+0.5) * dx[2] : 0.;
+            /*
             phi_ptr(i,j,k) = std::sin(4*M_PI*x/prob_hi_x + omega)*std::sin(124*M_PI*y/prob_hi_y + omega);
             if (AMREX_SPACEDIM == 3) {
                 phi_ptr(i,j,k) *= std::sin(2*M_PI*z/prob_hi_z + omega);
             }
+            */
+            phi_ptr(i,j,k) = std::sin(2*M_PI*x/prob_hi_x)*std::sin(2*M_PI*y/prob_hi_y) + 100;
         });
     }
 
@@ -261,44 +267,6 @@ int main (int argc, char* argv[])
 #endif
     }
 
-    // now we have completed the fft and the fft is inside spectral_field
-    // take inverse fft of spectral_field and put it in phi_onegrid_2
-    //
-
-    Vector<FFTplan> backward_plan;
-
-    for (MFIter mfi(phi_onegrid_2); mfi.isValid(); ++mfi) {
-
-       // grab a single box including ghost cell range
-       Box realspace_bx = mfi.fabbox();
-
-       // size of box including ghost cell range
-       IntVect fft_size = realspace_bx.length(); // This will be different for hybrid FFT
-
-       FFTplan bplan;
-
-#if (AMREX_SPACEDIM == 2)
-      bplan = fftw_plan_dft_c2r_2d(fft_size[1], fft_size[0],
-                   reinterpret_cast<FFTcomplex*>
-           (spectral_field.back()->dataPtr()),
-                   phi_onegrid_2[mfi].dataPtr(),
-                   FFTW_ESTIMATE);
-#elif (AMREX_SPACEDIM == 3)
-      bplan = fftw_plan_dft_c2r_3d(fft_size[2], fft_size[1], fft_size[0],
-                   reinterpret_cast<FFTcomplex*>
-           (spectral_field.back()->dataPtr()),
-           phi_onegrid_2[mfi].dataPtr(),
-                   FFTW_ESTIMATE);
-#endif
-
-    backward_plan.push_back(bplan);// This adds an instance of bplan to the end of backward_plan
-    }
-
-    for (MFIter mfi(phi_onegrid_2); mfi.isValid(); ++mfi) {
-      int i = mfi.LocalIndex();
-      fftw_execute(backward_plan[i]);
-    }
-
     // copy contents of phi_onegrid_2 into phi_2
     phi_2.ParallelCopy(phi_onegrid_2, 0, 0, 1);
 
@@ -341,6 +309,45 @@ int main (int argc, char* argv[])
       });
     }
 
+    phi_dft_real_unshifted.ParallelCopy(phi_dft_real_onegrid, 0, 0, 1);
+    phi_dft_imag_unshifted.ParallelCopy(phi_dft_imag_onegrid, 0, 0, 1);
+
+    // now we have completed the fft and the fft is inside spectral_field
+    // take inverse fft of spectral_field and put it in phi_onegrid_2
+    Vector<FFTplan> backward_plan;
+
+    for (MFIter mfi(phi_onegrid_2); mfi.isValid(); ++mfi) {
+
+       // grab a single box including ghost cell range
+       Box realspace_bx = mfi.fabbox();
+
+       // size of box including ghost cell range
+       IntVect fft_size = realspace_bx.length(); // This will be different for hybrid FFT
+
+       FFTplan bplan;
+
+#if (AMREX_SPACEDIM == 2)
+      bplan = fftw_plan_dft_c2r_2d(fft_size[1], fft_size[0],
+                   reinterpret_cast<FFTcomplex*>
+           (spectral_field.back()->dataPtr()),
+                   phi_onegrid_2[mfi].dataPtr(),
+                   FFTW_ESTIMATE);
+#elif (AMREX_SPACEDIM == 3)
+      bplan = fftw_plan_dft_c2r_3d(fft_size[2], fft_size[1], fft_size[0],
+                   reinterpret_cast<FFTcomplex*>
+           (spectral_field.back()->dataPtr()),
+           phi_onegrid_2[mfi].dataPtr(),
+                   FFTW_ESTIMATE);
+#endif
+
+    backward_plan.push_back(bplan);// This adds an instance of bplan to the end of backward_plan
+    }
+
+    for (MFIter mfi(phi_onegrid_2); mfi.isValid(); ++mfi) {
+      int i = mfi.LocalIndex();
+      fftw_execute(backward_plan[i]);
+    }
+
     // destroy fft plan
     for (int i = 0; i < forward_plan.size(); ++i) {
 #ifdef AMREX_USE_CUDA
@@ -356,7 +363,7 @@ int main (int argc, char* argv[])
 
     // zero_avg=0 means set the k=0 value to zero,
     // otherwise it sets the k=0 value to the average value of the signal in real space
-    int zero_avg = 1;
+    int zero_avg = 0;
 
     // shift data
     ShiftFFT(phi_dft_real_onegrid,geom,zero_avg);
@@ -410,7 +417,7 @@ int main (int argc, char* argv[])
      }
 
      // storage for variables to write to plotfile
-     MultiFab plotfile(ba, dm, 6, 0);
+     MultiFab plotfile(ba, dm, 8, 0);
 
      // copy phi, phi_dft_real, and phi_dft_imag, phi_dft_magn, and phi_dft_phase into plotfile
      MultiFab::Copy(plotfile, phi         , 0, 0, 1, 0);
@@ -419,6 +426,8 @@ int main (int argc, char* argv[])
      MultiFab::Copy(plotfile, phi_dft_magn, 0, 3, 1, 0);
      MultiFab::Copy(plotfile, phi_dft_phase, 0, 4, 1, 0);
      MultiFab::Copy(plotfile, phi_2        , 0, 5, 1, 0);
+     MultiFab::Copy(plotfile, phi_dft_real_unshifted, 0, 6, 1, 0);
+     MultiFab::Copy(plotfile, phi_dft_real_unshifted, 0, 7, 1, 0);
 
      // time and step are dummy variables required to WriteSingleLevelPlotfile
      Real time = 0.;
@@ -431,7 +440,7 @@ int main (int argc, char* argv[])
      // 4: geometry object
      // 5: "time" of plotfile; not relevant in this example
      // 6: "time step" of plotfile; not relevant in this example
-     WriteSingleLevelPlotfile("plt", plotfile, {"phi", "phi_dft_real", "phi_dft_imag","phi_dft_magn","phi_dft_phase", "phi_2"}, geom, time, step);
+     WriteSingleLevelPlotfile("plt", plotfile, {"phi", "phi_dft_real", "phi_dft_imag","phi_dft_magn","phi_dft_phase", "phi_2", "phi_dft_real_unshifted", "phi_dft_imag_unshifted"}, geom, time, step);
 
      // Call the timer again and compute the maximum difference between the start time
      // and stop time over all processors
