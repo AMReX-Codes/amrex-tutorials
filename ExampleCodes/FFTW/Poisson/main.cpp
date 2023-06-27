@@ -363,7 +363,7 @@ int main (int argc, char* argv[])
 
     // zero_avg=0 means set the k=0 value to zero,
     // otherwise it sets the k=0 value to the average value of the signal in real space
-    int zero_avg = 0;
+    int zero_avg = 1;
 
     // shift data
     ShiftFFT(phi_dft_real_onegrid,geom,zero_avg);
