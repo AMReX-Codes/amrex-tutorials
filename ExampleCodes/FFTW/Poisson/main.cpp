@@ -145,7 +145,7 @@ int main (int argc, char* argv[])
                 phi_ptr(i,j,k) *= std::sin(2*M_PI*z/prob_hi_z + omega);
             }
             */
-            phi_ptr(i,j,k) = std::sin(2*M_PI*x/prob_hi_x)*std::sin(2*M_PI*y/prob_hi_y) + 100;
+            phi_ptr(i,j,k) = std::sin(2*M_PI*x/prob_hi_x)*std::sin(2*M_PI*y/prob_hi_y);
         });
     }
 
@@ -267,9 +267,6 @@ int main (int argc, char* argv[])
 #endif
     }
 
-    // copy contents of phi_onegrid_2 into phi_2
-    phi_2.ParallelCopy(phi_onegrid_2, 0, 0, 1);
-
     // copy data to a full-sized MultiFab
     // this involves copying the complex conjugate from the half-sized field
     // into the appropriate place in the full MultiFab
@@ -347,6 +344,9 @@ int main (int argc, char* argv[])
       int i = mfi.LocalIndex();
       fftw_execute(backward_plan[i]);
     }
+
+    // copy contents of phi_onegrid_2 into phi_2
+    phi_2.ParallelCopy(phi_onegrid_2, 0, 0, 1);
 
     // destroy fft plan
     for (int i = 0; i < forward_plan.size(); ++i) {
