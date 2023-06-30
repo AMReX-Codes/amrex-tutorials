@@ -309,6 +309,41 @@ int main (int argc, char* argv[])
     phi_dft_real_unshifted.ParallelCopy(phi_dft_real_onegrid, 0, 0, 1);
     phi_dft_imag_unshifted.ParallelCopy(phi_dft_imag_onegrid, 0, 0, 1);
 
+    // mutiply by 1/|k|^2
+    for (MFIter mfi(phi_dft_real_onegrid); mfi.isValid(); ++mfi) {
+
+      Array4< GpuComplex<Real> > spectral = (*spectral_field[0]).array();
+
+      Array4<Real> const& realpart = phi_dft_real_onegrid.array(mfi);
+      Array4<Real> const& imagpart = phi_dft_imag_onegrid.array(mfi);
+
+      Box bx = mfi.fabbox();
+
+      ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+      {
+          if (i <= bx.length(0)/2) {
+
+	    // 
+	    Real a = 2. * M_PI * ( /* this is "kx" as a function of i,j,k */) / 1.
+	    
+
+	      k2 = a * a + b * b;
+	    
+              // copy value
+            spectral(i,j,k).real() /= -k2;
+            spectral(i,j,k).imag() /= -k2;  
+
+	    
+          } else {
+
+	    // don't do anything
+	    
+          }
+      });
+    }
+
+
+    
     // now we have completed the fft and the fft is inside spectral_field
     // take inverse fft of spectral_field and put it in phi_onegrid_2
     Vector<FFTplan> backward_plan;
