@@ -114,8 +114,6 @@ int main (int argc, char* argv[])
     // we are going to put the inverse of the FFT here
     MultiFab phi_2       (ba, dm, 1, 0);
 
-    phi_2.setVal(0.); // delete this line later once inverse fft is working
-
     // **********************************
     // INITIALIZE DATA
     // **********************************
@@ -139,13 +137,15 @@ int main (int argc, char* argv[])
             Real x = (i+0.5) * dx[0];
             Real y = (j+0.5) * dx[1];
             Real z = (AMREX_SPACEDIM==3) ? (k+0.5) * dx[2] : 0.;
-            /*
-            phi_ptr(i,j,k) = std::sin(4*M_PI*x/prob_hi_x + omega)*std::sin(124*M_PI*y/prob_hi_y + omega);
+
+            // phi_ptr(i,j,k) = std::exp(-10.*((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5)));
+
+            phi_ptr(i,j,k) = std::sin(4*M_PI*x/prob_hi_x + omega)*std::sin(2*M_PI*y/prob_hi_y + omega);
             if (AMREX_SPACEDIM == 3) {
                 phi_ptr(i,j,k) *= std::sin(2*M_PI*z/prob_hi_z + omega);
             }
-            */
-            phi_ptr(i,j,k) = std::sin(2*M_PI*x/prob_hi_x)*std::sin(2*M_PI*y/prob_hi_y);
+
+            // phi_ptr(i,j,k) = std::sin(62*M_PI*x/prob_hi_x)*std::sin(62*M_PI*y/prob_hi_y);
         });
     }
 
@@ -281,10 +281,26 @@ int main (int argc, char* argv[])
 
       ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
       {
+      /*
+        Copying rules:
+
+        For domains from (0,0,0) to (Nx-1,Ny-1,Nz-1)
+
+        For any cells with i index >= Nx/2, these values are complex conjugates of the corresponding
+        entry where (Nx-i,Ny-j,Nz-k) UNLESS that index is zero, in which case you use 0.
+
+        e.g. for an 8^3 domain, any cell with i index
+
+        Cell (6,2,3) is complex conjugate of (2,6,5)
+
+        Cell (4,1,0) is complex conjugate of (4,7,0)  (note that the FFT is computed for 0 <= i <= Nx/2)
+      */
           if (i <= bx.length(0)/2) {
-              // copy value
+	      // copy value
               realpart(i,j,k) = spectral(i,j,k).real();
               imagpart(i,j,k) = spectral(i,j,k).imag();
+              // spectral(i,j,k) /= npts;
+
           } else {
               // copy complex conjugate
               int iloc = bx.length(0)-i;
@@ -299,53 +315,56 @@ int main (int argc, char* argv[])
 
               realpart(i,j,k) =  spectral(iloc,jloc,kloc).real();
               imagpart(i,j,k) = -spectral(iloc,jloc,kloc).imag();
+	      // spectral(iloc,jloc,kloc) /= sqrtnpts;
           }
 
           realpart(i,j,k) /= sqrtnpts;
           imagpart(i,j,k) /= sqrtnpts;
       });
     }
+    
+    // Now we take the standard FFT and scale it by 1/k^2
+    for (MFIter mfi(phi_dft_real); mfi.isValid(); ++mfi)
+    {
+        Array4< GpuComplex<Real> > spectral = (*spectral_field[0]).array();
+
+        const Box& bx = mfi.fabbox();
+
+        // Set the value of the magnitude and phase angle using the real and imaginary parts of the dft
+        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
+        {
+            if (i <= bx.length(0)/2) {
+                // Generate the scaled value of each k coordinate using the points shifted to our typical fourier space (or 'k-space')
+	        Real a = (i < n_cell_x/2) ? (2.*M_PI*i / n_cell_x) : (2.*M_PI*(i-n_cell_x) / n_cell_x);
+		Real b = (j < n_cell_y/2) ? (2.*M_PI*j / n_cell_y) : (2.*M_PI*(j-n_cell_y) / n_cell_y);
+	        Real c = (k < n_cell_z/2) ? (2.*M_PI*k / n_cell_z) : (2.*M_PI*(k-n_cell_z) / n_cell_z);
+
+              // Calculate the scaled distance from the origin for each mode
+#if (AMREX_SPACEDIM == 2)
+                Real k2 = -(a * a + b * b);
+#elif (AMREX_SPACEDIM == 3)
+                Real k2 = -(a * a + b * b + c * c);
+#endif
+
+		if (k2 != 0.) {
+                    spectral(i,j,k) /= k2;
+	        } else {
+	            spectral(i,j,k) *= 0.;
+	        }
+	    }
+
+        });
+     }
+
+    phi_dft_real.ParallelCopy(phi_dft_real_onegrid, 0, 0, 1);
+    phi_dft_imag.ParallelCopy(phi_dft_imag_onegrid, 0, 0, 1);
 
     phi_dft_real_unshifted.ParallelCopy(phi_dft_real_onegrid, 0, 0, 1);
     phi_dft_imag_unshifted.ParallelCopy(phi_dft_imag_onegrid, 0, 0, 1);
 
-    // mutiply by 1/|k|^2
-    for (MFIter mfi(phi_dft_real_onegrid); mfi.isValid(); ++mfi) {
-
-      Array4< GpuComplex<Real> > spectral = (*spectral_field[0]).array();
-
-      Array4<Real> const& realpart = phi_dft_real_onegrid.array(mfi);
-      Array4<Real> const& imagpart = phi_dft_imag_onegrid.array(mfi);
-
-      Box bx = mfi.fabbox();
-
-      ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-      {
-          if (i <= bx.length(0)/2) {
-
-	    // 
-	    Real a = 2. * M_PI * ( /* this is "kx" as a function of i,j,k */) / 1.
-	    
-
-	      k2 = a * a + b * b;
-	    
-              // copy value
-            spectral(i,j,k).real() /= -k2;
-            spectral(i,j,k).imag() /= -k2;  
-
-	    
-          } else {
-
-	    // don't do anything
-	    
-          }
-      });
-    }
-
-
-    
-    // now we have completed the fft and the fft is inside spectral_field
-    // take inverse fft of spectral_field and put it in phi_onegrid_2
+    // Now we have completed the fft and scaled each value by 1/k^2
+    // The scaled fft is inside spectral_field
+    // Take inverse fft of spectral_field and put it in phi_onegrid_2
     Vector<FFTplan> backward_plan;
 
     for (MFIter mfi(phi_onegrid_2); mfi.isValid(); ++mfi) {
@@ -361,14 +380,14 @@ int main (int argc, char* argv[])
 #if (AMREX_SPACEDIM == 2)
       bplan = fftw_plan_dft_c2r_2d(fft_size[1], fft_size[0],
                    reinterpret_cast<FFTcomplex*>
-           (spectral_field.back()->dataPtr()),
+                   (spectral_field.back()->dataPtr()),
                    phi_onegrid_2[mfi].dataPtr(),
                    FFTW_ESTIMATE);
 #elif (AMREX_SPACEDIM == 3)
       bplan = fftw_plan_dft_c2r_3d(fft_size[2], fft_size[1], fft_size[0],
                    reinterpret_cast<FFTcomplex*>
-           (spectral_field.back()->dataPtr()),
-           phi_onegrid_2[mfi].dataPtr(),
+                   (spectral_field.back()->dataPtr()),
+                   phi_onegrid_2[mfi].dataPtr(),
                    FFTW_ESTIMATE);
 #endif
 
@@ -380,6 +399,8 @@ int main (int argc, char* argv[])
       fftw_execute(backward_plan[i]);
     }
 
+VisMF::Write(phi_onegrid_2, "phi_onegrid_2");
+
     // copy contents of phi_onegrid_2 into phi_2
     phi_2.ParallelCopy(phi_onegrid_2, 0, 0, 1);
 
@@ -390,6 +411,15 @@ int main (int argc, char* argv[])
 #else
         fftw_destroy_plan(forward_plan[i]);
 #endif
+     }
+    // destroy ifft plan
+    for (int i = 0; i < backward_plan.size(); ++i) {
+#ifdef AMREX_USE_CUDA
+        cufftDestroy(backward_plan[i]);
+#else
+        fftw_destroy_plan(backward_plan[i]);
+#endif
+
     }
 
     // **********************************
@@ -398,7 +428,7 @@ int main (int argc, char* argv[])
 
     // zero_avg=0 means set the k=0 value to zero,
     // otherwise it sets the k=0 value to the average value of the signal in real space
-    int zero_avg = 1;
+    int zero_avg = 0;
 
     // shift data
     ShiftFFT(phi_dft_real_onegrid,geom,zero_avg);

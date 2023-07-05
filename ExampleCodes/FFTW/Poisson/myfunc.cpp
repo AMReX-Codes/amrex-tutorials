@@ -2,20 +2,18 @@
 #include "myfunc.H"
 
 void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) {
-
+  
   /*
     Shifting rules:
 
-    For domains from (0,0,0) to (Nx-1,Ny-1,Nz-1)
+    Take the full plater of FFT values, and move the element at each index half of the total grid size (N/2) units to the "right", or "down"
 
-    For any cells with i index >= Nx/2, these values are complex conjugates of the corresponding
-    entry where (Nx-i,Ny-j,Nz-k) UNLESS that index is zero, in which case you use 0.
+    Peridic boundaries are used to shift elements on the "right" or "bottom" end of the domain
 
-    e.g. for an 8^3 domain, any cell with i index
+    e.g. for an 8^3 domain
 
-    Cell (6,2,3) is complex conjugate of (2,6,5)
+    Cell (7,2,3) is sent to (3,6,7)
 
-    Cell (4,1,0) is complex conjugate of (4,7,0)  (note that the FFT is computed for 0 <= i <= Nx/2)
   */
 
   MultiFab dft_onegrid_temp;
@@ -62,6 +60,7 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
   }
 
 }
+
 
 #ifdef AMREX_USE_CUDA
 std::string cufftErrorToString (const cufftResult& err)
