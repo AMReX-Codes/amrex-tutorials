@@ -2,7 +2,7 @@
 #include "myfunc.H"
 
 void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) {
-  
+
   /*
     Shifting rules:
 

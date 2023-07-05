@@ -296,7 +296,7 @@ int main (int argc, char* argv[])
         Cell (4,1,0) is complex conjugate of (4,7,0)  (note that the FFT is computed for 0 <= i <= Nx/2)
       */
           if (i <= bx.length(0)/2) {
-	      // copy value
+          // copy value
               realpart(i,j,k) = spectral(i,j,k).real();
               imagpart(i,j,k) = spectral(i,j,k).imag();
               // spectral(i,j,k) /= npts;
@@ -315,14 +315,14 @@ int main (int argc, char* argv[])
 
               realpart(i,j,k) =  spectral(iloc,jloc,kloc).real();
               imagpart(i,j,k) = -spectral(iloc,jloc,kloc).imag();
-	      // spectral(iloc,jloc,kloc) /= sqrtnpts;
+          // spectral(iloc,jloc,kloc) /= sqrtnpts;
           }
 
           realpart(i,j,k) /= sqrtnpts;
           imagpart(i,j,k) /= sqrtnpts;
       });
     }
-    
+
     // Now we take the standard FFT and scale it by 1/k^2
     for (MFIter mfi(phi_dft_real); mfi.isValid(); ++mfi)
     {
@@ -335,9 +335,9 @@ int main (int argc, char* argv[])
         {
             if (i <= bx.length(0)/2) {
                 // Generate the scaled value of each k coordinate using the points shifted to our typical fourier space (or 'k-space')
-	        Real a = (i < n_cell_x/2) ? (2.*M_PI*i / n_cell_x) : (2.*M_PI*(i-n_cell_x) / n_cell_x);
-		Real b = (j < n_cell_y/2) ? (2.*M_PI*j / n_cell_y) : (2.*M_PI*(j-n_cell_y) / n_cell_y);
-	        Real c = (k < n_cell_z/2) ? (2.*M_PI*k / n_cell_z) : (2.*M_PI*(k-n_cell_z) / n_cell_z);
+            Real a = (i < n_cell_x/2) ? (2.*M_PI*i / n_cell_x) : (2.*M_PI*(i-n_cell_x) / n_cell_x);
+        Real b = (j < n_cell_y/2) ? (2.*M_PI*j / n_cell_y) : (2.*M_PI*(j-n_cell_y) / n_cell_y);
+            Real c = (k < n_cell_z/2) ? (2.*M_PI*k / n_cell_z) : (2.*M_PI*(k-n_cell_z) / n_cell_z);
 
               // Calculate the scaled distance from the origin for each mode
 #if (AMREX_SPACEDIM == 2)
@@ -346,12 +346,12 @@ int main (int argc, char* argv[])
                 Real k2 = -(a * a + b * b + c * c);
 #endif
 
-		if (k2 != 0.) {
+        if (k2 != 0.) {
                     spectral(i,j,k) /= k2;
-	        } else {
-	            spectral(i,j,k) *= 0.;
-	        }
-	    }
+            } else {
+                spectral(i,j,k) *= 0.;
+            }
+        }
 
         });
      }
