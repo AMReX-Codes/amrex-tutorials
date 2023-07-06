@@ -138,14 +138,13 @@ int main (int argc, char* argv[])
             Real y = (j+0.5) * dx[1];
             Real z = (AMREX_SPACEDIM==3) ? (k+0.5) * dx[2] : 0.;
 
-            // phi_ptr(i,j,k) = std::exp(-10.*((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5)));
+            phi_ptr(i,j,k) = std::exp(-10.*((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5)));
 
-            phi_ptr(i,j,k) = std::sin(4*M_PI*x/prob_hi_x + omega)*std::sin(2*M_PI*y/prob_hi_y + omega);
-            if (AMREX_SPACEDIM == 3) {
-                phi_ptr(i,j,k) *= std::sin(2*M_PI*z/prob_hi_z + omega);
-            }
+            // phi_ptr(i,j,k) = std::sin(4*M_PI*x/prob_hi_x + omega)*std::sin(2*M_PI*y/prob_hi_y + omega) + std::sin(4*M_PI*x/prob_hi_x + omega)*std::sin(6*M_PI*y/prob_hi_y + omega);
+            // if (AMREX_SPACEDIM == 3) {
+                // phi_ptr(i,j,k) *= std::sin(2*M_PI*z/prob_hi_z + omega);
+            // }
 
-            // phi_ptr(i,j,k) = std::sin(62*M_PI*x/prob_hi_x)*std::sin(62*M_PI*y/prob_hi_y);
         });
     }
 
@@ -299,7 +298,6 @@ int main (int argc, char* argv[])
           // copy value
               realpart(i,j,k) = spectral(i,j,k).real();
               imagpart(i,j,k) = spectral(i,j,k).imag();
-              // spectral(i,j,k) /= npts;
 
           } else {
               // copy complex conjugate
@@ -315,7 +313,6 @@ int main (int argc, char* argv[])
 
               realpart(i,j,k) =  spectral(iloc,jloc,kloc).real();
               imagpart(i,j,k) = -spectral(iloc,jloc,kloc).imag();
-          // spectral(iloc,jloc,kloc) /= sqrtnpts;
           }
 
           realpart(i,j,k) /= sqrtnpts;
@@ -336,7 +333,7 @@ int main (int argc, char* argv[])
             if (i <= bx.length(0)/2) {
                 // Generate the scaled value of each k coordinate using the points shifted to our typical fourier space (or 'k-space')
             Real a = (i < n_cell_x/2) ? (2.*M_PI*i / n_cell_x) : (2.*M_PI*(i-n_cell_x) / n_cell_x);
-        Real b = (j < n_cell_y/2) ? (2.*M_PI*j / n_cell_y) : (2.*M_PI*(j-n_cell_y) / n_cell_y);
+            Real b = (j < n_cell_y/2) ? (2.*M_PI*j / n_cell_y) : (2.*M_PI*(j-n_cell_y) / n_cell_y);
             Real c = (k < n_cell_z/2) ? (2.*M_PI*k / n_cell_z) : (2.*M_PI*(k-n_cell_z) / n_cell_z);
 
               // Calculate the scaled distance from the origin for each mode
@@ -397,9 +394,15 @@ int main (int argc, char* argv[])
     for (MFIter mfi(phi_onegrid_2); mfi.isValid(); ++mfi) {
       int i = mfi.LocalIndex();
       fftw_execute(backward_plan[i]);
+/*
+      // Must divide each point by the total number of points in the domain for properly scaled inverse FFT
+#if (AMREX_SPACEDIM == 2)    
+      phi_onegrid_2[mfi] /= n_cell_x*n_cell_y;
+#elif (AMREX_SPACEDIM == 3)
+      phi_onegrid_2[mfi] /= n_cell_x*n_cell_y*n_cell_z;
+#endif
+*/
     }
-
-VisMF::Write(phi_onegrid_2, "phi_onegrid_2");
 
     // copy contents of phi_onegrid_2 into phi_2
     phi_2.ParallelCopy(phi_onegrid_2, 0, 0, 1);
@@ -412,6 +415,7 @@ VisMF::Write(phi_onegrid_2, "phi_onegrid_2");
         fftw_destroy_plan(forward_plan[i]);
 #endif
      }
+
     // destroy ifft plan
     for (int i = 0; i < backward_plan.size(); ++i) {
 #ifdef AMREX_USE_CUDA
