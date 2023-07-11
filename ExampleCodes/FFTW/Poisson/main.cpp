@@ -32,6 +32,10 @@ int main (int argc, char* argv[])
     int n_cell_z;
 
     // dimensions of each box (or grid)
+    Real prob_lo_x;
+    Real prob_lo_y;
+    Real prob_lo_z;
+   
     Real prob_hi_x;
     Real prob_hi_y;
     Real prob_hi_z;
@@ -56,7 +60,11 @@ int main (int argc, char* argv[])
         pp.get("n_cell_z",n_cell_z);
 
         // We need to get prob_hi_x/y/z from the inputs file - this is the physical dimensions of the domain
-        pp.get("prob_hi_x",prob_hi_x);
+        pp.get("prob_lo_x",prob_lo_x);
+        pp.get("prob_lo_y",prob_lo_y);
+        pp.get("prob_lo_z",prob_lo_z);
+
+	pp.get("prob_hi_x",prob_hi_x);
         pp.get("prob_hi_y",prob_hi_y);
         pp.get("prob_hi_z",prob_hi_z);
 
@@ -91,7 +99,7 @@ int main (int argc, char* argv[])
     DistributionMapping dm(ba);
 
     // This defines the physical box size in each direction
-    RealBox real_box({ AMREX_D_DECL(0., 0., 0.)},
+    RealBox real_box({ AMREX_D_DECL(prob_lo_x, prob_lo_y, prob_lo_z)},
                      { AMREX_D_DECL(prob_hi_x, prob_hi_y, prob_hi_z)} );
 
     // periodic in all direction
@@ -319,36 +327,46 @@ int main (int argc, char* argv[])
           imagpart(i,j,k) /= sqrtnpts;
       });
     }
+    
+    // Determine the grid size in each direction.
+    Real grid_size_x = std::abs(prob_hi_x - prob_lo_x);
+    Real grid_size_y = std::abs(prob_hi_y - prob_lo_y);
+    Real grid_size_z = std::abs(prob_hi_z - prob_lo_z);
+
 
     // Now we take the standard FFT and scale it by 1/k^2
-    for (MFIter mfi(phi_dft_real); mfi.isValid(); ++mfi)
+    for (MFIter mfi(phi_dft_real_onegrid); mfi.isValid(); ++mfi)
     {
         Array4< GpuComplex<Real> > spectral = (*spectral_field[0]).array();
 
-        const Box& bx = mfi.fabbox();
-
+        const Box& bx = mfi.fabbox(); 
+       	
         // Set the value of the magnitude and phase angle using the real and imaginary parts of the dft
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
             if (i <= bx.length(0)/2) {
-                // Generate the scaled value of each k coordinate using the points shifted to our typical fourier space (or 'k-space')
-            Real a = (i < n_cell_x/2) ? (2.*M_PI*i / n_cell_x) : (2.*M_PI*(i-n_cell_x) / n_cell_x);
-            Real b = (j < n_cell_y/2) ? (2.*M_PI*j / n_cell_y) : (2.*M_PI*(j-n_cell_y) / n_cell_y);
-            Real c = (k < n_cell_z/2) ? (2.*M_PI*k / n_cell_z) : (2.*M_PI*(k-n_cell_z) / n_cell_z);
+
+                Real a = 2.*M_PI*i / grid_size_x;
+                Real b = 2.*M_PI*j / grid_size_y;
+	        Real c = 2.*M_PI*k / grid_size_z;
+
+                // If we are on the "bottom" or "right" half of the plane in y and z, then we still need to account for indices of repeated terms
+                if (j >= n_cell_z/2) b = 2.*M_PI*(n_cell_y-j) / grid_size_y;
+		if (k >= n_cell_z/2) c = 2.*M_PI*(n_cell_z-k) / grid_size_z;
 
               // Calculate the scaled distance from the origin for each mode
 #if (AMREX_SPACEDIM == 2)
-                Real k2 = -(a * a + b * b);
+                Real k2 = -(a*a + b*b);
 #elif (AMREX_SPACEDIM == 3)
-                Real k2 = -(a * a + b * b + c * c);
+                Real k2 = -(a*a + b*b + c*c);
 #endif
 
-        if (k2 != 0.) {
+                if (k2 != 0.) {
                     spectral(i,j,k) /= k2;
-            } else {
-                spectral(i,j,k) *= 0.;
-            }
-        }
+                } else {
+                    spectral(i,j,k) *= 0.;
+                }
+            }  
 
         });
      }
@@ -394,14 +412,14 @@ int main (int argc, char* argv[])
     for (MFIter mfi(phi_onegrid_2); mfi.isValid(); ++mfi) {
       int i = mfi.LocalIndex();
       fftw_execute(backward_plan[i]);
-/*
+
       // Must divide each point by the total number of points in the domain for properly scaled inverse FFT
 #if (AMREX_SPACEDIM == 2)    
       phi_onegrid_2[mfi] /= n_cell_x*n_cell_y;
 #elif (AMREX_SPACEDIM == 3)
       phi_onegrid_2[mfi] /= n_cell_x*n_cell_y*n_cell_z;
 #endif
-*/
+
     }
 
     // copy contents of phi_onegrid_2 into phi_2
