@@ -35,7 +35,7 @@ int main (int argc, char* argv[])
     Real prob_lo_x;
     Real prob_lo_y;
     Real prob_lo_z;
-   
+
     Real prob_hi_x;
     Real prob_hi_y;
     Real prob_hi_z;
@@ -64,7 +64,7 @@ int main (int argc, char* argv[])
         pp.get("prob_lo_y",prob_lo_y);
         pp.get("prob_lo_z",prob_lo_z);
 
-	pp.get("prob_hi_x",prob_hi_x);
+        pp.get("prob_hi_x",prob_hi_x);
         pp.get("prob_hi_y",prob_hi_y);
         pp.get("prob_hi_z",prob_hi_z);
 
@@ -327,7 +327,7 @@ int main (int argc, char* argv[])
           imagpart(i,j,k) /= sqrtnpts;
       });
     }
-    
+
     // Determine the grid size in each direction.
     Real grid_size_x = std::abs(prob_hi_x - prob_lo_x);
     Real grid_size_y = std::abs(prob_hi_y - prob_lo_y);
@@ -339,8 +339,8 @@ int main (int argc, char* argv[])
     {
         Array4< GpuComplex<Real> > spectral = (*spectral_field[0]).array();
 
-        const Box& bx = mfi.fabbox(); 
-       	
+        const Box& bx = mfi.fabbox();
+
         // Set the value of the magnitude and phase angle using the real and imaginary parts of the dft
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
@@ -348,11 +348,11 @@ int main (int argc, char* argv[])
 
                 Real a = 2.*M_PI*i / grid_size_x;
                 Real b = 2.*M_PI*j / grid_size_y;
-	        Real c = 2.*M_PI*k / grid_size_z;
+                Real c = 2.*M_PI*k / grid_size_z;
 
                 // If we are on the "bottom" or "right" half of the plane in y and z, then we still need to account for indices of repeated terms
                 if (j >= n_cell_z/2) b = 2.*M_PI*(n_cell_y-j) / grid_size_y;
-		if (k >= n_cell_z/2) c = 2.*M_PI*(n_cell_z-k) / grid_size_z;
+                if (k >= n_cell_z/2) c = 2.*M_PI*(n_cell_z-k) / grid_size_z;
 
               // Calculate the scaled distance from the origin for each mode
 #if (AMREX_SPACEDIM == 2)
@@ -366,7 +366,7 @@ int main (int argc, char* argv[])
                 } else {
                     spectral(i,j,k) *= 0.;
                 }
-            }  
+            }
 
         });
      }
@@ -414,7 +414,7 @@ int main (int argc, char* argv[])
       fftw_execute(backward_plan[i]);
 
       // Must divide each point by the total number of points in the domain for properly scaled inverse FFT
-#if (AMREX_SPACEDIM == 2)    
+#if (AMREX_SPACEDIM == 2)
       phi_onegrid_2[mfi] /= n_cell_x*n_cell_y;
 #elif (AMREX_SPACEDIM == 3)
       phi_onegrid_2[mfi] /= n_cell_x*n_cell_y*n_cell_z;
