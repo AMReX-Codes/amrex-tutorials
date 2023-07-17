@@ -148,11 +148,6 @@ int main (int argc, char* argv[])
 
             phi_ptr(i,j,k) = std::exp(-10.*((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5)));
 
-            // phi_ptr(i,j,k) = std::sin(4*M_PI*x/prob_hi_x + omega)*std::sin(2*M_PI*y/prob_hi_y + omega) + std::sin(4*M_PI*x/prob_hi_x + omega)*std::sin(6*M_PI*y/prob_hi_y + omega);
-            // if (AMREX_SPACEDIM == 3) {
-                // phi_ptr(i,j,k) *= std::sin(2*M_PI*z/prob_hi_z + omega);
-            // }
-
         });
     }
 
