@@ -59,42 +59,65 @@ def main_main ():
         x = (np.arange(bx.small_end[0],bx.big_end[0],1) + 0.5) * dx[0]
         y = (np.arange(bx.small_end[1],bx.big_end[1],1) + 0.5) * dx[1]
         z = (np.arange(bx.small_end[2],bx.big_end[2],1) + 0.5) * dx[2]
-        rsquared = ((z[:,np.newaxis,np.newaxis]-0.5)**2
-                  + (y[np.newaxis,:,np.newaxis]-0.5)**2
-                  + (x[np.newaxis,np.newaxis,:]-0.5)**2) / 0.01
+        rsquared = ((z[:         , np.newaxis, np.newaxis] - 0.5)**2
+                  + (y[np.newaxis, :         , np.newaxis] - 0.5)**2
+                  + (x[np.newaxis, np.newaxis, :         ] - 0.5)**2) / 0.01
         phiOld = 1. + np.exp(-rsquared)
 
     # Write a plotfile of the initial data if plot_int > 0
-    #if (plot_int > 0)
-    #{
-    #    int step = 0;
-    #    const std::string& pltfile = amrex::Concatenate("plt",step,5);
-    #    WriteSingleLevelPlotfile(pltfile, phi_old, {"phi"}, geom, time, 0);
-    #}
+    if plot_int > 0:
+        step = 0
+        pltfile = amr.concatenate("plt", step, 5)
+        varnames = amr.Vector_string(['phi'])
+        amr.write_single_level_plotfile(pltfile, phi_old, varnames, geom, time, 0)
 
     for step in range(nsteps):
         # Fill periodic ghost cells
         phi_old.fill_boundary(geom.periodicity())
 
+    # Ghost cells
+    ng = phi_old.nGrowVect
+    ngx = ng[0]
+    ngy = ng[1]
+    ngz = ng[2]
     # new_phi = old_phi + dt * Laplacian(old_phi)
     # Loop over boxes
     for mfi in phi_old:
-        #bx = mfi.validbox()
         phiOld = np.array(phi_old.array(mfi), copy=False)
         phiNew = np.array(phi_new.array(mfi), copy=False)
+        hix = phiOld.shape[3]
+        hiy = phiOld.shape[2]
+        hiz = phiOld.shape[1]
         # Advance the data by dt
         phiNew[ngz:-ngz,ngy:-ngy,ngx:-ngx] = (
             phiOld[ngz:-ngz,ngy:-ngy,ngx:-ngx]
-            + dt*((   phiOld[ngz  :-ngz  , ngy  :-ngy  , ngx+1:-ngx+1]
-                   -2*phiOld[ngz  :-ngz  , ngy  :-ngy  , ngx  :-ngx  ]
-                     +phiOld[ngz  :-ngz  , ngy  :-ngy  , ngx-1:-ngx-1])/dx[0]**2
-                 +(   phiOld[ngz  :-ngz  , ngy+1:-ngy+1, ngx  :-ngx  ]
-                   -2*phiOld[ngz  :-ngz  , ngy  :-ngy  , ngx  :-ngx  ]
-                     +phiOld[ngz  :-ngz  , ngy-1:-ngy-1, ngx  :-ngx  ])/dx[1]**2
-                 +(   phiOld[ngz+1:-ngz+1, ngy  :-ngy  , ngx  :-ngx  ]
-                   -2*phiOld[ngz  :-ngz  , ngy  :-ngy  , ngx  :-ngx  ]
-                     +phiOld[ngz-1:-ngz-1, ngy  :-ngy  , ngx  :-ngx  ])/dx[2]**2))
+            + dt*((   phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx+1:hix-ngx+1]
+                   -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
+                     +phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx-1:hix-ngx-1]) / dx[0]**2
+                 +(   phiOld[ngz  :-ngz     , ngy+1:hiy-ngy+1, ngx  :-ngx     ]
+                   -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
+                     +phiOld[ngz  :-ngz     , ngy-1:hiy-ngy-1, ngx  :-ngx     ]) / dx[1]**2
+                 +(   phiOld[ngz+1:hiz-ngz+1, ngy  :-ngy     , ngx  :-ngx     ]
+                   -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
+                     +phiOld[ngz-1:hiz-ngz-1, ngy  :-ngy     , ngx  :-ngx     ]) / dx[2]**2))
         
+    # Update time
+    time = time + dt
+
+    # Copy new solution into old solution
+    phi_old.copy(phi_old, phi_new, 0, 0, 1, 0)
+    # TODO Use keyword arguments
+    # phi_old.copy(dst=phi_old, src=phi_new, srccomp=0, dstcomp=0, numcomp=1, nghost=0)
+
+    # Tell the I/O Processor to write out which step we're doing
+    print(f'Advanced step {step}\n')
+
+    # Write a plotfile of the current data (plot_int was defined in the inputs file)
+    if plot_int > 0 and step%plot_int == 0:
+        pltfile = amr.concatenate("plt", step, 5)
+        varnames = amr.Vector_string(['phi'])
+        amr.write_single_level_plotfile(pltfile, phi_new, varnames, geom, time, step)
+
 # Initialize AMReX
 amr.initialize([])
 
@@ -115,87 +138,3 @@ main_main()
 
 # Finalize AMReX
 amr.finalize()
-
-##include <AMReX_PlotFileUtil.H>
-##include <AMReX_ParmParse.H>
-#
-##include "myfunc.H"
-#
-#void main_main ()
-#{
-#
-#    // inputs parameters
-#    {
-#        // ParmParse is way of reading inputs from the inputs file
-#        // pp.get means we require the inputs file to have it
-#        // pp.query means we optionally need the inputs file to have it - but we must supply a default here
-#        ParmParse pp;
-#
-#        // We need to get n_cell from the inputs file - this is the number of cells on each side of
-#        //   a square (or cubic) domain.
-#        pp.get("n_cell",n_cell);
-#
-#        // The domain is broken into boxes of size max_grid_size
-#        pp.get("max_grid_size",max_grid_size);
-#
-#        // Default nsteps to 10, allow us to set it to something else in the inputs file
-#        nsteps = 10;
-#        pp.query("nsteps",nsteps);
-#
-#        // Default plot_int to -1, allow us to set it to something else in the inputs file
-#        //  If plot_int < 0 then no plot files will be written
-#        plot_int = -1;
-#        pp.query("plot_int",plot_int);
-#
-#        // time step
-#        pp.get("dt",dt);
-#    }
-#
-#    // **********************************
-#    // SIMULATION SETUP
-#
-#
-#    // **********************************
-#    // INITIALIZE DATA
-#
-#    for (int step = 1; step <= nsteps; ++step)
-#    {
-#        // new_phi = old_phi + dt * Laplacian(old_phi)
-#        // loop over boxes
-#        for ( MFIter mfi(phi_old); mfi.isValid(); ++mfi )
-#        {
-#            const Box& bx = mfi.validbox();
-#
-#            const Array4<Real>& phiOld = phi_old.array(mfi);
-#            const Array4<Real>& phiNew = phi_new.array(mfi);
-#
-#            // advance the data by dt
-#            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
-#            {
-#                phiNew(i,j,k) = phiOld(i,j,k) + dt *
-#                    ( (phiOld(i+1,j,k) - 2.*phiOld(i,j,k) + phiOld(i-1,j,k)) / (dx[0]*dx[0])
-#                     +(phiOld(i,j+1,k) - 2.*phiOld(i,j,k) + phiOld(i,j-1,k)) / (dx[1]*dx[1])
-##if (AMREX_SPACEDIM == 3)
-#                     +(phiOld(i,j,k+1) - 2.*phiOld(i,j,k) + phiOld(i,j,k-1)) / (dx[2]*dx[2])
-##endif
-#                        );
-#            });
-#        }
-#
-#        // update time
-#        time = time + dt;
-#
-#        // copy new solution into old solution
-#        MultiFab::Copy(phi_old, phi_new, 0, 0, 1, 0);
-#
-#        // Tell the I/O Processor to write out which step we're doing
-#        amrex::Print() << "Advanced step " << step << "\n";
-#
-#        // Write a plotfile of the current data (plot_int was defined in the inputs file)
-#        if (plot_int > 0 && step%plot_int == 0)
-#        {
-#            const std::string& pltfile = amrex::Concatenate("plt",step,5);
-#            WriteSingleLevelPlotfile(pltfile, phi_new, {"phi"}, geom, time, step);
-#        }
-#    }
-#}
