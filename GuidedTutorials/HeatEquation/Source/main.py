@@ -75,48 +75,48 @@ def main_main ():
         # Fill periodic ghost cells
         phi_old.fill_boundary(geom.periodicity())
 
-    # Ghost cells
-    ng = phi_old.nGrowVect
-    ngx = ng[0]
-    ngy = ng[1]
-    ngz = ng[2]
-    # new_phi = old_phi + dt * Laplacian(old_phi)
-    # Loop over boxes
-    for mfi in phi_old:
-        phiOld = np.array(phi_old.array(mfi), copy=False)
-        phiNew = np.array(phi_new.array(mfi), copy=False)
-        hix = phiOld.shape[3]
-        hiy = phiOld.shape[2]
-        hiz = phiOld.shape[1]
-        # Advance the data by dt
-        phiNew[ngz:-ngz,ngy:-ngy,ngx:-ngx] = (
-            phiOld[ngz:-ngz,ngy:-ngy,ngx:-ngx]
-            + dt*((   phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx+1:hix-ngx+1]
-                   -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
-                     +phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx-1:hix-ngx-1]) / dx[0]**2
-                 +(   phiOld[ngz  :-ngz     , ngy+1:hiy-ngy+1, ngx  :-ngx     ]
-                   -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
-                     +phiOld[ngz  :-ngz     , ngy-1:hiy-ngy-1, ngx  :-ngx     ]) / dx[1]**2
-                 +(   phiOld[ngz+1:hiz-ngz+1, ngy  :-ngy     , ngx  :-ngx     ]
-                   -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
-                     +phiOld[ngz-1:hiz-ngz-1, ngy  :-ngy     , ngx  :-ngx     ]) / dx[2]**2))
-        
-    # Update time
-    time = time + dt
+        # Ghost cells
+        ng = phi_old.nGrowVect
+        ngx = ng[0]
+        ngy = ng[1]
+        ngz = ng[2]
+        # new_phi = old_phi + dt * Laplacian(old_phi)
+        # Loop over boxes
+        for mfi in phi_old:
+            phiOld = np.array(phi_old.array(mfi), copy=False)
+            phiNew = np.array(phi_new.array(mfi), copy=False)
+            hix = phiOld.shape[3]
+            hiy = phiOld.shape[2]
+            hiz = phiOld.shape[1]
+            # Advance the data by dt
+            phiNew[ngz:-ngz,ngy:-ngy,ngx:-ngx] = (
+                phiOld[ngz:-ngz,ngy:-ngy,ngx:-ngx]
+                + dt*((   phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx+1:hix-ngx+1]
+                       -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
+                         +phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx-1:hix-ngx-1]) / dx[0]**2
+                     +(   phiOld[ngz  :-ngz     , ngy+1:hiy-ngy+1, ngx  :-ngx     ]
+                       -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
+                         +phiOld[ngz  :-ngz     , ngy-1:hiy-ngy-1, ngx  :-ngx     ]) / dx[1]**2
+                     +(   phiOld[ngz+1:hiz-ngz+1, ngy  :-ngy     , ngx  :-ngx     ]
+                       -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
+                         +phiOld[ngz-1:hiz-ngz-1, ngy  :-ngy     , ngx  :-ngx     ]) / dx[2]**2))
 
-    # Copy new solution into old solution
-    phi_old.copy(phi_old, phi_new, 0, 0, 1, 0)
-    # TODO Use keyword arguments
-    # phi_old.copy(dst=phi_old, src=phi_new, srccomp=0, dstcomp=0, numcomp=1, nghost=0)
+        # Update time
+        time = time + dt
 
-    # Tell the I/O Processor to write out which step we're doing
-    print(f'Advanced step {step}\n')
+        # Copy new solution into old solution
+        phi_old.copy(phi_old, phi_new, 0, 0, 1, 0)
+        # TODO Use keyword arguments
+        # phi_old.copy(dst=phi_old, src=phi_new, srccomp=0, dstcomp=0, numcomp=1, nghost=0)
 
-    # Write a plotfile of the current data (plot_int was defined in the inputs file)
-    if plot_int > 0 and step%plot_int == 0:
-        pltfile = amr.concatenate("plt", step, 5)
-        varnames = amr.Vector_string(['phi'])
-        amr.write_single_level_plotfile(pltfile, phi_new, varnames, geom, time, step)
+        # Tell the I/O Processor to write out which step we're doing
+        print(f'Advanced step {step}\n')
+
+        # Write a plotfile of the current data (plot_int was defined in the inputs file)
+        if plot_int > 0 and step%plot_int == 0:
+            pltfile = amr.concatenate("plt", step, 5)
+            varnames = amr.Vector_string(['phi'])
+            amr.write_single_level_plotfile(pltfile, phi_new, varnames, geom, time, step)
 
 # Initialize AMReX
 amr.initialize([])
