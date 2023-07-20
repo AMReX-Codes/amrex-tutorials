@@ -281,7 +281,7 @@ int main (int argc, char* argv[])
 
         Cell (4,1,0) is complex conjugate of (4,7,0)  (note that the FFT is computed for 0 <= i <= Nx/2)
       */
-      f (i <= bx.length(0)/2) {
+      if (i <= bx.length(0)/2) {
               // copy value
               realpart(i,j,k) = spectral(i,j,k).real();
               imagpart(i,j,k) = spectral(i,j,k).imag();
