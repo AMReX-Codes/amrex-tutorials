@@ -46,9 +46,17 @@ def main_main ():
     # Allocate two phi multifabs: one will store the old state, the other the new.
     phi_old = amr.MultiFab(ba, dm, Ncomp, Nghost)
     phi_new = amr.MultiFab(ba, dm, Ncomp, Nghost)
+    phi_old.set_val(0.)
+    phi_new.set_val(0.)
 
     # time = starting time in the simulation
     time = 0.
+
+    # Ghost cells
+    ng = phi_old.nGrowVect
+    ngx = ng[0]
+    ngy = ng[1]
+    ngz = ng[2]
 
     # Loop over boxes
     for mfi in phi_old:
@@ -56,13 +64,13 @@ def main_main ():
         # phiOld is indexed in reversed order (z,y,x) and indices are local
         phiOld = np.array(phi_old.array(mfi), copy=False)
         # set phi = 1 + e^(-(r-0.5)^2)
-        x = (np.arange(bx.small_end[0],bx.big_end[0],1) + 0.5) * dx[0]
-        y = (np.arange(bx.small_end[1],bx.big_end[1],1) + 0.5) * dx[1]
-        z = (np.arange(bx.small_end[2],bx.big_end[2],1) + 0.5) * dx[2]
+        x = (np.arange(bx.small_end[0],bx.big_end[0]+1,1) + 0.5) * dx[0]
+        y = (np.arange(bx.small_end[1],bx.big_end[1]+1,1) + 0.5) * dx[1]
+        z = (np.arange(bx.small_end[2],bx.big_end[2]+1,1) + 0.5) * dx[2]
         rsquared = ((z[:         , np.newaxis, np.newaxis] - 0.5)**2
                   + (y[np.newaxis, :         , np.newaxis] - 0.5)**2
                   + (x[np.newaxis, np.newaxis, :         ] - 0.5)**2) / 0.01
-        phiOld = 1. + np.exp(-rsquared)
+        phiOld[:, ngz:-ngz, ngy:-ngy, ngx:-ngx] = 1. + np.exp(-rsquared)
 
     # Write a plotfile of the initial data if plot_int > 0
     if plot_int > 0:
@@ -71,15 +79,10 @@ def main_main ():
         varnames = amr.Vector_string(['phi'])
         amr.write_single_level_plotfile(pltfile, phi_old, varnames, geom, time, 0)
 
-    for step in range(nsteps):
+    for step in range(1, nsteps+1):
         # Fill periodic ghost cells
         phi_old.fill_boundary(geom.periodicity())
 
-        # Ghost cells
-        ng = phi_old.nGrowVect
-        ngx = ng[0]
-        ngy = ng[1]
-        ngz = ng[2]
         # new_phi = old_phi + dt * Laplacian(old_phi)
         # Loop over boxes
         for mfi in phi_old:
@@ -89,17 +92,17 @@ def main_main ():
             hiy = phiOld.shape[2]
             hiz = phiOld.shape[1]
             # Advance the data by dt
-            phiNew[ngz:-ngz,ngy:-ngy,ngx:-ngx] = (
-                phiOld[ngz:-ngz,ngy:-ngy,ngx:-ngx]
-                + dt*((   phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx+1:hix-ngx+1]
-                       -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
-                         +phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx-1:hix-ngx-1]) / dx[0]**2
-                     +(   phiOld[ngz  :-ngz     , ngy+1:hiy-ngy+1, ngx  :-ngx     ]
-                       -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
-                         +phiOld[ngz  :-ngz     , ngy-1:hiy-ngy-1, ngx  :-ngx     ]) / dx[1]**2
-                     +(   phiOld[ngz+1:hiz-ngz+1, ngy  :-ngy     , ngx  :-ngx     ]
-                       -2*phiOld[ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
-                         +phiOld[ngz-1:hiz-ngz-1, ngy  :-ngy     , ngx  :-ngx     ]) / dx[2]**2))
+            phiNew[:, ngz:-ngz,ngy:-ngy,ngx:-ngx] = (
+                phiOld[:, ngz:-ngz,ngy:-ngy,ngx:-ngx]
+                + dt*((   phiOld[:, ngz  :-ngz     , ngy  :-ngy     , ngx+1:hix-ngx+1]
+                       -2*phiOld[:, ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
+                         +phiOld[:, ngz  :-ngz     , ngy  :-ngy     , ngx-1:hix-ngx-1]) / dx[0]**2
+                     +(   phiOld[:, ngz  :-ngz     , ngy+1:hiy-ngy+1, ngx  :-ngx     ]
+                       -2*phiOld[:, ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
+                         +phiOld[:, ngz  :-ngz     , ngy-1:hiy-ngy-1, ngx  :-ngx     ]) / dx[1]**2
+                     +(   phiOld[:, ngz+1:hiz-ngz+1, ngy  :-ngy     , ngx  :-ngx     ]
+                       -2*phiOld[:, ngz  :-ngz     , ngy  :-ngy     , ngx  :-ngx     ]
+                         +phiOld[:, ngz-1:hiz-ngz-1, ngy  :-ngy     , ngx  :-ngx     ]) / dx[2]**2))
 
         # Update time
         time = time + dt
