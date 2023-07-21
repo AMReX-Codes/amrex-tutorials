@@ -108,9 +108,7 @@ def main_main ():
         time = time + dt
 
         # Copy new solution into old solution
-        phi_old.copy(phi_old, phi_new, 0, 0, 1, 0)
-        # TODO Use keyword arguments
-        # phi_old.copy(dst=phi_old, src=phi_new, srccomp=0, dstcomp=0, numcomp=1, nghost=0)
+        phi_old.copy(dst=phi_old, src=phi_new, srccomp=0, dstcomp=0, numcomp=1, nghost=0)
 
         # Tell the I/O Processor to write out which step we're doing
         print(f'Advanced step {step}\n')
