@@ -3,7 +3,7 @@
 
 void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) {
 
-   /*
+  /*
     Shifting rules:
 
     Take the full plater of FFT values, and move the element at each index half of the total grid size (N/2) units to the "right", or "down"
@@ -15,6 +15,7 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
     Cell (7,2,3) is sent to (3,6,7)
 
   */
+
   MultiFab dft_onegrid_temp;
   dft_onegrid_temp.define(dft_onegrid.boxArray(), dft_onegrid.DistributionMap(), 1, 0);
 
@@ -59,6 +60,7 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
   }
 
 }
+
 
 #ifdef AMREX_USE_CUDA
 std::string cufftErrorToString (const cufftResult& err)
