@@ -319,6 +319,10 @@ int main (int argc, char* argv[])
 
        FFTplan bplan;
 
+#ifdef AMREX_USE_CUDA
+
+#else // host
+       
 #if (AMREX_SPACEDIM == 2)
       bplan = fftw_plan_dft_c2r_2d(fft_size[1], fft_size[0],
                    reinterpret_cast<FFTcomplex*>
@@ -331,6 +335,8 @@ int main (int argc, char* argv[])
                    (spectral_field.back()->dataPtr()),
                    soln_onegrid[mfi].dataPtr(),
                    FFTW_ESTIMATE);
+#endif
+
 #endif
 
     backward_plan.push_back(bplan);// This adds an instance of bplan to the end of backward_plan
