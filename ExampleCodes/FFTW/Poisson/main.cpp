@@ -255,12 +255,12 @@ int main (int argc, char* argv[])
 #ifdef AMREX_USE_CUDA
       cufftSetStream(forward_plan[i], Gpu::gpuStream());
       cufftResult result = cufftExecD2Z(forward_plan[i],
-                    rhs_onegrid[mfi].dataPtr(),
-                    reinterpret_cast<FFTcomplex*>
+					rhs_onegrid[mfi].dataPtr(),
+					reinterpret_cast<FFTcomplex*>
                     (spectral_field[i]->dataPtr()));
       if (result != CUFFT_SUCCESS) {
-    AllPrint() << " forward transform using cufftExec failed! Error: "
-              << cufftErrorToString(result) << "\n";
+	AllPrint() << " forward transform using cufftExec failed! Error: "
+		   << cufftErrorToString(result) << "\n";
       }
 #else
       fftw_execute(forward_plan[i]);
@@ -344,13 +344,10 @@ int main (int argc, char* argv[])
 
     for (MFIter mfi(soln_onegrid); mfi.isValid(); ++mfi) {
       int i = mfi.LocalIndex();
-      fftw_execute(backward_plan[i]);
+#ifdef AMREX_USE_CUDA
 
-      // Must divide each point by the total number of points in the domain for properly scaled inverse FFT
-#if (AMREX_SPACEDIM == 2)
-      soln_onegrid[mfi] /= n_cell_x*n_cell_y;
-#elif (AMREX_SPACEDIM == 3)
-      soln_onegrid[mfi] /= n_cell_x*n_cell_y*n_cell_z;
+#else
+      fftw_execute(backward_plan[i]);
 #endif
 
     }
@@ -358,6 +355,10 @@ int main (int argc, char* argv[])
     // copy contents of soln_onegrid into soln
     soln.ParallelCopy(soln_onegrid, 0, 0, 1);
 
+    // Must divide each point by the total number of points in the domain for properly scaled inverse FFT
+    Real volinv = (AMREX_SPACEDIM == 2) ? 1. / (n_cell_x*n_cell_y) : 1. / (n_cell_x*n_cell_y*n_cell_z);
+    soln.mult(volinv);
+    
     // destroy fft plan
     for (int i = 0; i < forward_plan.size(); ++i) {
 #ifdef AMREX_USE_CUDA
@@ -377,33 +378,33 @@ int main (int argc, char* argv[])
 
     }
 
-     // storage for variables to write to plotfile
+    // storage for variables to write to plotfile
     MultiFab plotfile(ba, dm, 2, 0);
 
-     // copy rhs and soln into plotfile
-     MultiFab::Copy(plotfile, rhs , 0, 0, 1, 0);
-     MultiFab::Copy(plotfile, soln, 0, 1, 1, 0);
+    // copy rhs and soln into plotfile
+    MultiFab::Copy(plotfile, rhs , 0, 0, 1, 0);
+    MultiFab::Copy(plotfile, soln, 0, 1, 1, 0);
 
-     // time and step are dummy variables required to WriteSingleLevelPlotfile
-     Real time = 0.;
-     int step = 0;
+    // time and step are dummy variables required to WriteSingleLevelPlotfile
+    Real time = 0.;
+    int step = 0;
 
-     // arguments
-     // 1: name of plotfile
-     // 2: MultiFab containing data to plot
-     // 3: variables names
-     // 4: geometry object
-     // 5: "time" of plotfile; not relevant in this example
-     // 6: "time step" of plotfile; not relevant in this example
-     WriteSingleLevelPlotfile("plt", plotfile, {"rhs", "soln"}, geom, time, step);
+    // arguments
+    // 1: name of plotfile
+    // 2: MultiFab containing data to plot
+    // 3: variables names
+    // 4: geometry object
+    // 5: "time" of plotfile; not relevant in this example
+    // 6: "time step" of plotfile; not relevant in this example
+    WriteSingleLevelPlotfile("plt", plotfile, {"rhs", "soln"}, geom, time, step);
 
-     // Call the timer again and compute the maximum difference between the start time
-     // and stop time over all processors
-     Real stop_time = ParallelDescriptor::second() - start_time;
-     ParallelDescriptor::ReduceRealMax(stop_time);
-     Print() << "Run time = " << stop_time << std::endl;
+    // Call the timer again and compute the maximum difference between the start time
+    // and stop time over all processors
+    Real stop_time = ParallelDescriptor::second() - start_time;
+    ParallelDescriptor::ReduceRealMax(stop_time);
+    Print() << "Run time = " << stop_time << std::endl;
 
-     Finalize();
+    Finalize();
 }
 
 
