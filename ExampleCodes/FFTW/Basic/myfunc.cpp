@@ -18,6 +18,22 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
 
   MultiFab::Copy(dft_onegrid_temp,dft_onegrid,0,0,1,0);
 
+  for (MFIter mfi(dft_onegrid); mfi.isValid(); ++mfi) {
+
+    const Box& bx = mfi.tilebox();
+
+    const Array4<Real>& dft_temp = dft_onegrid_temp.array(mfi);
+
+    if (zero_avg == 1) {
+      amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+      {
+	if (i == 0 && j == 0 && k == 0) {
+	  dft_temp(i,j,k) = 0.;
+	}
+      });
+    }
+  }
+  
   // Shift DFT by N/2+1 (pi)
   for (MFIter mfi(dft_onegrid); mfi.isValid(); ++mfi) {
 
@@ -25,14 +41,6 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
 
     const Array4<Real>& dft = dft_onegrid.array(mfi);
     const Array4<Real>& dft_temp = dft_onegrid_temp.array(mfi);
-
-    if (zero_avg == 1) {
-#if (AMREX_SPACEDIM == 2)
-      dft_temp(bx.smallEnd(0),bx.smallEnd(1),0) = 0.;
-#elif (AMREX_SPACEDIM == 3)
-      dft_temp(bx.smallEnd(0),bx.smallEnd(1),bx.smallEnd(2)) = 0.;
-#endif
-    }
 
     int nx = bx.length(0);    
     int nxh = nx/2;
