@@ -245,8 +245,8 @@ int main (int argc, char* argv[])
                     reinterpret_cast<FFTcomplex*>
                     (spectral_field[i]->dataPtr()));
       if (result != CUFFT_SUCCESS) {
-    AllPrint() << " forward transform using cufftExec failed! Error: "
-              << cufftErrorToString(result) << "\n";
+	AllPrint() << " forward transform using cufftExec failed! Error: "
+		   << cufftErrorToString(result) << "\n";
       }
 #else
       fftw_execute(forward_plan[i]);
