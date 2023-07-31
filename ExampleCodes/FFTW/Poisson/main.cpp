@@ -72,6 +72,11 @@ int main (int argc, char* argv[])
         pp.get("max_grid_size",max_grid_size);
     }
 
+    // Determine the grid size in each direction.
+    Real L_x = std::abs(prob_hi_x - prob_lo_x);
+    Real L_y = std::abs(prob_hi_y - prob_lo_y);
+    Real L_z = std::abs(prob_hi_z - prob_lo_z);
+
     // **********************************
     // DEFINE SIMULATION SETUP AND GEOMETRY
     // **********************************
@@ -111,16 +116,11 @@ int main (int argc, char* argv[])
     // extract dx from the geometry object
     GpuArray<Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
 
-    // MultiFab storage for phi, and the real and imaginary parts of the dft
-    MultiFab phi         (ba, dm, 1, 0);
-    MultiFab phi_dft_real(ba, dm, 1, 0);
-    MultiFab phi_dft_imag(ba, dm, 1, 0);
-
-    MultiFab phi_dft_real_unshifted(ba, dm, 1, 0);
-    MultiFab phi_dft_imag_unshifted(ba, dm, 1, 0);
+    // MultiFab storage for rhs, and the real and imaginary parts of the dft
+    MultiFab rhs(ba, dm, 1, 0);
 
     // we are going to put the inverse of the FFT here
-    MultiFab phi_2       (ba, dm, 1, 0);
+    MultiFab soln(ba, dm, 1, 0);
 
     // **********************************
     // INITIALIZE DATA
@@ -129,13 +129,13 @@ int main (int argc, char* argv[])
     double omega = M_PI/2.0;
 
     // loop over boxes
-    for (MFIter mfi(phi); mfi.isValid(); ++mfi)
+    for (MFIter mfi(rhs); mfi.isValid(); ++mfi)
     {
         const Box& bx = mfi.validbox();
 
-        const Array4<Real>& phi_ptr = phi.array(mfi);
+        const Array4<Real>& rhs_ptr = rhs.array(mfi);
 
-        // set phi = 1 + e^(-(r-0.5)^2)
+        // set rhs = 1 + e^(-10(r-0.5)^2)
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
             // **********************************
@@ -146,29 +146,27 @@ int main (int argc, char* argv[])
             Real y = (j+0.5) * dx[1];
             Real z = (AMREX_SPACEDIM==3) ? (k+0.5) * dx[2] : 0.;
 
-            phi_ptr(i,j,k) = std::exp(-10.*((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5)));
+            rhs_ptr(i,j,k) = std::exp(-10.*((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5)));
 
         });
     }
 
     // **********************************
-    // COPY PHI INTO A MULTIFAB WITH ONE BOX
+    // COPY RHS INTO A MULTIFAB WITH ONE BOX
     // **********************************
 
     // create a new BoxArray and DistributionMapping for a MultiFab with 1 grid
     BoxArray ba_onegrid(geom.Domain());
     DistributionMapping dm_onegrid(ba_onegrid);
 
-    // storage for phi and the dft
-    MultiFab phi_onegrid         (ba_onegrid, dm_onegrid, 1, 0);
-    MultiFab phi_dft_real_onegrid(ba_onegrid, dm_onegrid, 1, 0);
-    MultiFab phi_dft_imag_onegrid(ba_onegrid, dm_onegrid, 1, 0);
+    // storage for rhs
+    MultiFab rhs_onegrid(ba_onegrid, dm_onegrid, 1, 0);
 
-    // we are going to put the inverse fft here
-    MultiFab phi_onegrid_2       (ba_onegrid, dm_onegrid, 1, 0);
+    // we are going to put the solution here
+    MultiFab soln_onegrid(ba_onegrid, dm_onegrid, 1, 0);
 
-    // copy phi into phi_onegrid
-    phi_onegrid.ParallelCopy(phi, 0, 0, 1);
+    // copy rhs into rhs_onegrid
+    rhs_onegrid.ParallelCopy(rhs, 0, 0, 1);
 
     // **********************************
     // COMPUTE FFT
@@ -191,7 +189,7 @@ int main (int argc, char* argv[])
 
     Vector<FFTplan> forward_plan;
 
-    for (MFIter mfi(phi_onegrid); mfi.isValid(); ++mfi) {
+    for (MFIter mfi(rhs_onegrid); mfi.isValid(); ++mfi) {
 
       // grab a single box including ghost cell range
       Box realspace_bx = mfi.fabbox();
@@ -232,13 +230,13 @@ int main (int argc, char* argv[])
 
 #if (AMREX_SPACEDIM == 2)
       fplan = fftw_plan_dft_r2c_2d(fft_size[1], fft_size[0],
-                   phi_onegrid[mfi].dataPtr(),
+                   rhs_onegrid[mfi].dataPtr(),
                    reinterpret_cast<FFTcomplex*>
                    (spectral_field.back()->dataPtr()),
                    FFTW_ESTIMATE);
 #elif (AMREX_SPACEDIM == 3)
       fplan = fftw_plan_dft_r2c_3d(fft_size[2], fft_size[1], fft_size[0],
-                   phi_onegrid[mfi].dataPtr(),
+                   rhs_onegrid[mfi].dataPtr(),
                    reinterpret_cast<FFTcomplex*>
                    (spectral_field.back()->dataPtr()),
                    FFTW_ESTIMATE);
@@ -252,12 +250,12 @@ int main (int argc, char* argv[])
     ParallelDescriptor::Barrier();
 
     // ForwardTransform
-    for (MFIter mfi(phi_onegrid); mfi.isValid(); ++mfi) {
+    for (MFIter mfi(rhs_onegrid); mfi.isValid(); ++mfi) {
       int i = mfi.LocalIndex();
 #ifdef AMREX_USE_CUDA
       cufftSetStream(forward_plan[i], Gpu::gpuStream());
       cufftResult result = cufftExecD2Z(forward_plan[i],
-                    phi_onegrid[mfi].dataPtr(),
+                    rhs_onegrid[mfi].dataPtr(),
                     reinterpret_cast<FFTcomplex*>
                     (spectral_field[i]->dataPtr()));
       if (result != CUFFT_SUCCESS) {
@@ -269,68 +267,8 @@ int main (int argc, char* argv[])
 #endif
     }
 
-    // copy data to a full-sized MultiFab
-    // this involves copying the complex conjugate from the half-sized field
-    // into the appropriate place in the full MultiFab
-    for (MFIter mfi(phi_dft_real_onegrid); mfi.isValid(); ++mfi) {
-
-      Array4< GpuComplex<Real> > spectral = (*spectral_field[0]).array();
-
-      Array4<Real> const& realpart = phi_dft_real_onegrid.array(mfi);
-      Array4<Real> const& imagpart = phi_dft_imag_onegrid.array(mfi);
-
-      Box bx = mfi.fabbox();
-
-      ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-      {
-      /*
-        Copying rules:
-
-        For domains from (0,0,0) to (Nx-1,Ny-1,Nz-1)
-
-        For any cells with i index >= Nx/2, these values are complex conjugates of the corresponding
-        entry where (Nx-i,Ny-j,Nz-k) UNLESS that index is zero, in which case you use 0.
-
-        e.g. for an 8^3 domain, any cell with i index
-
-        Cell (6,2,3) is complex conjugate of (2,6,5)
-
-        Cell (4,1,0) is complex conjugate of (4,7,0)  (note that the FFT is computed for 0 <= i <= Nx/2)
-      */
-          if (i <= bx.length(0)/2) {
-          // copy value
-              realpart(i,j,k) = spectral(i,j,k).real();
-              imagpart(i,j,k) = spectral(i,j,k).imag();
-
-          } else {
-              // copy complex conjugate
-              int iloc = bx.length(0)-i;
-              int jloc, kloc;
-
-              jloc = (j == 0) ? 0 : bx.length(1)-j;
-#if (AMREX_SPACEDIM == 2)
-              kloc = 0;
-#elif (AMREX_SPACEDIM == 3)
-              kloc = (k == 0) ? 0 : bx.length(2)-k;
-#endif
-
-              realpart(i,j,k) =  spectral(iloc,jloc,kloc).real();
-              imagpart(i,j,k) = -spectral(iloc,jloc,kloc).imag();
-          }
-
-          realpart(i,j,k) /= sqrtnpts;
-          imagpart(i,j,k) /= sqrtnpts;
-      });
-    }
-
-    // Determine the grid size in each direction.
-    Real grid_size_x = std::abs(prob_hi_x - prob_lo_x);
-    Real grid_size_y = std::abs(prob_hi_y - prob_lo_y);
-    Real grid_size_z = std::abs(prob_hi_z - prob_lo_z);
-
-
     // Now we take the standard FFT and scale it by 1/k^2
-    for (MFIter mfi(phi_dft_real_onegrid); mfi.isValid(); ++mfi)
+    for (MFIter mfi(rhs_onegrid); mfi.isValid(); ++mfi)
     {
         Array4< GpuComplex<Real> > spectral = (*spectral_field[0]).array();
 
@@ -341,13 +279,13 @@ int main (int argc, char* argv[])
         {
             if (i <= bx.length(0)/2) {
 
-                Real a = 2.*M_PI*i / grid_size_x;
-                Real b = 2.*M_PI*j / grid_size_y;
-                Real c = 2.*M_PI*k / grid_size_z;
+                Real a = 2.*M_PI*i / L_x;
+                Real b = 2.*M_PI*j / L_y;
+                Real c = 2.*M_PI*k / L_z;
 
                 // If we are on the "bottom" or "right" half of the plane in y and z, then we still need to account for indices of repeated terms
-                if (j >= n_cell_z/2) b = 2.*M_PI*(n_cell_y-j) / grid_size_y;
-                if (k >= n_cell_z/2) c = 2.*M_PI*(n_cell_z-k) / grid_size_z;
+                if (j >= n_cell_z/2) b = 2.*M_PI*(n_cell_y-j) / L_y;
+                if (k >= n_cell_z/2) c = 2.*M_PI*(n_cell_z-k) / L_z;
 
               // Calculate the scaled distance from the origin for each mode
 #if (AMREX_SPACEDIM == 2)
@@ -366,18 +304,12 @@ int main (int argc, char* argv[])
         });
      }
 
-    phi_dft_real.ParallelCopy(phi_dft_real_onegrid, 0, 0, 1);
-    phi_dft_imag.ParallelCopy(phi_dft_imag_onegrid, 0, 0, 1);
-
-    phi_dft_real_unshifted.ParallelCopy(phi_dft_real_onegrid, 0, 0, 1);
-    phi_dft_imag_unshifted.ParallelCopy(phi_dft_imag_onegrid, 0, 0, 1);
-
     // Now we have completed the fft and scaled each value by 1/k^2
     // The scaled fft is inside spectral_field
-    // Take inverse fft of spectral_field and put it in phi_onegrid_2
+    // Take inverse fft of spectral_field and put it in soln_onegrid
     Vector<FFTplan> backward_plan;
 
-    for (MFIter mfi(phi_onegrid_2); mfi.isValid(); ++mfi) {
+    for (MFIter mfi(soln_onegrid); mfi.isValid(); ++mfi) {
 
        // grab a single box including ghost cell range
        Box realspace_bx = mfi.fabbox();
@@ -391,34 +323,34 @@ int main (int argc, char* argv[])
       bplan = fftw_plan_dft_c2r_2d(fft_size[1], fft_size[0],
                    reinterpret_cast<FFTcomplex*>
                    (spectral_field.back()->dataPtr()),
-                   phi_onegrid_2[mfi].dataPtr(),
+                   soln_onegrid[mfi].dataPtr(),
                    FFTW_ESTIMATE);
 #elif (AMREX_SPACEDIM == 3)
       bplan = fftw_plan_dft_c2r_3d(fft_size[2], fft_size[1], fft_size[0],
                    reinterpret_cast<FFTcomplex*>
                    (spectral_field.back()->dataPtr()),
-                   phi_onegrid_2[mfi].dataPtr(),
+                   soln_onegrid[mfi].dataPtr(),
                    FFTW_ESTIMATE);
 #endif
 
     backward_plan.push_back(bplan);// This adds an instance of bplan to the end of backward_plan
     }
 
-    for (MFIter mfi(phi_onegrid_2); mfi.isValid(); ++mfi) {
+    for (MFIter mfi(soln_onegrid); mfi.isValid(); ++mfi) {
       int i = mfi.LocalIndex();
       fftw_execute(backward_plan[i]);
 
       // Must divide each point by the total number of points in the domain for properly scaled inverse FFT
 #if (AMREX_SPACEDIM == 2)
-      phi_onegrid_2[mfi] /= n_cell_x*n_cell_y;
+      soln_onegrid[mfi] /= n_cell_x*n_cell_y;
 #elif (AMREX_SPACEDIM == 3)
-      phi_onegrid_2[mfi] /= n_cell_x*n_cell_y*n_cell_z;
+      soln_onegrid[mfi] /= n_cell_x*n_cell_y*n_cell_z;
 #endif
 
     }
 
-    // copy contents of phi_onegrid_2 into phi_2
-    phi_2.ParallelCopy(phi_onegrid_2, 0, 0, 1);
+    // copy contents of soln_onegrid into soln
+    soln.ParallelCopy(soln_onegrid, 0, 0, 1);
 
     // destroy fft plan
     for (int i = 0; i < forward_plan.size(); ++i) {
@@ -439,77 +371,12 @@ int main (int argc, char* argv[])
 
     }
 
-    // **********************************
-    // SHIFT DATA
-    // **********************************
-
-    // zero_avg=0 means set the k=0 value to zero,
-    // otherwise it sets the k=0 value to the average value of the signal in real space
-    int zero_avg = 0;
-
-    // shift data
-    ShiftFFT(phi_dft_real_onegrid,geom,zero_avg);
-    ShiftFFT(phi_dft_imag_onegrid,geom,zero_avg);
-
-    // **********************************
-    // COPY DFT INTO THE DISTRIBUTED MULTIFAB
-    // **********************************
-
-    phi_dft_real.ParallelCopy(phi_dft_real_onegrid, 0, 0, 1);
-    phi_dft_imag.ParallelCopy(phi_dft_imag_onegrid, 0, 0, 1);
-
-    // **********************************
-    // WRITE DATA AND FFT TO PLOT FILE
-    // **********************************
-
-    // storage for magnitude and phase angle
-    MultiFab phi_dft_magn(ba, dm, 1, 0);
-    MultiFab phi_dft_phase(ba, dm, 1, 0);
-
-    for (MFIter mfi(phi_dft_real); mfi.isValid(); ++mfi)
-    {
-        // Pointers to the magnitude, phase, real, and imaginary data
-        const Array4<Real>& phi_dft_magn_ptr = phi_dft_magn.array(mfi);
-        const Array4<Real>& phi_dft_phase_ptr = phi_dft_phase.array(mfi);
-        const Array4<Real>& phi_dft_real_ptr = phi_dft_real.array(mfi);
-        const Array4<Real>& phi_dft_imag_ptr = phi_dft_imag.array(mfi);
-
-        const Box& bx = mfi.validbox();
-
-        // Set the value of the magnitude and phase angle using the real and imaginary parts of the dft
-        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
-        {
-            double re = phi_dft_real_ptr(i,j,k);
-            double im = phi_dft_imag_ptr(i,j,k);
-            phi_dft_magn_ptr(i,j,k) = std::sqrt(re*re + im*im); // Here we want to store the values of the magnitude
-
-            // Avoid division by zero
-            if (re == 0.0) {
-                if (im == 0.0){
-                    phi_dft_phase_ptr(i,j,k) = 0.0;
-                } else if (im > 0.0) {
-                    phi_dft_phase_ptr(i,j,k) = M_PI/2.0;
-                } else {
-                     phi_dft_phase_ptr(i,j,k) = -M_PI/2.0;
-                }
-            } else {
-                phi_dft_phase_ptr(i,j,k) = std::atan(im/re); // Here we want to store the values of the phase angle
-            }
-        });
-     }
-
      // storage for variables to write to plotfile
-     MultiFab plotfile(ba, dm, 8, 0);
+    MultiFab plotfile(ba, dm, 2, 0);
 
-     // copy phi, phi_dft_real, and phi_dft_imag, phi_dft_magn, and phi_dft_phase into plotfile
-     MultiFab::Copy(plotfile, phi         , 0, 0, 1, 0);
-     MultiFab::Copy(plotfile, phi_dft_real, 0, 1, 1, 0);
-     MultiFab::Copy(plotfile, phi_dft_imag, 0, 2, 1, 0);
-     MultiFab::Copy(plotfile, phi_dft_magn, 0, 3, 1, 0);
-     MultiFab::Copy(plotfile, phi_dft_phase, 0, 4, 1, 0);
-     MultiFab::Copy(plotfile, phi_2        , 0, 5, 1, 0);
-     MultiFab::Copy(plotfile, phi_dft_real_unshifted, 0, 6, 1, 0);
-     MultiFab::Copy(plotfile, phi_dft_real_unshifted, 0, 7, 1, 0);
+     // copy rhs and soln into plotfile
+     MultiFab::Copy(plotfile, rhs , 0, 0, 1, 0);
+     MultiFab::Copy(plotfile, soln, 0, 1, 1, 0);
 
      // time and step are dummy variables required to WriteSingleLevelPlotfile
      Real time = 0.;
@@ -522,7 +389,7 @@ int main (int argc, char* argv[])
      // 4: geometry object
      // 5: "time" of plotfile; not relevant in this example
      // 6: "time step" of plotfile; not relevant in this example
-     WriteSingleLevelPlotfile("plt", plotfile, {"phi", "phi_dft_real", "phi_dft_imag","phi_dft_magn","phi_dft_phase", "phi_2", "phi_dft_real_unshifted", "phi_dft_imag_unshifted"}, geom, time, step);
+     WriteSingleLevelPlotfile("plt", plotfile, {"rhs", "soln"}, geom, time, step);
 
      // Call the timer again and compute the maximum difference between the start time
      // and stop time over all processors

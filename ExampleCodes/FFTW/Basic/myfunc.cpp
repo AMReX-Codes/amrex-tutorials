@@ -6,13 +6,11 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
    /*
     Shifting rules:
 
-    Take the full plater of FFT values, and move the element at each index half of the total grid size (N/2) units to the "right", or "down"
-
-    Peridic boundaries are used to shift elements on the "right" or "bottom" end of the domain
+    For each direction d, shift the data in the +d direction by n_cell[d]/2 and then modulo by n_cell[d].
 
     e.g. for an 8^3 domain
 
-    Cell (7,2,3) is sent to (3,6,7)
+    Cell (7,2,3) is shifted to ( (7+4)%8, (2+4)%8, (3+4)%8 ) =  (3,6,7)
 
   */
   MultiFab dft_onegrid_temp;
@@ -36,13 +34,13 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
 #endif
     }
 
-    int nx = bx.length(0);
-    int nxh = (nx+1)/2;
+    int nx = bx.length(0);    
+    int nxh = nx/2;
     int ny = bx.length(1);
-    int nyh = (ny+1)/2;
+    int nyh = ny/2;
 #if (AMREX_SPACEDIM == 3)
     int nz = bx.length(2);
-    int nzh = (nz+1)/2;
+    int nzh = nz/2;
 #endif
 
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept

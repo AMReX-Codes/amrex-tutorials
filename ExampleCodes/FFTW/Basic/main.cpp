@@ -268,11 +268,11 @@ int main (int argc, char* argv[])
       ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
       {
       /*
-      Copying rules:
+       Unpacking rules:
 
         For domains from (0,0,0) to (Nx-1,Ny-1,Nz-1)
 
-        For any cells with i index >= Nx/2, these values are complex conjugates of the corresponding
+        For any cells with i index > Nx/2, these values are complex conjugates of the corresponding
         entry where (Nx-i,Ny-j,Nz-k) UNLESS that index is zero, in which case you use 0.
 
         e.g. for an 8^3 domain, any cell with i index
