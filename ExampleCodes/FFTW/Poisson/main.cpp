@@ -17,7 +17,7 @@ using namespace amrex;
 int main (int argc, char* argv[])
 {
 
-    Initialize(argc,argv);
+    Initialize(argc,argv);{
 
     // store the current time so we can later compute total run time.
     Real start_time = ParallelDescriptor::second();
@@ -255,12 +255,12 @@ int main (int argc, char* argv[])
 #ifdef AMREX_USE_CUDA
       cufftSetStream(forward_plan[i], Gpu::gpuStream());
       cufftResult result = cufftExecD2Z(forward_plan[i],
-					rhs_onegrid[mfi].dataPtr(),
-					reinterpret_cast<FFTcomplex*>
+                    rhs_onegrid[mfi].dataPtr(),
+                    reinterpret_cast<FFTcomplex*>
                     (spectral_field[i]->dataPtr()));
       if (result != CUFFT_SUCCESS) {
-	AllPrint() << " forward transform using cufftExec failed! Error: "
-		   << cufftErrorToString(result) << "\n";
+    AllPrint() << " forward transform using cufftExec failed! Error: "
+           << cufftErrorToString(result) << "\n";
       }
 #else
       fftw_execute(forward_plan[i]);
@@ -321,8 +321,22 @@ int main (int argc, char* argv[])
 
 #ifdef AMREX_USE_CUDA
 
+#if (AMREX_SPACEDIM == 2)
+      cufftResult result = cufftPlan2d(&bplan, fft_size[1], fft_size[0], CUFFT_Z2D);
+      if (result != CUFFT_SUCCESS) {
+    AllPrint() << " cufftplan2d forward failed! Error: "
+              << cufftErrorToString(result) << "\n";
+      }
+#elif (AMREX_SPACEDIM == 3)
+      cufftResult result = cufftPlan3d(&bplan, fft_size[2], fft_size[1], fft_size[0], CUFFT_Z2D);
+      if (result != CUFFT_SUCCESS) {
+    AllPrint() << " cufftplan3d forward failed! Error: "
+              << cufftErrorToString(result) << "\n";
+      }
+#endif
+
 #else // host
-       
+
 #if (AMREX_SPACEDIM == 2)
       bplan = fftw_plan_dft_c2r_2d(fft_size[1], fft_size[0],
                    reinterpret_cast<FFTcomplex*>
@@ -345,7 +359,15 @@ int main (int argc, char* argv[])
     for (MFIter mfi(soln_onegrid); mfi.isValid(); ++mfi) {
       int i = mfi.LocalIndex();
 #ifdef AMREX_USE_CUDA
-
+      cufftSetStream(backward_plan[i], Gpu::gpuStream());
+      cufftResult result = cufftExecZ2D(backward_plan[i],
+                           reinterpret_cast<FFTcomplex*>
+                           (spectral_field[i]->dataPtr()),
+		           soln_onegrid[mfi].dataPtr());
+       if (result != CUFFT_SUCCESS) {
+         AllPrint() << " inverse transform using cufftExec failed! Error: "
+         << cufftErrorToString(result) << "\n";
+       }
 #else
       fftw_execute(backward_plan[i]);
 #endif
@@ -358,7 +380,7 @@ int main (int argc, char* argv[])
     // Must divide each point by the total number of points in the domain for properly scaled inverse FFT
     Real volinv = (AMREX_SPACEDIM == 2) ? 1. / (n_cell_x*n_cell_y) : 1. / (n_cell_x*n_cell_y*n_cell_z);
     soln.mult(volinv);
-    
+
     // destroy fft plan
     for (int i = 0; i < forward_plan.size(); ++i) {
 #ifdef AMREX_USE_CUDA
@@ -404,7 +426,7 @@ int main (int argc, char* argv[])
     ParallelDescriptor::ReduceRealMax(stop_time);
     Print() << "Run time = " << stop_time << std::endl;
 
-    Finalize();
+    }Finalize();
 }
 
 
