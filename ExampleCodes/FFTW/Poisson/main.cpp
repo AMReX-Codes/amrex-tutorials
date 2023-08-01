@@ -363,7 +363,7 @@ int main (int argc, char* argv[])
       cufftResult result = cufftExecZ2D(backward_plan[i],
                            reinterpret_cast<FFTcomplex*>
                            (spectral_field[i]->dataPtr()),
-		           soln_onegrid[mfi].dataPtr());
+                           soln_onegrid[mfi].dataPtr());
        if (result != CUFFT_SUCCESS) {
          AllPrint() << " inverse transform using cufftExec failed! Error: "
          << cufftErrorToString(result) << "\n";
