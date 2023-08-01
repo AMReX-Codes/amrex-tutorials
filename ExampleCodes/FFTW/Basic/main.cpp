@@ -1,5 +1,4 @@
-#include
-<AMReX.H>
+#include <AMReX.H>
 
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
@@ -19,6 +18,7 @@ int main (int argc, char* argv[])
 {
 
     Initialize(argc,argv);
+    {
 
     // store the current time so we can later compute total run time.
     Real start_time = ParallelDescriptor::second();
@@ -246,8 +246,8 @@ int main (int argc, char* argv[])
                     reinterpret_cast<FFTcomplex*>
                     (spectral_field[i]->dataPtr()));
       if (result != CUFFT_SUCCESS) {
-    AllPrint() << " forward transform using cufftExec failed! Error: "
-           << cufftErrorToString(result) << "\n";
+	AllPrint() << " forward transform using cufftExec failed! Error: "
+		   << cufftErrorToString(result) << "\n";
       }
 #else
       fftw_execute(forward_plan[i]);
@@ -404,6 +404,7 @@ int main (int argc, char* argv[])
      ParallelDescriptor::ReduceRealMax(stop_time);
      Print() << "Run time = " << stop_time << std::endl;
 
+     }
      Finalize();
 }
 

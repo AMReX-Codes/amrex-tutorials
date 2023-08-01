@@ -17,7 +17,8 @@ using namespace amrex;
 int main (int argc, char* argv[])
 {
 
-    Initialize(argc,argv);{
+    Initialize(argc,argv);
+    {
 
     // store the current time so we can later compute total run time.
     Real start_time = ParallelDescriptor::second();
@@ -426,7 +427,8 @@ int main (int argc, char* argv[])
     ParallelDescriptor::ReduceRealMax(stop_time);
     Print() << "Run time = " << stop_time << std::endl;
 
-    }Finalize();
+    }
+    Finalize();
 }
 
 
