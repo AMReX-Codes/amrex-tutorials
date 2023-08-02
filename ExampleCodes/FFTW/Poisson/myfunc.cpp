@@ -1,4 +1,3 @@
-
 #include "myfunc.H"
 
 void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) {
@@ -23,18 +22,28 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
 
     const Box& bx = mfi.tilebox();
 
-    const Array4<Real>& dft = dft_onegrid.array(mfi);
     const Array4<Real>& dft_temp = dft_onegrid_temp.array(mfi);
 
     if (zero_avg == 1) {
-#if (AMREX_SPACEDIM == 2)
-      dft_temp(bx.smallEnd(0),bx.smallEnd(1),0) = 0.;
-#elif (AMREX_SPACEDIM == 3)
-      dft_temp(bx.smallEnd(0),bx.smallEnd(1),bx.smallEnd(2)) = 0.;
-#endif
+      amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+      {
+        if (i == 0 && j == 0 && k == 0) {
+          dft_temp(i,j,k) = 0.;
+        }
+      });
     }
+  }
 
-    int nx = bx.length(0);    
+
+  // Shift DFT by N/2+1 (pi)
+  for (MFIter mfi(dft_onegrid); mfi.isValid(); ++mfi) {
+
+    const Box& bx = mfi.tilebox();
+
+    const Array4<Real>& dft = dft_onegrid.array(mfi);
+    const Array4<Real>& dft_temp = dft_onegrid_temp.array(mfi);
+
+    int nx = bx.length(0);
     int nxh = nx/2;
     int ny = bx.length(1);
     int nyh = ny/2;
@@ -57,7 +66,6 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
   }
 
 }
-
 
 #ifdef AMREX_USE_CUDA
 std::string cufftErrorToString (const cufftResult& err)
