@@ -32,7 +32,7 @@ int main (int argc, char* argv[])
     int n_cell_y;
     int n_cell_z;
 
-    // dimensions of each box (or grid)
+    // dimensions of the domain
     Real prob_hi_x;
     Real prob_hi_y;
     Real prob_hi_z;
@@ -41,27 +41,22 @@ int main (int argc, char* argv[])
     int max_grid_size;
 
     // **********************************
-    // READ PARAMETER VALUES FROM INPUT DATA
+    // READ PARAMETER VALUES FROM INPUTS FILE
     // **********************************
-    // inputs parameters
     {
         // ParmParse is way of reading inputs from the inputs file
         // pp.get means we require the inputs file to have it
-        // pp.query means we optionally need the inputs file to have it - but we must supply a default here
+        // pp.query means we optionally need the inputs file to have it - but you should supply a default value above
         ParmParse pp;
 
-        // We need to get n_cell_ from the inputs file - this is the number of cells on each side of
-        //   a rectangular domain.
         pp.get("n_cell_x",n_cell_x);
         pp.get("n_cell_y",n_cell_y);
         pp.get("n_cell_z",n_cell_z);
 
-        // We need to get prob_hi_x/y/z from the inputs file - this is the physical dimensions of the domain
         pp.get("prob_hi_x",prob_hi_x);
         pp.get("prob_hi_y",prob_hi_y);
         pp.get("prob_hi_z",prob_hi_z);
 
-        // The domain is broken into boxes of size max_grid_size
         pp.get("max_grid_size",max_grid_size);
     }
 
@@ -76,7 +71,7 @@ int main (int argc, char* argv[])
     Geometry geom;
 
     // define lower and upper indices
-    IntVect dom_lo(AMREX_D_DECL(       0,        0,        0));
+    IntVect dom_lo(AMREX_D_DECL(         0,          0,          0));
     IntVect dom_hi(AMREX_D_DECL(n_cell_x-1, n_cell_y-1, n_cell_z-1));
 
     // Make a single box that is the entire domain
@@ -92,7 +87,7 @@ int main (int argc, char* argv[])
     DistributionMapping dm(ba);
 
     // This defines the physical box size in each direction
-    RealBox real_box({ AMREX_D_DECL(0., 0., 0.)},
+    RealBox real_box({ AMREX_D_DECL(       0.,        0.,        0.)},
                      { AMREX_D_DECL(prob_hi_x, prob_hi_y, prob_hi_z)} );
 
     // periodic in all direction
@@ -110,7 +105,7 @@ int main (int argc, char* argv[])
     MultiFab phi_dft_imag(ba, dm, 1, 0);
 
     // **********************************
-    // INITIALIZE DATA
+    // INITIALIZE PHI
     // **********************************
 
     double omega = M_PI/2.0;
@@ -122,7 +117,6 @@ int main (int argc, char* argv[])
 
         const Array4<Real>& phi_ptr = phi.array(mfi);
 
-        // set phi = 1 + e^(-(r-0.5)^2)
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
             // **********************************
@@ -143,7 +137,7 @@ int main (int argc, char* argv[])
     // COPY PHI INTO A MULTIFAB WITH ONE BOX
     // **********************************
 
-    // create a new BoxArray and DistributionMapping for a MultiFab with 1 grid
+    // create a new BoxArray and DistributionMapping for a MultiFab with 1 box
     BoxArray ba_onegrid(geom.Domain());
     DistributionMapping dm_onegrid(ba_onegrid);
 
@@ -171,18 +165,18 @@ int main (int argc, char* argv[])
     long npts = domain.numPts();
     Real sqrtnpts = std::sqrt(npts);
 
-    // contain to store FFT - note it is shrunk by "half" in x
+    // contain to store FFT - note it is shrunk by approximately a half in x
     Vector<std::unique_ptr<BaseFab<GpuComplex<Real> > > > spectral_field;
 
     Vector<FFTplan> forward_plan;
 
     for (MFIter mfi(phi_onegrid); mfi.isValid(); ++mfi) {
 
-      // grab a single box including ghost cell range
+      // grab a single box
       Box realspace_bx = mfi.fabbox();
 
-      // size of box including ghost cell range
-      IntVect fft_size = realspace_bx.length(); // This will be different for hybrid FFT
+      // size of box
+      IntVect fft_size = realspace_bx.length(); // This will be different for FFTs of complex data
 
       // this is the size of the box, except the 0th component is 'halved plus 1'
       IntVect spectral_bx_size = fft_size;
@@ -202,14 +196,14 @@ int main (int argc, char* argv[])
 #if (AMREX_SPACEDIM == 2)
       cufftResult result = cufftPlan2d(&fplan, fft_size[1], fft_size[0], CUFFT_D2Z);
       if (result != CUFFT_SUCCESS) {
-    AllPrint() << " cufftplan2d forward failed! Error: "
-              << cufftErrorToString(result) << "\n";
+          AllPrint() << " cufftplan2d forward failed! Error: "
+                     << cufftErrorToString(result) << "\n";
       }
 #elif (AMREX_SPACEDIM == 3)
       cufftResult result = cufftPlan3d(&fplan, fft_size[2], fft_size[1], fft_size[0], CUFFT_D2Z);
       if (result != CUFFT_SUCCESS) {
-    AllPrint() << " cufftplan3d forward failed! Error: "
-              << cufftErrorToString(result) << "\n";
+          AllPrint() << " cufftplan3d forward failed! Error: "
+                     << cufftErrorToString(result) << "\n";
       }
 #endif
 
@@ -246,8 +240,8 @@ int main (int argc, char* argv[])
                     reinterpret_cast<FFTcomplex*>
                     (spectral_field[i]->dataPtr()));
       if (result != CUFFT_SUCCESS) {
-    AllPrint() << " forward transform using cufftExec failed! Error: "
-           << cufftErrorToString(result) << "\n";
+          AllPrint() << " forward transform using cufftExec failed! Error: "
+                     << cufftErrorToString(result) << "\n";
       }
 #else
       fftw_execute(forward_plan[i]);

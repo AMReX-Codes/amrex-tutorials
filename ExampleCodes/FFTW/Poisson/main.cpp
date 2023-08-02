@@ -32,7 +32,7 @@ int main (int argc, char* argv[])
     int n_cell_y;
     int n_cell_z;
 
-    // dimensions of each box (or grid)
+    // dimensions of the domain
     Real prob_lo_x;
     Real prob_lo_y;
     Real prob_lo_z;
@@ -45,22 +45,18 @@ int main (int argc, char* argv[])
     int max_grid_size;
 
     // **********************************
-    // READ PARAMETER VALUES FROM INPUT DATA
+    // READ PARAMETER VALUES FROM INPUTS FILE
     // **********************************
-    // inputs parameters
     {
         // ParmParse is way of reading inputs from the inputs file
         // pp.get means we require the inputs file to have it
-        // pp.query means we optionally need the inputs file to have it - but we must supply a default here
+        // pp.query means we optionally need the inputs file to have it - but you should supply a default value above
         ParmParse pp;
 
-        // We need to get n_cell_ from the inputs file - this is the number of cells on each side of
-        //   a rectangular domain.
         pp.get("n_cell_x",n_cell_x);
         pp.get("n_cell_y",n_cell_y);
         pp.get("n_cell_z",n_cell_z);
 
-        // We need to get prob_hi_x/y/z from the inputs file - this is the physical dimensions of the domain
         pp.get("prob_lo_x",prob_lo_x);
         pp.get("prob_lo_y",prob_lo_y);
         pp.get("prob_lo_z",prob_lo_z);
@@ -69,11 +65,10 @@ int main (int argc, char* argv[])
         pp.get("prob_hi_y",prob_hi_y);
         pp.get("prob_hi_z",prob_hi_z);
 
-        // The domain is broken into boxes of size max_grid_size
         pp.get("max_grid_size",max_grid_size);
     }
 
-    // Determine the grid size in each direction.
+    // Determine the domain length in each direction
     Real L_x = std::abs(prob_hi_x - prob_lo_x);
     Real L_y = std::abs(prob_hi_y - prob_lo_y);
     Real L_z = std::abs(prob_hi_z - prob_lo_z);
@@ -89,7 +84,7 @@ int main (int argc, char* argv[])
     Geometry geom;
 
     // define lower and upper indices
-    IntVect dom_lo(AMREX_D_DECL(       0,        0,        0));
+    IntVect dom_lo(AMREX_D_DECL(         0,          0,          0));
     IntVect dom_hi(AMREX_D_DECL(n_cell_x-1, n_cell_y-1, n_cell_z-1));
 
     // Make a single box that is the entire domain
@@ -117,17 +112,13 @@ int main (int argc, char* argv[])
     // extract dx from the geometry object
     GpuArray<Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
 
-    // MultiFab storage for rhs, and the real and imaginary parts of the dft
+    // MultiFab storage for rhs and the solution to the Poisson equation, lap(soln) = rhs
     MultiFab rhs(ba, dm, 1, 0);
-
-    // we are going to put the inverse of the FFT here
     MultiFab soln(ba, dm, 1, 0);
 
     // **********************************
-    // INITIALIZE DATA
+    // INITIALIZE RHS
     // **********************************
-
-    double omega = M_PI/2.0;
 
     // loop over boxes
     for (MFIter mfi(rhs); mfi.isValid(); ++mfi)
@@ -136,7 +127,6 @@ int main (int argc, char* argv[])
 
         const Array4<Real>& rhs_ptr = rhs.array(mfi);
 
-        // set rhs = 1 + e^(-10(r-0.5)^2)
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
             // **********************************
@@ -156,14 +146,12 @@ int main (int argc, char* argv[])
     // COPY RHS INTO A MULTIFAB WITH ONE BOX
     // **********************************
 
-    // create a new BoxArray and DistributionMapping for a MultiFab with 1 grid
+    // create a new BoxArray and DistributionMapping for a MultiFab with 1 box
     BoxArray ba_onegrid(geom.Domain());
     DistributionMapping dm_onegrid(ba_onegrid);
 
-    // storage for rhs
+    // storage for rhs and soln
     MultiFab rhs_onegrid(ba_onegrid, dm_onegrid, 1, 0);
-
-    // we are going to put the solution here
     MultiFab soln_onegrid(ba_onegrid, dm_onegrid, 1, 0);
 
     // copy rhs into rhs_onegrid
@@ -185,18 +173,18 @@ int main (int argc, char* argv[])
     long npts = domain.numPts();
     Real sqrtnpts = std::sqrt(npts);
 
-    // contain to store FFT - note it is shrunk by "half" in x
+    // contain to store FFT - note it is shrunk by approximately a half in x
     Vector<std::unique_ptr<BaseFab<GpuComplex<Real> > > > spectral_field;
 
     Vector<FFTplan> forward_plan;
 
     for (MFIter mfi(rhs_onegrid); mfi.isValid(); ++mfi) {
 
-      // grab a single box including ghost cell range
+      // grab a single box
       Box realspace_bx = mfi.fabbox();
 
-      // size of box including ghost cell range
-      IntVect fft_size = realspace_bx.length(); // This will be different for hybrid FFT
+      // size of box
+      IntVect fft_size = realspace_bx.length(); // This will be different for FFTs of complex data
 
       // this is the size of the box, except the 0th component is 'halved plus 1'
       IntVect spectral_bx_size = fft_size;
@@ -216,14 +204,14 @@ int main (int argc, char* argv[])
 #if (AMREX_SPACEDIM == 2)
       cufftResult result = cufftPlan2d(&fplan, fft_size[1], fft_size[0], CUFFT_D2Z);
       if (result != CUFFT_SUCCESS) {
-    AllPrint() << " cufftplan2d forward failed! Error: "
-              << cufftErrorToString(result) << "\n";
+          AllPrint() << " cufftplan2d forward failed! Error: "
+                     << cufftErrorToString(result) << "\n";
       }
 #elif (AMREX_SPACEDIM == 3)
       cufftResult result = cufftPlan3d(&fplan, fft_size[2], fft_size[1], fft_size[0], CUFFT_D2Z);
       if (result != CUFFT_SUCCESS) {
-    AllPrint() << " cufftplan3d forward failed! Error: "
-              << cufftErrorToString(result) << "\n";
+          AllPrint() << " cufftplan3d forward failed! Error: "
+                     << cufftErrorToString(result) << "\n";
       }
 #endif
 
@@ -275,20 +263,19 @@ int main (int argc, char* argv[])
 
         const Box& bx = mfi.fabbox();
 
-        // Set the value of the magnitude and phase angle using the real and imaginary parts of the dft
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
+            // the "spectral" data only exists for i <= nx/2
             if (i <= bx.length(0)/2) {
 
                 Real a = 2.*M_PI*i / L_x;
                 Real b = 2.*M_PI*j / L_y;
                 Real c = 2.*M_PI*k / L_z;
 
-                // If we are on the "bottom" or "right" half of the plane in y and z, then we still need to account for indices of repeated terms
+                // the values in the upper-half of the spectral array in y and z are here interpreted as negative wavenumbers
                 if (j >= n_cell_z/2) b = 2.*M_PI*(n_cell_y-j) / L_y;
                 if (k >= n_cell_z/2) c = 2.*M_PI*(n_cell_z-k) / L_z;
 
-              // Calculate the scaled distance from the origin for each mode
 #if (AMREX_SPACEDIM == 2)
                 Real k2 = -(a*a + b*b);
 #elif (AMREX_SPACEDIM == 3)
@@ -298,7 +285,7 @@ int main (int argc, char* argv[])
                 if (k2 != 0.) {
                     spectral(i,j,k) /= k2;
                 } else {
-                    spectral(i,j,k) *= 0.;
+                    spectral(i,j,k) *= 0.; // interpretation here is that the average value of the solution is zero
                 }
             }
 
@@ -325,14 +312,14 @@ int main (int argc, char* argv[])
 #if (AMREX_SPACEDIM == 2)
       cufftResult result = cufftPlan2d(&bplan, fft_size[1], fft_size[0], CUFFT_Z2D);
       if (result != CUFFT_SUCCESS) {
-    AllPrint() << " cufftplan2d forward failed! Error: "
-              << cufftErrorToString(result) << "\n";
+          AllPrint() << " cufftplan2d forward failed! Error: "
+                     << cufftErrorToString(result) << "\n";
       }
 #elif (AMREX_SPACEDIM == 3)
       cufftResult result = cufftPlan3d(&bplan, fft_size[2], fft_size[1], fft_size[0], CUFFT_Z2D);
       if (result != CUFFT_SUCCESS) {
-    AllPrint() << " cufftplan3d forward failed! Error: "
-              << cufftErrorToString(result) << "\n";
+          AllPrint() << " cufftplan3d forward failed! Error: "
+                     << cufftErrorToString(result) << "\n";
       }
 #endif
 
@@ -366,8 +353,8 @@ int main (int argc, char* argv[])
                            (spectral_field[i]->dataPtr()),
                            soln_onegrid[mfi].dataPtr());
        if (result != CUFFT_SUCCESS) {
-         AllPrint() << " inverse transform using cufftExec failed! Error: "
-         << cufftErrorToString(result) << "\n";
+           AllPrint() << " inverse transform using cufftExec failed! Error: "
+                      << cufftErrorToString(result) << "\n";
        }
 #else
       fftw_execute(backward_plan[i]);
