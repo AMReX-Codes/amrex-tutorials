@@ -1,11 +1,12 @@
 import numpy as np
 import amrex.space3d as amr
 
-# TODO How do we print pyamrex's version?
-print("Hello world from pyamrex\n")
-
 # Initialize AMReX
 amr.initialize([])
+
+# TODO How do we print pyamrex's version?
+if amr.ParallelDescriptor.IOProcessor():
+    print("Hello world from pyamrex\n")
 
 # Goals:
 # * Define a MultiFab
@@ -79,9 +80,10 @@ for mfi in mf:
     mf_refval = 1.0 + np.exp(-vv)
     assert(mf_array[0,0,0] == mf_refval)
 
-# TODO How do we write plotfiles?
 # Plot MultiFab data
-# WriteSingleLevelPlotfile("plt001", mf, {"comp0"}, geom, 0., 0);
+plotfile = amr.concatenate(root="plt", num=1, mindigits=3)
+varnames = amr.Vector_string(["comp0"])
+amr.write_single_level_plotfile(plotfile, mf, varnames, geom, time=0., level_step=0)
 
 # Finalize AMReX
 amr.finalize()
