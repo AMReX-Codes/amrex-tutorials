@@ -59,26 +59,31 @@ dx = geom.data().CellSize() # dx[0]=dx dx[1]=dy dx[2]=dz
 mf_val = 0.
 for mfi in mf:
     bx = mfi.validbox()
-    # mf_array is indexed in reversed order (z,y,x) and indices are local,
-    # that is, indices range from 0 to the box size
+    # Preferred way to fill array using NumPy operations:
+    # - mf_array is indexed in reversed order (n,z,y,x)
+    # - indices are local (range from 0 to box size)
     mf_array = np.array(mf.array(mfi), copy=False)
-    x = (np.arange(bx.small_end[0], bx.big_end[0])+0.5)*dx[0]
-    y = (np.arange(bx.small_end[1], bx.big_end[1])+0.5)*dx[1]
-    z = (np.arange(bx.small_end[2], bx.big_end[2])+0.5)*dx[2]
-    v = (x[np.newaxis,np.newaxis,:]*10
-       + y[np.newaxis,:,np.newaxis]*100
-       + z[:,np.newaxis,np.newaxis]*1000)
+    x = (np.arange(bx.small_end[0], bx.big_end[0]+1)+0.5)*dx[0]
+    y = (np.arange(bx.small_end[1], bx.big_end[1]+1)+0.5)*dx[1]
+    z = (np.arange(bx.small_end[2], bx.big_end[2]+1)+0.5)*dx[2]
+    v = (x[np.newaxis,np.newaxis,:]
+       + y[np.newaxis,:,np.newaxis]*0.1
+       + z[:,np.newaxis,np.newaxis]*0.01)
     mf_array = 1. + np.exp(-v)
-    # Check that mf_array has been filled correctly for a given set of indices
-    ii = bx.small_end[0]
-    jj = bx.small_end[1] 
-    kk = bx.small_end[2]
-    xx = (ii+0.5)*dx[0]
-    yy = (jj+0.5)*dx[1]
-    zz = (kk+0.5)*dx[2]
-    vv = xx*10 + yy*100 + zz*1000
-    mf_refval = 1.0 + np.exp(-vv)
-    assert(mf_array[0,0,0] == mf_refval)
+    # Alternative way to fill array using standard for loop over box indices:
+    # - mf_array_ref is indexed in standard order (x,y,z,n)
+    # - indices are global
+    mf_array_ref = mf.array(mfi)
+    for i, j, k in bx:
+        x = (i+0.5)*dx[0]
+        y = (j+0.5)*dx[1]
+        z = (k+0.5)*dx[2]
+        v = x + y*0.1 + z*0.01
+        mf_array_ref[i,j,k,0] = 1. + np.exp(-v)
+    # Check that mf_array has been filled correctly, compare it with
+    # mf_array_ref (filled as Array4 and transformed to NumPy array)
+    mf_array_ref_np = np.array(mf_array_ref, copy=False)
+    assert np.allclose(mf_array, mf_array_ref_np, rtol=1e-16, atol=1e-16)
 
 # Plot MultiFab data
 plotfile = amr.concatenate(root="plt", num=1, mindigits=3)
