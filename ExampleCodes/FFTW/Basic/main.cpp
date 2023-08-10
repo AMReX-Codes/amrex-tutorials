@@ -197,7 +197,7 @@ int main (int argc, char* argv[])
 #ifdef AMREX_USE_CUDA
 
 #if (AMREX_SPACEDIM == 1)
-      cufftResult result = cufftPlan1d(&fplan, fft_size[1], CUFFT_D2Z);
+      cufftResult result = cufftPlan1d(&fplan, fft_size[0], CUFFT_D2Z, 1);
       if (result != CUFFT_SUCCESS) {
           AllPrint() << " cufftplan1d forward failed! Error: "
                      << cufftErrorToString(result) << "\n";
