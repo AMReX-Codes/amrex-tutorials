@@ -298,16 +298,12 @@ int main (int argc, char* argv[])
           } else {
               // copy complex conjugate
               int iloc = bx.length(0)-i;
-              int jloc, kloc;
-
-#if (AMREX_SPACEDIM == 1)
-              jloc = 0;
-              kloc = 0;
-#elif (AMREX_SPACEDIM == 2)           
+              int jloc = 0;
+              int kloc = 0;
+#if (AMREX_SPACEDIM >= 2)           
               jloc = (j == 0) ? 0 : bx.length(1)-j;
-              kloc = 0;
-#elif (AMREX_SPACEDIM == 3)
-              jloc = (j == 0) ? 0 : bx.length(1)-j;
+#endif
+#if (AMREX_SPACEDIM == 3)
               kloc = (k == 0) ? 0 : bx.length(2)-k;
 #endif
 
