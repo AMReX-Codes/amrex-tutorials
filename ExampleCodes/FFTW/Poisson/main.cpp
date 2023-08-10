@@ -134,7 +134,7 @@ int main (int argc, char* argv[])
             // **********************************
 
             Real x = (i+0.5) * dx[0];
-            Real y = (AMREX_SPACEDIM==2) ? (j+0.5) * dx[1] : 0.;
+            Real y = (AMREX_SPACEDIM>=2) ? (j+0.5) * dx[1] : 0.;
             Real z = (AMREX_SPACEDIM==3) ? (k+0.5) * dx[2] : 0.;
 
             rhs_ptr(i,j,k) = std::exp(-10.*((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5)));
@@ -392,7 +392,7 @@ int main (int argc, char* argv[])
     soln.ParallelCopy(soln_onegrid, 0, 0, 1);
 
     // Must divide each point by the total number of points in the domain for properly scaled inverse FFT
-    Real volinv = (AMREX_SPACEDIM == 2) ? 1. / (n_cell_x*n_cell_y) : 1. / (n_cell_x*n_cell_y*n_cell_z);
+    Real volinv = 1./npts;
     soln.mult(volinv);
 
     // destroy fft plan
