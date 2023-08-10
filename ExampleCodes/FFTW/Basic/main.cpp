@@ -223,7 +223,7 @@ int main (int argc, char* argv[])
                    phi_onegrid[mfi].dataPtr(),
                    reinterpret_cast<FFTcomplex*>
                    (spectral_field.back()->dataPtr()),
-                   FFTW_ESTIMATE);      
+                   FFTW_ESTIMATE);
 #elif (AMREX_SPACEDIM == 2)
       fplan = fftw_plan_dft_r2c_2d(fft_size[1], fft_size[0],
                    phi_onegrid[mfi].dataPtr(),
@@ -300,7 +300,7 @@ int main (int argc, char* argv[])
               int iloc = bx.length(0)-i;
               int jloc = 0;
               int kloc = 0;
-#if (AMREX_SPACEDIM >= 2)           
+#if (AMREX_SPACEDIM >= 2)
               jloc = (j == 0) ? 0 : bx.length(1)-j;
 #endif
 #if (AMREX_SPACEDIM == 3)

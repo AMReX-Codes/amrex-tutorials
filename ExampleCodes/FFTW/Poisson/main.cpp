@@ -206,7 +206,7 @@ int main (int argc, char* argv[])
       if (result != CUFFT_SUCCESS) {
           AllPrint() << " cufftplan1d forward failed! Error: "
                      << cufftErrorToString(result) << "\n";
-      }      
+      }
 #elif (AMREX_SPACEDIM == 2)
       cufftResult result = cufftPlan2d(&fplan, fft_size[1], fft_size[0], CUFFT_D2Z);
       if (result != CUFFT_SUCCESS) {
@@ -228,7 +228,7 @@ int main (int argc, char* argv[])
                    rhs_onegrid[mfi].dataPtr(),
                    reinterpret_cast<FFTcomplex*>
                    (spectral_field.back()->dataPtr()),
-                   FFTW_ESTIMATE);   
+                   FFTW_ESTIMATE);
 #elif (AMREX_SPACEDIM == 2)
       fplan = fftw_plan_dft_r2c_2d(fft_size[1], fft_size[0],
                    rhs_onegrid[mfi].dataPtr(),
@@ -289,7 +289,7 @@ int main (int argc, char* argv[])
                 if (k >= n_cell_z/2) c = 2.*M_PI*(n_cell_z-k) / L_z;
 
 #if (AMREX_SPACEDIM == 1)
-		Real k2 = -a*a;
+                Real k2 = -a*a;
 #elif (AMREX_SPACEDIM == 2)
                 Real k2 = -(a*a + b*b);
 #elif (AMREX_SPACEDIM == 3)
@@ -350,7 +350,7 @@ int main (int argc, char* argv[])
                    reinterpret_cast<FFTcomplex*>
                    (spectral_field.back()->dataPtr()),
                    soln_onegrid[mfi].dataPtr(),
-                   FFTW_ESTIMATE);      
+                   FFTW_ESTIMATE);
 #elif (AMREX_SPACEDIM == 2)
       bplan = fftw_plan_dft_c2r_2d(fft_size[1], fft_size[0],
                    reinterpret_cast<FFTcomplex*>
