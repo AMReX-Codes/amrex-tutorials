@@ -44,20 +44,25 @@ void ShiftFFT(MultiFab& dft_onegrid, const Geometry& geom, const int& zero_avg) 
 
     int nx = bx.length(0);
     int nxh = nx/2;
+#if (AMREX_SPACEDIM >= 2)
     int ny = bx.length(1);
     int nyh = ny/2;
 #if (AMREX_SPACEDIM == 3)
     int nz = bx.length(2);
     int nzh = nz/2;
 #endif
+#endif
 
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
     {
       int ip = (i+nxh)%nx;
-      int jp = (j+nyh)%ny;
+      int jp = 0;
       int kp = 0;
+#if (AMREX_SPACEDIM >= 2)
+      jp = (j+nyh)%ny;
 #if (AMREX_SPACEDIM == 3)
       kp = (k+nzh)%nz;
+#endif
 #endif
       dft(ip,jp,kp) = dft_temp(i,j,k);
     });

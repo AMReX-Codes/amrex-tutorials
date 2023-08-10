@@ -124,9 +124,12 @@ int main (int argc, char* argv[])
             // **********************************
 
             Real x = (i+0.5) * dx[0];
-            Real y = (j+0.5) * dx[1];
+            Real y = (AMREX_SPACEDIM>=2) ? (j+0.5) * dx[1] : 0.;
             Real z = (AMREX_SPACEDIM==3) ? (k+0.5) * dx[2] : 0.;
-            phi_ptr(i,j,k) = std::sin(4*M_PI*x/prob_hi_x + omega)*std::sin(124*M_PI*y/prob_hi_y + omega);
+            phi_ptr(i,j,k) = std::sin(4*M_PI*x/prob_hi_x + omega);
+            if (AMREX_SPACEDIM >= 2) {
+                phi_ptr(i,j,k) *= std::sin(124*M_PI*y/prob_hi_y + omega);
+            }
             if (AMREX_SPACEDIM == 3) {
                 phi_ptr(i,j,k) *= std::sin(2*M_PI*z/prob_hi_z + omega);
             }
@@ -193,7 +196,13 @@ int main (int argc, char* argv[])
 
 #ifdef AMREX_USE_CUDA
 
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+      cufftResult result = cufftPlan1d(&fplan, fft_size[1], CUFFT_D2Z);
+      if (result != CUFFT_SUCCESS) {
+          AllPrint() << " cufftplan1d forward failed! Error: "
+                     << cufftErrorToString(result) << "\n";
+      }
+#elif (AMREX_SPACEDIM == 2)
       cufftResult result = cufftPlan2d(&fplan, fft_size[1], fft_size[0], CUFFT_D2Z);
       if (result != CUFFT_SUCCESS) {
           AllPrint() << " cufftplan2d forward failed! Error: "
@@ -209,7 +218,13 @@ int main (int argc, char* argv[])
 
 #else // host
 
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+      fplan = fftw_plan_dft_r2c_1d(fft_size[0],
+                   phi_onegrid[mfi].dataPtr(),
+                   reinterpret_cast<FFTcomplex*>
+                   (spectral_field.back()->dataPtr()),
+                   FFTW_ESTIMATE);      
+#elif (AMREX_SPACEDIM == 2)
       fplan = fftw_plan_dft_r2c_2d(fft_size[1], fft_size[0],
                    phi_onegrid[mfi].dataPtr(),
                    reinterpret_cast<FFTcomplex*>
@@ -285,10 +300,14 @@ int main (int argc, char* argv[])
               int iloc = bx.length(0)-i;
               int jloc, kloc;
 
+#if (AMREX_SPACEDIM == 1)
+              jloc = 0;
+              kloc = 0;
+#elif (AMREX_SPACEDIM == 2)           
               jloc = (j == 0) ? 0 : bx.length(1)-j;
-#if (AMREX_SPACEDIM == 2)
               kloc = 0;
 #elif (AMREX_SPACEDIM == 3)
+              jloc = (j == 0) ? 0 : bx.length(1)-j;
               kloc = (k == 0) ? 0 : bx.length(2)-k;
 #endif
 
