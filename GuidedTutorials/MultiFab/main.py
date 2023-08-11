@@ -4,9 +4,8 @@ import amrex.space3d as amr
 # Initialize AMReX
 amr.initialize([])
 
-# TODO How do we print pyamrex's version?
 if amr.ParallelDescriptor.IOProcessor():
-    print("Hello world from pyamrex\n")
+    print(f"Hello world from pyAMReX version {amr.__version__}\n")
 
 # Goals:
 # * Define a MultiFab
@@ -47,7 +46,6 @@ mf.set_val(0.)
 # Geometry: physical properties for data on our domain
 real_box = amr.RealBox([0., 0., 0.], [1. , 1., 1.])
 
-# TODO Should this be &real_box (reference) instead?
 coord = 0  # Cartesian
 is_per = [0, 0, 0] # periodicity
 geom = amr.Geometry(domain, real_box, coord, is_per)
