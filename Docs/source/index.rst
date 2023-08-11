@@ -50,6 +50,7 @@ sorted by the following categories:
 - :ref:`Linear Solvers<tutorials_linearsolvers>`  -- Examples of several linear solvers.
 - :ref:`MUI<tutorials_mui>`  -- Incorporates the MxUI/MUI (Multiscale Universal interface) frame into AMReX.
 - :ref:`Particles<tutorials_particles>`  -- Basic usage of AMReX's particle data structures.
+- :ref:`Python<tutorials_python>`  -- Using AMReX and interfacing with AMReX applications form Python - via `pyAMReX <https://github.com/AMReX-Codes/pyamrex/>`__
 - :ref:`SDC<tutorials_sdc>`  -- Example usage of a "Multi-Implicit" Spectral Deferred Corrections (MISDC) integrator
   to solve a scalar advection-diffusion-reaction equation.
 - :ref:`SENSEI<tutorials_sensei>`  -- In situ data analysis and visualization through a unified interface.
@@ -71,6 +72,7 @@ sorted by the following categories:
    ML_Tutorial
    MUI_Tutorial
    Particles_Tutorial
+   Python_Tutorial
    SDC_Tutorial
    SENSEI_Tutorial
    SUNDIALS_Tutorial
@@ -94,6 +96,8 @@ sorted by the following categories:
 .. _`MUI`: MUI_Tutorial.html
 
 .. _`Particles`: Particles_Tutorial.html
+
+.. _`Python`: Python_Tutorial.html
 
 .. _`SDC`: SDC_Tutorial.html
 
