@@ -17,4 +17,8 @@ sudo apt-get install -y --no-install-recommends\
     build-essential \
     g++             \
     libopenmpi-dev  \
-    openmpi-bin
+    openmpi-bin     \
+    python3         \
+    python3-pip
+
+python3 -m pip install -U pip setuptools wheel

@@ -11,4 +11,8 @@ sudo apt-get update
 
 sudo apt-get install -y  \
     build-essential      \
-    clang gfortran
+    clang gfortran       \
+    python3              \
+    python3-pip
+
+python3 -m pip install -U pip setuptools wheel
