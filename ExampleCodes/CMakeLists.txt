@@ -25,6 +25,14 @@ set ( AMReX_GIT_REPO "https://github.com/AMReX-Codes/amrex.git/"
 set ( SUNDIALS_GIT_REPO "https://github.com/LLNL/sundials.git"
     CACHE STRING "The URL identifying the repo to fetch SUNDIALS from" )
 
+#
+# For Python, we need AMReX as a a sahred library, otherwise we cannot share all
+# its global variables between multiple Python modules
+#
+if(TUTORIAL_PYTHON)
+    set(AMReX_BUILD_SHARED_LIBS ON CACHE BOOL "Build AMReX shared library" FORCE)
+endif()
+
 if( NOT DEFINED AMReX_DIR )
    #
    # Fetch amrex repo
