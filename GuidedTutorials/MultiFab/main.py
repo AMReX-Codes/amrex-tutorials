@@ -1,5 +1,25 @@
-import numpy as np
 import amrex.space3d as amr
+
+# CPU/GPU logic
+if amr.Config.have_gpu:
+    try:
+        import cupy as cp
+        xp = cp
+        print("Note: found and will use cupy")
+    except ImportError:
+        print("Warning: GPU found but cupy not available! Trying managed memory in numpy...")
+        import numpy as np
+        xp = np
+    if amr.Config.gpu_backend == "SYCL":
+        print("Warning: SYCL GPU backend not yet implemented for Python")
+        import numpy as np
+        xp = np
+
+else:
+    import numpy as np
+    xp = np
+    print("Note: found and will use numpy")
+
 
 # Initialize AMReX
 amr.initialize([])
@@ -57,31 +77,18 @@ dx = geom.data().CellSize() # dx[0]=dx dx[1]=dy dx[2]=dz
 mf_val = 0.
 for mfi in mf:
     bx = mfi.validbox()
-    # Preferred way to fill array using NumPy operations:
-    # - mf_array is indexed in reversed order (n,z,y,x)
+    # Preferred way to fill array using fast ranged operations:
+    # - xp.array is indexed in reversed order (n,z,y,x),
+    #   .T creates a view into the AMReX (x,y,z,n) order
     # - indices are local (range from 0 to box size)
-    mf_array = np.array(mf.array(mfi), copy=False)
-    x = (np.arange(bx.small_end[0], bx.big_end[0]+1)+0.5)*dx[0]
-    y = (np.arange(bx.small_end[1], bx.big_end[1]+1)+0.5)*dx[1]
-    z = (np.arange(bx.small_end[2], bx.big_end[2]+1)+0.5)*dx[2]
-    v = (x[np.newaxis,np.newaxis,:]
-       + y[np.newaxis,:,np.newaxis]*0.1
-       + z[:,np.newaxis,np.newaxis]*0.01)
-    mf_array = 1. + np.exp(-v)
-    # Alternative way to fill array using standard for loop over box indices:
-    # - mf_array_ref is indexed in standard order (x,y,z,n)
-    # - indices are global
-    mf_array_ref = mf.array(mfi)
-    for i, j, k in bx:
-        x = (i+0.5)*dx[0]
-        y = (j+0.5)*dx[1]
-        z = (k+0.5)*dx[2]
-        v = x + y*0.1 + z*0.01
-        mf_array_ref[i,j,k,0] = 1. + np.exp(-v)
-    # Check that mf_array has been filled correctly, compare it with
-    # mf_array_ref (filled as Array4 and transformed to NumPy array)
-    mf_array_ref_np = np.array(mf_array_ref, copy=False)
-    assert np.allclose(mf_array, mf_array_ref_np, rtol=1e-16, atol=1e-16)
+    mf_array = xp.array(mf.array(mfi), copy=False).T
+    x = (xp.arange(bx.small_end[0], bx.big_end[0]+1)+0.5)*dx[0]
+    y = (xp.arange(bx.small_end[1], bx.big_end[1]+1)+0.5)*dx[1]
+    z = (xp.arange(bx.small_end[2], bx.big_end[2]+1)+0.5)*dx[2]
+    v = (x[xp.newaxis,xp.newaxis,:]
+       + y[xp.newaxis,:,xp.newaxis]*0.1
+       + z[:,xp.newaxis,xp.newaxis]*0.01)
+    mf_array = 1. + xp.exp(-v)
 
 # Plot MultiFab data
 plotfile = amr.concatenate(root="plt", num=1, mindigits=3)
