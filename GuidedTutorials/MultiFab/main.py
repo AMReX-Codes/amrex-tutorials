@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Copyright 2023 The AMReX Community
+#
+# This file is part of AMReX.
+#
+# License: BSD-3-Clause-LBNL
+# Authors: Revathi Jambunathan, Edoardo Zoni, Olga Shapoval, David Grote, Axel Huebl
+
 import amrex.space3d as amr
 
 # CPU/GPU logic
