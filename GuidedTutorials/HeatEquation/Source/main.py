@@ -1,9 +1,39 @@
-import numpy as np
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Copyright 2023 The AMReX Community
+#
+# This file is part of AMReX.
+#
+# License: BSD-3-Clause-LBNL
+# Authors: Revathi Jambunathan, Edoardo Zoni, Olga Shapoval, David Grote, Axel Huebl
+
 import amrex.space3d as amr
 
-def main_main ():
+# CPU/GPU logic
+if amr.Config.have_gpu:
+    try:
+        import cupy as cp
+        xp = cp
+        print("Note: found and will use cupy")
+    except ImportError:
+        print("Warning: GPU found but cupy not available! Trying managed memory in numpy...")
+        import numpy as np
+        xp = np
+    if amr.Config.gpu_backend == "SYCL":
+        print("Warning: SYCL GPU backend not yet implemented for Python")
+        import numpy as np
+        xp = np
+
+else:
+    import numpy as np
+    xp = np
+    print("Note: found and will use numpy")
+
+
+def main(n_cell, max_grid_size, nsteps, plot_int, dt):
     """
-    TODO Add documentation
+    The main function, automatically called below if called as a script.
     """
     # AMREX_D_DECL means "do the first X of these, where X is the dimensionality of the simulation"
     dom_lo = amr.IntVect(*amr.d_decl(       0,        0,        0))
@@ -62,15 +92,15 @@ def main_main ():
     for mfi in phi_old:
         bx = mfi.validbox()
         # phiOld is indexed in reversed order (z,y,x) and indices are local
-        phiOld = np.array(phi_old.array(mfi), copy=False)
+        phiOld = xp.array(phi_old.array(mfi), copy=False)
         # set phi = 1 + e^(-(r-0.5)^2)
-        x = (np.arange(bx.small_end[0],bx.big_end[0]+1,1) + 0.5) * dx[0]
-        y = (np.arange(bx.small_end[1],bx.big_end[1]+1,1) + 0.5) * dx[1]
-        z = (np.arange(bx.small_end[2],bx.big_end[2]+1,1) + 0.5) * dx[2]
-        rsquared = ((z[:         , np.newaxis, np.newaxis] - 0.5)**2
-                  + (y[np.newaxis, :         , np.newaxis] - 0.5)**2
-                  + (x[np.newaxis, np.newaxis, :         ] - 0.5)**2) / 0.01
-        phiOld[:, ngz:-ngz, ngy:-ngy, ngx:-ngx] = 1. + np.exp(-rsquared)
+        x = (xp.arange(bx.small_end[0],bx.big_end[0]+1,1) + 0.5) * dx[0]
+        y = (xp.arange(bx.small_end[1],bx.big_end[1]+1,1) + 0.5) * dx[1]
+        z = (xp.arange(bx.small_end[2],bx.big_end[2]+1,1) + 0.5) * dx[2]
+        rsquared = ((z[:         , xp.newaxis, xp.newaxis] - 0.5)**2
+                  + (y[xp.newaxis, :         , xp.newaxis] - 0.5)**2
+                  + (x[xp.newaxis, xp.newaxis, :         ] - 0.5)**2) / 0.01
+        phiOld[:, ngz:-ngz, ngy:-ngy, ngx:-ngx] = 1. + xp.exp(-rsquared)
 
     # Write a plotfile of the initial data if plot_int > 0
     if plot_int > 0:
@@ -86,8 +116,8 @@ def main_main ():
         # new_phi = old_phi + dt * Laplacian(old_phi)
         # Loop over boxes
         for mfi in phi_old:
-            phiOld = np.array(phi_old.array(mfi), copy=False)
-            phiNew = np.array(phi_new.array(mfi), copy=False)
+            phiOld = xp.array(phi_old.array(mfi), copy=False)
+            phiNew = xp.array(phi_new.array(mfi), copy=False)
             hix = phiOld.shape[3]
             hiy = phiOld.shape[2]
             hiz = phiOld.shape[1]
@@ -119,23 +149,25 @@ def main_main ():
             varnames = amr.Vector_string(['phi'])
             amr.write_single_level_plotfile(pltfile, phi_new, varnames, geom, time, step)
 
-# Initialize AMReX
-amr.initialize([])
 
-# TODO Implement parser
-# Simulation parameters
-# number of cells on each side of the domain
-n_cell = 32
-# size of each box (or grid)
-max_grid_size = 16
-# total steps in simulation
-nsteps = 1000
-# how often to write a plotfile
-plot_int = 100
-# time step
-dt = 1e-5
+if __name__ == '__main__':
+    # Initialize AMReX
+    amr.initialize([])
 
-main_main()
+    # TODO Implement parser
+    # Simulation parameters
+    # number of cells on each side of the domain
+    n_cell = 32
+    # size of each box (or grid)
+    max_grid_size = 16
+    # total steps in simulation
+    nsteps = 1000
+    # how often to write a plotfile
+    plot_int = 100
+    # time step
+    dt = 1e-5
 
-# Finalize AMReX
-amr.finalize()
+    main(n_cell, max_grid_size, nsteps, plot_int, dt)
+
+    # Finalize AMReX
+    amr.finalize()
