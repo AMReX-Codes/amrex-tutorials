@@ -14,16 +14,33 @@ set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake )
 # If AMReX_DIR is passed then we link to the library found there. Otherwise
 # the sources are fetched and compiled from the repo pointed to by AMReX_GIT_REPO
 #
-set ( AMReX_GIT_REPO "https://github.com/AMReX-Codes/amrex.git/"
-    CACHE STRING "The URL identifying the repo to fetchg AMReX from" )
+set ( AMReX_GIT_REPO "https://github.com/AMReX-Codes/amrex.git"
+    CACHE STRING "The URL identifying the repo to fetch AMReX from" )
 
 #
 # Fetch and compile AMReX or link to an existing CMake build install of libamrex.
 # If AMReX_DIR is passed then we link to the library found there. Otherwise
-# the sources are fetched and compiled from the repo pointed to by AMReX_GIT_REPO
+# the sources are fetched and compiled from the repo pointed to by pyAMReX_GIT_REPO
+#
+set ( pyAMReX_GIT_REPO "https://github.com/AMReX-Codes/pyamrex.git"
+    CACHE STRING "The URL identifying the repo to fetch pyAMReX from" )
+option(TUTORIAL_PYTHON OFF)
+
+#
+# Fetch and compile AMReX or link to an existing CMake build install of libamrex.
+# If AMReX_DIR is passed then we link to the library found there. Otherwise
+# the sources are fetched and compiled from the repo pointed to by SUNDIALS_GIT_REPO
 #
 set ( SUNDIALS_GIT_REPO "https://github.com/LLNL/sundials.git"
     CACHE STRING "The URL identifying the repo to fetch SUNDIALS from" )
+
+#
+# For Python, we need AMReX as a a sahred library, otherwise we cannot share all
+# its global variables between multiple Python modules
+#
+if(TUTORIAL_PYTHON)
+    set(AMReX_BUILD_SHARED_LIBS ON CACHE BOOL "Build AMReX shared library" FORCE)
+endif()
 
 if( NOT DEFINED AMReX_DIR )
    #
@@ -172,6 +189,33 @@ else()
          include(AMReX_SetupCUDA)
       endif()
    endif()
+endif()
+
+if(TUTORIAL_PYTHON)
+    if(DEFINED pyAMReX_DIR)
+       add_subdirectory(${pyAMReX_DIR})
+    else()
+       #
+       # Fetch pyAMReX repo
+       #
+       message(STATUS "Fetching from ${pyAMReX_GIT_REPO} branch ${pyAMReX_GIT_BRANCH}" )
+
+       set(pyAMReX_GIT_BRANCH "development" CACHE STRING "The pyAMReX branch to checkout")
+       set(pyAMReX_INSTALL  "NO" CACHE INTERNAL "Disable install target for pyAMReX")
+
+       include(FetchContent)
+       #set(FETCHCONTENT_QUIET OFF)  # Verbose ON
+
+       FetchContent_Declare( fetchedpyamrex
+           GIT_REPOSITORY ${pyAMReX_GIT_REPO}
+           GIT_TAG        ${pyAMReX_GIT_BRANCH}
+           )
+
+       if(NOT fetchedpyamrex_POPULATED)
+           FetchContent_Populate(fetchedpyamrex)
+           add_subdirectory(${fetchedpyamrex_SOURCE_DIR} ${fetchedpyamrex_BINARY_DIR})
+       endif()
+    endif()
 endif()
 
 #
