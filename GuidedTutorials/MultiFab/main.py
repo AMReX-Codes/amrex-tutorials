@@ -10,32 +10,36 @@
 
 import amrex.space3d as amr
 
-# CPU/GPU logic
-if amr.Config.have_gpu:
-    try:
-        import cupy as cp
-        xp = cp
-        print("Note: found and will use cupy")
-    except ImportError:
-        print("Warning: GPU found but cupy not available! Trying managed memory in numpy...")
-        import numpy as np
-        xp = np
-    if amr.Config.gpu_backend == "SYCL":
-        print("Warning: SYCL GPU backend not yet implemented for Python")
-        import numpy as np
-        xp = np
 
-else:
-    import numpy as np
-    xp = np
-    print("Note: found and will use numpy")
+def load_cupy():
+    if amr.Config.have_gpu:
+        try:
+            import cupy as cp
+            xp = cp
+            amr.Print("Note: found and will use cupy")
+        except ImportError:
+            amr.Print("Warning: GPU found but cupy not available! Trying managed memory in numpy...")
+            import numpy as np
+            xp = np
+        if amr.Config.gpu_backend == "SYCL":
+            amr.Print("Warning: SYCL GPU backend not yet implemented for Python")
+            import numpy as np
+            xp = np
+
+    else:
+        import numpy as np
+        xp = np
+        amr.Print("Note: found and will use numpy")
+    return xp
 
 
 # Initialize AMReX
 amr.initialize([])
 
-if amr.ParallelDescriptor.IOProcessor():
-    print(f"Hello world from pyAMReX version {amr.__version__}\n")
+# CPU/GPU logic
+xp = load_cupy()
+
+amr.Print(f"Hello world from pyAMReX version {amr.__version__}\n")
 
 # Goals:
 # * Define a MultiFab

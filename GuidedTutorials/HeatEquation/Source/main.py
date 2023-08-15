@@ -10,31 +10,36 @@
 
 import amrex.space3d as amr
 
-# CPU/GPU logic
-if amr.Config.have_gpu:
-    try:
-        import cupy as cp
-        xp = cp
-        print("Note: found and will use cupy")
-    except ImportError:
-        print("Warning: GPU found but cupy not available! Trying managed memory in numpy...")
-        import numpy as np
-        xp = np
-    if amr.Config.gpu_backend == "SYCL":
-        print("Warning: SYCL GPU backend not yet implemented for Python")
-        import numpy as np
-        xp = np
 
-else:
-    import numpy as np
-    xp = np
-    print("Note: found and will use numpy")
+def load_cupy():
+    if amr.Config.have_gpu:
+        try:
+            import cupy as cp
+            xp = cp
+            amr.Print("Note: found and will use cupy")
+        except ImportError:
+            amr.Print("Warning: GPU found but cupy not available! Trying managed memory in numpy...")
+            import numpy as np
+            xp = np
+        if amr.Config.gpu_backend == "SYCL":
+            amr.Print("Warning: SYCL GPU backend not yet implemented for Python")
+            import numpy as np
+            xp = np
+
+    else:
+        import numpy as np
+        xp = np
+        amr.Print("Note: found and will use numpy")
+    return xp
 
 
 def main(n_cell, max_grid_size, nsteps, plot_int, dt):
     """
     The main function, automatically called below if called as a script.
     """
+    # CPU/GPU logic
+    xp = load_cupy()
+
     # AMREX_D_DECL means "do the first X of these, where X is the dimensionality of the simulation"
     dom_lo = amr.IntVect(*amr.d_decl(       0,        0,        0))
     dom_hi = amr.IntVect(*amr.d_decl(n_cell-1, n_cell-1, n_cell-1))
@@ -141,7 +146,7 @@ def main(n_cell, max_grid_size, nsteps, plot_int, dt):
         phi_old.copy(dst=phi_old, src=phi_new, srccomp=0, dstcomp=0, numcomp=1, nghost=0)
 
         # Tell the I/O Processor to write out which step we're doing
-        print(f'Advanced step {step}\n')
+        amr.Print(f'Advanced step {step}\n')
 
         # Write a plotfile of the current data (plot_int was defined in the inputs file)
         if plot_int > 0 and step%plot_int == 0:
