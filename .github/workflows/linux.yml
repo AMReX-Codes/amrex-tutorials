@@ -31,6 +31,8 @@ jobs:
       run: |
         cd GuidedTutorials/MultiFab/
         python main.py
+        cd ../HeatEquation/Source/
+        python main.py
 
   # Build all tutorials
   tutorials_cxx20:
@@ -63,6 +65,8 @@ jobs:
     - name: Run Python
       run: |
         cd GuidedTutorials/MultiFab/
+        python main.py
+        cd ../HeatEquation/Source/
         python main.py
 
   tutorials_clang:
@@ -98,6 +102,8 @@ jobs:
       run: |
         cd GuidedTutorials/MultiFab/
         python main.py
+        cd ../HeatEquation/Source/
+        python main.py
 
   # Build all tutorials w/o MPI
   tutorials-nonmpi:
@@ -127,6 +133,8 @@ jobs:
       run: |
         cd GuidedTutorials/MultiFab/
         python main.py
+        cd ../HeatEquation/Source/
+        python main.py
 
   # Build all tutorials
   tutorials-nofortran:
@@ -153,6 +161,8 @@ jobs:
     - name: Run Python
       run: |
         cd GuidedTutorials/MultiFab/
+        python main.py
+        cd ../HeatEquation/Source/
         python main.py
 
   # Build all tutorials with CUDA 11.0.2 (recent supported)
