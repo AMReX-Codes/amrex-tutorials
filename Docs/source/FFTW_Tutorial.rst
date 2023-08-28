@@ -25,7 +25,7 @@ There are two FFTW tutorials, ``Basic`` and ``Poisson``:
 
 We note that both fftw and cufft assume a row-major ordering of data; since a :cpp:`MultiFab` is column major,
 the output to the spectral array is spatially-transposed.
-  
+
 .. toctree::
    :maxdepth: 1
 
