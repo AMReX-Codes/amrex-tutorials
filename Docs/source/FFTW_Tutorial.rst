@@ -38,8 +38,6 @@ This tutorial initializes a 3D or 2D :cpp:`MultiFab`, takes a forward FFT,
 and then redistributes the data in k-space where the center cell in the domain corresponds to the k=0 mode.
 The results are written to a plot file.
 
-We note that 
-
 .. _section:fftw_tutorial:fftw_pois:
 
 Poisson
