@@ -1,0 +1,39 @@
+heFFTe instaallation guide:
+https://icl-utk-edu.github.io/heffte/md_doxygen_installation.html
+
+Installation
+
+>> git clone git@github.com:icl-utk-edu/heffte.git
+>> cd heffte
+>> mkdir build
+>> cd build
+
+HOST BUILD
+
+>> cmake -DCMAKE_BUILD_TYPE=Release \
+   	 -DCMAKE_CXX_STANDARD=17 \
+   	 -DBUILD_SHARED_LIBS=OFF \
+  	 -DCMAKE_INSTALL_PREFIX=. \  # can choose any installation /path/to/heffte
+  	 -DHeffte_ENABLE_FFTW=ON \
+  	 -DHeffte_ENABLE_CUDA=OFF \
+  	 ..
+
+>> make -j4
+>> make install
+
+>> cd /path/to/amrex-tutorials/ExampleCodes/heFFTe
+>> make -j4 USE_CUDA=FALSE HEFFTE_HOME=/path/to/heffte
+
+CUDA BUILD
+
+>> cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \  # or Release for production runs
+   	 -DCMAKE_CXX_STANDARD=17 \
+  	 -DBUILD_SHARED_LIBS=OFF \
+  	 -DCMAKE_INSTALL_PREFIX=. \  # can choose any installation /path/to/heffte
+  	 -DHeffte_ENABLE_FFTW=ON \
+  	 -DHeffte_ENABLE_CUDA=ON \
+  	 -DHeffte_DISABLE_GPU_AWARE_MPI=ON \  # use this for workstations, don’t include this line for perlmutter/frontier
+  	 ..
+
+>> cd /path/to/amrex-tutorials/ExampleCodes/heFFTe
+>> make -j4 USE_CUDA=TRUE HEFFTE_HOME=/path/to/heffte
