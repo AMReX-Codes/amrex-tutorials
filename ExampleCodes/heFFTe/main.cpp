@@ -93,17 +93,17 @@ int main (int argc, char* argv[])
     
 #ifdef AMREX_USE_CUDA
     heffte::fft2d_r2c<heffte::backend::cufft> fft
-#elseif AMREX_USE_HIP
+#elif AMREX_USE_HIP
     heffte::fft2d_r2c<heffte::backend::rocfft> fft
 #else
     heffte::fft2d_r2c<heffte::backend::fftw> fft
 #endif
 
-#elseif (AMREX_SPACEDIM==3)
+#elif (AMREX_SPACEDIM==3)
     
 #ifdef AMREX_USE_CUDA
     heffte::fft3d_r2c<heffte::backend::cufft> fft
-#elseif AMREX_USE_HIP
+#elif AMREX_USE_HIP
     heffte::fft3d_r2c<heffte::backend::rocfft> fft
 #else
     heffte::fft3d_r2c<heffte::backend::fftw> fft

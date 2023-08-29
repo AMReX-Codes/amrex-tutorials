@@ -24,7 +24,7 @@ HOST BUILD
 >> cd /path/to/amrex-tutorials/ExampleCodes/heFFTe
 >> make -j4 USE_CUDA=FALSE HEFFTE_HOME=/path/to/heffte
 
-CUDA BUILD
+NVIDIA/CUDA BUILD
 
 >> cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \  # or Release for production runs
    	 -DCMAKE_CXX_STANDARD=17 \
@@ -34,6 +34,27 @@ CUDA BUILD
   	 -DHeffte_ENABLE_CUDA=ON \
   	 -DHeffte_DISABLE_GPU_AWARE_MPI=ON \  # use this for workstations, don’t include this line for perlmutter/frontier
   	 ..
+
+>> make -j4
+>> make install
+
+>> cd /path/to/amrex-tutorials/ExampleCodes/heFFTe
+>> make -j4 USE_CUDA=TRUE HEFFTE_HOME=/path/to/heffte
+
+
+AMD/ROC BUILD
+
+>> cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \  # or Release for production runs
+   	 -DCMAKE_CXX_STANDARD=17 \
+  	 -DBUILD_SHARED_LIBS=OFF \
+  	 -DCMAKE_INSTALL_PREFIX=. \  # can choose any installation /path/to/heffte
+  	 -DHeffte_ENABLE_FFTW=ON \
+  	 -DHeffte_ENABLE_ROCM=ON \
+  	 -DHeffte_DISABLE_GPU_AWARE_MPI=ON \  # use this for workstations, don’t include this line for perlmutter/frontier
+  	 ..
+
+>> make -j4
+>> make install
 
 >> cd /path/to/amrex-tutorials/ExampleCodes/heFFTe
 >> make -j4 USE_CUDA=TRUE HEFFTE_HOME=/path/to/heffte

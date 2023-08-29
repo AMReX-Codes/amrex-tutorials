@@ -1,5 +1,5 @@
-AMREX_HOME ?= ../../amrex
-HEFFTE_HOME ?= ../../heffte/build
+AMREX_HOME ?= ../../../amrex
+HEFFTE_HOME ?= ../../../heffte/build
 
 DEBUG = FALSE
 DIM = 3
