@@ -90,7 +90,7 @@ int main (int argc, char* argv[])
 
 
 #if (AMREX_SPACEDIM==2)
-    
+
 #ifdef AMREX_USE_CUDA
     heffte::fft2d_r2c<heffte::backend::cufft> fft
 #elif AMREX_USE_HIP
@@ -100,7 +100,7 @@ int main (int argc, char* argv[])
 #endif
 
 #elif (AMREX_SPACEDIM==3)
-    
+
 #ifdef AMREX_USE_CUDA
     heffte::fft3d_r2c<heffte::backend::cufft> fft
 #elif AMREX_USE_HIP
@@ -110,7 +110,7 @@ int main (int argc, char* argv[])
 #endif
 
 #endif
-        
+
         ({{r_local_box.smallEnd(0),r_local_box.smallEnd(1),r_local_box.smallEnd(2)},
           {r_local_box.bigEnd(0)  ,r_local_box.bigEnd(1)  ,r_local_box.bigEnd(2)}},
          {{c_local_box.smallEnd(0),c_local_box.smallEnd(1),c_local_box.smallEnd(2)},
