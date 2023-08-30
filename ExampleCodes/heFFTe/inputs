@@ -1,23 +1,15 @@
-# 4 processes
-n_cell        = (512, 512, 512)
-max_grid_size = (256, 256, 512)
+n_cell_x = 64
+n_cell_y = 64
+n_cell_z = 64
 
-# 1 summit node 3x2x1 boxes
-# n_cell        = (396, 256, 128)
-# max_grid_size = (132, 128, 128)
+max_grid_size_x = 32
+max_grid_size_y = 32
+max_grid_size_z = 64
 
-# # 8 summit node 6x4x2 boxes
-# n_cell        = (768, 508, 256)
-# max_grid_size = (128, 127, 128)
+prob_lo_x = 0.
+prob_lo_y = 0.
+prob_lo_z = 0.
 
-# # 64 summit node 12x8x4 boxes
-# n_cell        = (1572, 1048, 508)
-# max_grid_size = ( 131,  131, 127)
-
-# # 512 summit node 24x16x8 boxes
-# n_cell        = (3168, 2016, 1048)
-# max_grid_size = ( 132,  126,  131)
-
-# # 4096 summit node 48x32x16 boxes
-# n_cell        = (6384, 4064, 2016)
-# max_grid_size = ( 133,  127,  126)
+prob_hi_x = 1.
+prob_hi_y = 1.
+prob_hi_z = 1.

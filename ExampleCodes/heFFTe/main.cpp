@@ -15,26 +15,87 @@ int main (int argc, char* argv[])
 
     BL_PROFILE("main");
 
-    Geometry geom;
-    BoxArray ba;
-    DistributionMapping dm;
-    IntVect n_cell;
+    // **********************************
+    // DECLARE SIMULATION PARAMETERS
+    // **********************************
+
+    // number of cells on each side of the domain
+    int n_cell_x;
+    int n_cell_y;
+    int n_cell_z;
+
+    int max_grid_size_x;
+    int max_grid_size_y;
+    int max_grid_size_z;
+
+    // dimensions of the domain
+    Real prob_lo_x = 0.;
+    Real prob_lo_y = 0.;
+    Real prob_lo_z = 0.;
+
+    Real prob_hi_x = 1.;
+    Real prob_hi_y = 1.;
+    Real prob_hi_z = 1.;
+
+    // **********************************
+    // READ PARAMETER VALUES FROM INPUTS FILE
+    // **********************************
     {
+        // ParmParse is way of reading inputs from the inputs file
+        // pp.get means we require the inputs file to have it
+        // pp.query means we optionally need the inputs file to have it - but you should supply a default value above
+        
         ParmParse pp;
-        IntVect max_grid_size;
-        pp.get("n_cell", n_cell);
-        pp.get("max_grid_size", max_grid_size);
 
-        Box domain(IntVect(0),n_cell-IntVect(1));
-        RealBox rb({0.,0.,0.},{1.,1.,1.});
-        Array<int,3> is_periodic{1,1,1};
-        geom.define(domain, rb, CoordSys::cartesian, is_periodic);
+        pp.get("n_cell_x",n_cell_x);
+        pp.get("n_cell_y",n_cell_y);
+        pp.get("n_cell_z",n_cell_z);
 
-        ba.define(domain);
-        ba.maxSize(max_grid_size);
+        pp.get("max_grid_size_x",max_grid_size_x);
+        pp.get("max_grid_size_y",max_grid_size_y);
+        pp.get("max_grid_size_z",max_grid_size_z);
 
-        dm.define(ba);
+        pp.query("prob_lo_x",prob_lo_x);
+        pp.query("prob_lo_y",prob_lo_y);
+        pp.query("prob_lo_z",prob_lo_z);
+
+        pp.query("prob_hi_x",prob_hi_x);
+        pp.query("prob_hi_y",prob_hi_y);
+        pp.query("prob_hi_z",prob_hi_z);
     }
+        
+
+    // define lower and upper indices
+    IntVect dom_lo(AMREX_D_DECL(         0,          0,          0));
+    IntVect dom_hi(AMREX_D_DECL(n_cell_x-1, n_cell_y-1, n_cell_z-1));
+
+    // Make a single box that is the entire domain
+    Box domain(dom_lo, dom_hi);
+
+    // number of points in the domain
+    long npts = domain.numPts();
+    
+    IntVect max_grid_size(AMREX_D_DECL(max_grid_size_x,max_grid_size_y,max_grid_size_z));
+    
+    // This defines the physical box size in each direction
+    RealBox real_box({ AMREX_D_DECL(prob_lo_x, prob_lo_y, prob_lo_z)},
+                     { AMREX_D_DECL(prob_hi_x, prob_hi_y, prob_hi_z)} );
+    
+    // periodic in all direction
+    Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
+
+    Geometry geom;
+    geom.define(domain, real_box, CoordSys::cartesian, is_periodic);
+
+    // Initialize the boxarray "ba" from the single box "domain"
+    BoxArray ba;
+    ba.define(domain);
+
+    // Break up boxarray "ba" into chunks no larger than "max_grid_size" along a direction
+    ba.maxSize(max_grid_size);
+
+    // How Boxes are distrubuted among MPI processes
+    DistributionMapping dm(ba);
 
     Box my_domain;
     int my_boxid;
@@ -132,8 +193,9 @@ int main (int argc, char* argv[])
         fft.backward(spectral_data, real_field[my_boxid].dataPtr());
     }
     }
-    
-    real_field.mult(1./(n_cell[0]*n_cell[1]*n_cell[2]));
+
+    // scale by 1/npts
+    real_field.mult(1./npts);
 
     WriteSingleLevelPlotfile("plt_out", real_field, {"phi"}, geom, time, step);
 
