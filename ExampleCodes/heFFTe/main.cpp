@@ -18,9 +18,9 @@ int main (int argc, char* argv[])
     Geometry geom;
     BoxArray ba;
     DistributionMapping dm;
+    IntVect n_cell;
     {
         ParmParse pp;
-        IntVect n_cell;
         IntVect max_grid_size;
         pp.get("n_cell", n_cell);
         pp.get("max_grid_size", max_grid_size);
@@ -128,7 +128,7 @@ int main (int argc, char* argv[])
     }
     }
     
-    real_field.mult(1./(64.*64.*64.));
+    real_field.mult(1./(n_cell[0]*n_cell[1]*n_cell[2]));
 
     WriteSingleLevelPlotfile("plt_out", real_field, {"phi"}, geom, time, step);
 
