@@ -1,6 +1,6 @@
 # 4 processes
 n_cell        = (512, 512, 512)
-max_grid_size = (256, 512, 512)
+max_grid_size = (256, 256, 512)
 nghost        = (  8,   8,   8)
 
 # 1 summit node 3x2x1 boxes
