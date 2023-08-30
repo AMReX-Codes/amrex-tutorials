@@ -44,7 +44,7 @@ int main (int argc, char* argv[])
         // ParmParse is way of reading inputs from the inputs file
         // pp.get means we require the inputs file to have it
         // pp.query means we optionally need the inputs file to have it - but you should supply a default value above
-        
+
         ParmParse pp;
 
         pp.get("n_cell_x",n_cell_x);
@@ -63,7 +63,7 @@ int main (int argc, char* argv[])
         pp.query("prob_hi_y",prob_hi_y);
         pp.query("prob_hi_z",prob_hi_z);
     }
-        
+
 
     // define lower and upper indices
     IntVect dom_lo(AMREX_D_DECL(         0,          0,          0));
@@ -74,13 +74,13 @@ int main (int argc, char* argv[])
 
     // number of points in the domain
     long npts = domain.numPts();
-    
+
     IntVect max_grid_size(AMREX_D_DECL(max_grid_size_x,max_grid_size_y,max_grid_size_z));
-    
+
     // This defines the physical box size in each direction
     RealBox real_box({ AMREX_D_DECL(prob_lo_x, prob_lo_y, prob_lo_z)},
                      { AMREX_D_DECL(prob_hi_x, prob_hi_y, prob_hi_z)} );
-    
+
     // periodic in all direction
     Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
 
@@ -109,12 +109,12 @@ int main (int argc, char* argv[])
             }
         }
     }
-    
+
     MultiFab real_field(ba,dm,1,0,MFInfo().SetArena(The_Device_Arena()));
 
     // check to make sure each MPI rank has exactly 1 box
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(real_field.local_size() == 1, "Must have one Box per process");
-    
+
     for (MFIter mfi(real_field); mfi.isValid(); ++mfi) {
         Array4<Real> const& fab = real_field.array(mfi);
         amrex::ParallelForRNG(mfi.fabbox(),
@@ -128,12 +128,12 @@ int main (int argc, char* argv[])
 
     Print() << "r_local_box " << r_local_box << std::endl;
     Print() << "r_local_box.bigEnd(0) " << r_local_box.bigEnd(0) << std::endl;
-    
+
     Box c_local_box = amrex::coarsen(r_local_box, IntVect(2,1,1));
 
     Print() << "c_local_box " << c_local_box << std::endl;
     Print() << "c_local_box.bigEnd(0) " << c_local_box.bigEnd(0) << std::endl;
-    
+
     if (c_local_box.bigEnd(0) * 2 == r_local_box.bigEnd(0)) {
         // this avoids overlap for the cases when one or more r_local_box's
         // have an even cell index in the hi-x cell
@@ -141,7 +141,7 @@ int main (int argc, char* argv[])
     }
     if (my_domain.bigEnd(0) == geom.Domain().bigEnd(0)) {
         // increase the size of boxes touching the hi-x domain by 1 in x
-        // this is an (Nx x Ny x Nz) -> (Nx/2+1 x Ny x Nz) real-to-complex sizing 
+        // this is an (Nx x Ny x Nz) -> (Nx/2+1 x Ny x Nz) real-to-complex sizing
         c_local_box.growHi(0,1);
     }
 
@@ -179,9 +179,9 @@ int main (int argc, char* argv[])
 
     Real time = 0.;
     int step = 0;
-    
+
     WriteSingleLevelPlotfile("plt_in", real_field, {"phi"}, geom, time, step);
-    
+
     { BL_PROFILE("HEFFTE-total");
     {
         BL_PROFILE("ForwardTransform");
