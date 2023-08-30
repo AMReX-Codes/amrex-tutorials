@@ -51,7 +51,7 @@ AMD/ROC BUILD
    	 -DCMAKE_CXX_STANDARD=17 \
   	 -DBUILD_SHARED_LIBS=OFF \
   	 -DCMAKE_INSTALL_PREFIX=. \  # can choose any installation /path/to/heffte
-  	 -DHeffte_ENABLE_FFTW=ON \
+         -DHeffte_ENABLE_FFTW=OFF \
   	 -DHeffte_ENABLE_ROCM=ON \
   	 -DHeffte_DISABLE_GPU_AWARE_MPI=ON \  # use this for workstations, don’t include this line for perlmutter/frontier
   	 ..
