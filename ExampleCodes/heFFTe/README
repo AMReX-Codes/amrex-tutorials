@@ -25,7 +25,7 @@ HOST BUILD
 >> make install
 
 >> cd /path/to/amrex-tutorials/ExampleCodes/heFFTe
->> make -j4 USE_CUDA=FALSE HEFFTE_HOME=/path/to/heffte
+>> make -j4 HEFFTE_HOME=/path/to/heffte
 
 NVIDIA/CUDA BUILD
 
@@ -60,4 +60,4 @@ AMD/ROC BUILD
 >> make install
 
 >> cd /path/to/amrex-tutorials/ExampleCodes/heFFTe
->> make -j4 USE_CUDA=TRUE HEFFTE_HOME=/path/to/heffte
+>> make -j4 USE_HIP=TRUE HEFFTE_HOME=/path/to/heffte
