@@ -4,6 +4,9 @@ https://icl-utk-edu.github.io/heffte/md_doxygen_installation.html
 Installation
 
 >> git clone git@github.com:icl-utk-edu/heffte.git
+OR
+>> git clone https://github.com/icl-utk-edu/heffte.git
+
 >> cd heffte
 >> mkdir build
 >> cd build
