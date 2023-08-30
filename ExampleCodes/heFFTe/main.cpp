@@ -66,20 +66,25 @@ int main (int argc, char* argv[])
     Box r_local_box = my_domain;
 
     Print() << "r_local_box " << r_local_box << std::endl;
+    Print() << "r_local_box.bigEnd(0) " << r_local_box.bigEnd(0) << std::endl;
     
     Box c_local_box = amrex::coarsen(r_local_box, IntVect(2,1,1));
 
     Print() << "c_local_box " << c_local_box << std::endl;
+    Print() << "c_local_box.bigEnd(0) " << c_local_box.bigEnd(0) << std::endl;
     
     if (c_local_box.bigEnd(0) * 2 == r_local_box.bigEnd(0)) {
-        c_local_box.setBig(0,c_local_box.bigEnd(0)-1);// to avoid overlap
+        // this avoids overlap for the cases when one or more r_local_box's
+        // have an even cell index in the hi-x cell
+        c_local_box.setBig(0,c_local_box.bigEnd(0)-1);
     }
     if (my_domain.bigEnd(0) == geom.Domain().bigEnd(0)) {
+        // increase the size of boxes touching the hi-x domain by 1 in x
+        // this is an (Nx x Ny x Nz) -> (Nx/2+1 x Ny x Nz) real-to-complex sizing 
         c_local_box.growHi(0,1);
     }
 
     BaseFab<GpuComplex<Real> > spectral_field(c_local_box, 1, The_Device_Arena());
-
 
 #if (AMREX_SPACEDIM==2)
 
