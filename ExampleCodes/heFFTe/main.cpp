@@ -73,7 +73,7 @@ int main (int argc, char* argv[])
     Box domain(dom_lo, dom_hi);
 
     // Box for fft data
-    Box domain_fft = amrex::coarsen(domain, IntVect(2,1,1));
+    Box domain_fft = amrex::coarsen(domain, IntVect(AMREX_D_DECL(2,1,1)));
     if (domain_fft.bigEnd(0) * 2 == domain.bigEnd(0)) {
         // this avoids overlap for the cases when one or more r_local_box's
         // have an even cell index in the hi-x cell
@@ -158,7 +158,7 @@ int main (int argc, char* argv[])
             }
 
             Box r_box = b;
-            Box c_box = amrex::coarsen(r_box, IntVect(2,1,1));
+            Box c_box = amrex::coarsen(r_box, IntVect(AMREX_D_DECL(2,1,1)));
 
             if (c_box.bigEnd(0) * 2 == r_box.bigEnd(0)) {
                 // this avoids overlap for the cases when one or more r_box's
@@ -178,10 +178,11 @@ int main (int argc, char* argv[])
     Print() << "fft_ba " << fft_ba << std::endl;
 
     MultiFab fft_data(fft_ba,dm,3,0);
+    fft_data.setVal(666.e66);
 
     // now each MPI rank works on its own box
     Box r_local_box = my_domain;
-    Box c_local_box = amrex::coarsen(r_local_box, IntVect(2,1,1));
+    Box c_local_box = amrex::coarsen(r_local_box, IntVect(AMREX_D_DECL(2,1,1)));
 
     if (c_local_box.bigEnd(0) * 2 == r_local_box.bigEnd(0)) {
         // this avoids overlap for the cases when one or more r_local_box's
@@ -205,6 +206,11 @@ int main (int argc, char* argv[])
 #else
     heffte::fft2d_r2c<heffte::backend::fftw> fft
 #endif
+        ({{r_local_box.smallEnd(0),r_local_box.smallEnd(1),0},
+          {r_local_box.bigEnd(0)  ,r_local_box.bigEnd(1)  ,0}},
+         {{c_local_box.smallEnd(0),c_local_box.smallEnd(1),0},
+          {c_local_box.bigEnd(0)  ,c_local_box.bigEnd(1)  ,0}},
+         0, ParallelDescriptor::Communicator());
 
 #elif (AMREX_SPACEDIM==3)
 
@@ -215,13 +221,13 @@ int main (int argc, char* argv[])
 #else
     heffte::fft3d_r2c<heffte::backend::fftw> fft
 #endif
-
-#endif
         ({{r_local_box.smallEnd(0),r_local_box.smallEnd(1),r_local_box.smallEnd(2)},
           {r_local_box.bigEnd(0)  ,r_local_box.bigEnd(1)  ,r_local_box.bigEnd(2)}},
          {{c_local_box.smallEnd(0),c_local_box.smallEnd(1),c_local_box.smallEnd(2)},
           {c_local_box.bigEnd(0)  ,c_local_box.bigEnd(1)  ,c_local_box.bigEnd(2)}},
          0, ParallelDescriptor::Communicator());
+
+#endif
 
     using heffte_complex = typename heffte::fft_output<Real>::type;
     heffte_complex* spectral_data = (heffte_complex*) spectral_field.dataPtr();
