@@ -136,6 +136,8 @@ int main (int argc, char* argv[])
                 fab(i,j,k) *= std::sin(8*M_PI*z/prob_hi_z + omega);
             }
 
+            // fab(i,j,k) = std::sqrt(x)*std::sqrt(y);
+
             // fab(i,j,k) = amrex::Random(engine);
             
         });
@@ -177,7 +179,8 @@ int main (int argc, char* argv[])
     }
     Print() << "fft_ba " << fft_ba << std::endl;
 
-    MultiFab fft_data(fft_ba,dm,3,0);
+    // storage for real, imaginary, magnitude, and phase
+    MultiFab fft_data(fft_ba,dm,4,0);
     fft_data.setVal(666.e66);
 
     // now each MPI rank works on its own box
@@ -252,10 +255,24 @@ int main (int argc, char* argv[])
             data(i,j,k,1) = spectral(i,j,k).imag();
             data(i,j,k,2) = std::sqrt(spectral(i,j,k).real()*spectral(i,j,k).real() +
                                       spectral(i,j,k).imag()*spectral(i,j,k).imag());
+
+            // Here we want to store the values of the phase angle
+            // Avoid division by zero
+            if (spectral(i,j,k).real() == 0.0) {
+                if (spectral(i,j,k).imag() == 0.0){
+                    data(i,j,k,4) = 0.0;
+                } else if (spectral(i,j,k).imag() > 0.0) {
+                    data(i,j,k,3) = M_PI/2.0;
+                } else {
+                    data(i,j,k,3) = -M_PI/2.0;
+                }
+            } else {
+                data(i,j,k,3) = std::atan(spectral(i,j,k).imag()/spectral(i,j,k).real());
+            }
         });
     }
 
-    WriteSingleLevelPlotfile("fft_data", fft_data, {"real", "imag", "mag"}, geom_fft, time, step);
+    WriteSingleLevelPlotfile("fft_data", fft_data, {"real", "imag", "magitude", "phase"}, geom_fft, time, step);
     
     {
         BL_PROFILE("BackwardTransform");
