@@ -72,6 +72,15 @@ int main (int argc, char* argv[])
     // Make a single box that is the entire domain
     Box domain(dom_lo, dom_hi);
 
+    // Box for fft data
+    Box domain_fft = amrex::coarsen(domain, IntVect(2,1,1));
+    if (domain_fft.bigEnd(0) * 2 == domain.bigEnd(0)) {
+        // this avoids overlap for the cases when one or more r_local_box's
+        // have an even cell index in the hi-x cell
+        domain_fft.setBig(0,domain_fft.bigEnd(0)-1);
+    }
+    domain_fft.growHi(0,1);
+
     // number of points in the domain
     long npts = domain.numPts();
 
@@ -84,12 +93,14 @@ int main (int argc, char* argv[])
     // periodic in all direction
     Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
 
-    Geometry geom;
-    geom.define(domain, real_box, CoordSys::cartesian, is_periodic);
+    Geometry geom(domain, real_box, CoordSys::cartesian, is_periodic);
+    Geometry geom_fft(domain_fft, real_box, CoordSys::cartesian, is_periodic);
+
+    // extract dx from the geometry object
+    GpuArray<Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
 
     // Initialize the boxarray "ba" from the single box "domain"
-    BoxArray ba;
-    ba.define(domain);
+    BoxArray ba(domain);
 
     // Break up boxarray "ba" into chunks no larger than "max_grid_size" along a direction
     ba.maxSize(max_grid_size);
@@ -97,9 +108,47 @@ int main (int argc, char* argv[])
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
+    MultiFab real_field(ba,dm,1,0,MFInfo().SetArena(The_Device_Arena()));
+
+    // check to make sure each MPI rank has exactly 1 box
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(real_field.local_size() == 1, "Must have one Box per process");
+
+    Real omega = M_PI/2.0;
+    
+    for (MFIter mfi(real_field); mfi.isValid(); ++mfi) {
+        Array4<Real> const& fab = real_field.array(mfi);
+        amrex::ParallelForRNG(mfi.fabbox(),
+        [=] AMREX_GPU_DEVICE (int i, int j, int k, RandomEngine const& engine) noexcept
+        {
+            
+            // **********************************
+            // SET VALUES FOR EACH CELL
+            // **********************************
+
+            Real x = prob_lo_x + (i+0.5) * dx[0];
+            Real y = (AMREX_SPACEDIM>=2) ? prob_lo_y + (j+0.5) * dx[1] : 0.;
+            Real z = (AMREX_SPACEDIM==3) ? prob_lo_z + (k+0.5) * dx[2] : 0.;
+            fab(i,j,k) = std::sin(4*M_PI*x/prob_hi_x + omega);
+            if (AMREX_SPACEDIM >= 2) {
+                fab(i,j,k) *= std::sin(6*M_PI*y/prob_hi_y + omega);
+            }
+            if (AMREX_SPACEDIM == 3) {
+                fab(i,j,k) *= std::sin(8*M_PI*z/prob_hi_z + omega);
+            }
+
+            // fab(i,j,k) = amrex::Random(engine);
+            
+        });
+    }
+
+
+    BoxArray fft_ba;
     Box my_domain;
     int my_boxid;
     {
+        BoxList bl;
+        bl.reserve(ba.size());
+
         for (int i = 0; i < ba.size(); ++i) {
             Box b = ba[i];
             // each MPI rank has its own my_domain Box and my_boxid ID
@@ -107,32 +156,32 @@ int main (int argc, char* argv[])
                 my_domain = b;
                 my_boxid = i;
             }
+
+            Box r_box = b;
+            Box c_box = amrex::coarsen(r_box, IntVect(2,1,1));
+
+            if (c_box.bigEnd(0) * 2 == r_box.bigEnd(0)) {
+                // this avoids overlap for the cases when one or more r_box's
+                // have an even cell index in the hi-x cell
+                c_box.setBig(0,c_box.bigEnd(0)-1);
+            }
+            if (b.bigEnd(0) == geom.Domain().bigEnd(0)) {
+                // increase the size of boxes touching the hi-x domain by 1 in x
+                // this is an (Nx x Ny x Nz) -> (Nx/2+1 x Ny x Nz) real-to-complex sizing
+                c_box.growHi(0,1);
+            }
+            bl.push_back(c_box);
+            
         }
+        fft_ba.define(std::move(bl));
     }
+    Print() << "fft_ba " << fft_ba << std::endl;
 
-    MultiFab real_field(ba,dm,1,0,MFInfo().SetArena(The_Device_Arena()));
+    MultiFab fft_data(fft_ba,dm,3,0);
 
-    // check to make sure each MPI rank has exactly 1 box
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(real_field.local_size() == 1, "Must have one Box per process");
-
-    for (MFIter mfi(real_field); mfi.isValid(); ++mfi) {
-        Array4<Real> const& fab = real_field.array(mfi);
-        amrex::ParallelForRNG(mfi.fabbox(),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k, RandomEngine const& engine) noexcept
-        {
-            fab(i,j,k) = amrex::Random(engine);
-        });
-    }
-
+    // now each MPI rank works on its own box
     Box r_local_box = my_domain;
-
-    Print() << "r_local_box " << r_local_box << std::endl;
-    Print() << "r_local_box.bigEnd(0) " << r_local_box.bigEnd(0) << std::endl;
-
     Box c_local_box = amrex::coarsen(r_local_box, IntVect(2,1,1));
-
-    Print() << "c_local_box " << c_local_box << std::endl;
-    Print() << "c_local_box.bigEnd(0) " << c_local_box.bigEnd(0) << std::endl;
 
     if (c_local_box.bigEnd(0) * 2 == r_local_box.bigEnd(0)) {
         // this avoids overlap for the cases when one or more r_local_box's
@@ -188,6 +237,20 @@ int main (int argc, char* argv[])
         fft.forward(real_field[my_boxid].dataPtr(), spectral_data);
     }
 
+    for (MFIter mfi(fft_data); mfi.isValid(); ++mfi) {
+        Array4<Real> const& data = fft_data.array(mfi);
+        Array4< GpuComplex<Real> > spectral = spectral_field.array();
+        amrex::ParallelFor(mfi.fabbox(), [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+        {
+            data(i,j,k,0) = spectral(i,j,k).real();
+            data(i,j,k,1) = spectral(i,j,k).imag();
+            data(i,j,k,2) = std::sqrt(spectral(i,j,k).real()*spectral(i,j,k).real() +
+                                      spectral(i,j,k).imag()*spectral(i,j,k).imag());
+        });
+    }
+
+    WriteSingleLevelPlotfile("fft_data", fft_data, {"real", "imag", "mag"}, geom_fft, time, step);
+    
     {
         BL_PROFILE("BackwardTransform");
         fft.backward(spectral_data, real_field[my_boxid].dataPtr());
