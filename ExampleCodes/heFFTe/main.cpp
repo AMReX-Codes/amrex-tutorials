@@ -105,7 +105,7 @@ int main (int argc, char* argv[])
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(real_field.local_size() == 1, "Must have one Box per process");
 
     Real omega = M_PI/2.0;
-    
+
     for (MFIter mfi(real_field); mfi.isValid(); ++mfi) {
 
         Array4<Real> const& fab = real_field.array(mfi);
@@ -114,7 +114,7 @@ int main (int argc, char* argv[])
 
         amrex::ParallelForRNG(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k, RandomEngine const& engine) noexcept
         {
-            
+
             // **********************************
             // SET VALUES FOR EACH CELL
             // **********************************
@@ -133,7 +133,7 @@ int main (int argc, char* argv[])
             // fab(i,j,k) = std::sqrt(x)*std::sqrt(y);
 
             // fab(i,j,k) = amrex::Random(engine);
-            
+
         });
     }
 
@@ -151,7 +151,7 @@ int main (int argc, char* argv[])
                 local_box = b;
                 local_boxid = i;
             }
-            
+
         }
     }
 
@@ -221,7 +221,7 @@ int main (int argc, char* argv[])
         //
         //
         //
-        
+
         {
             BL_PROFILE("BackwardTransform");
             fft.backward(spectral_data, real_field[local_boxid].dataPtr());
@@ -232,7 +232,7 @@ int main (int argc, char* argv[])
     real_field.mult(1./npts);
 
     WriteSingleLevelPlotfile("phi_out", real_field, {"phi"}, geom, time, step);
-    
+
     // **********************************
     // diagnostics
     // **********************************
@@ -259,18 +259,18 @@ int main (int argc, char* argv[])
                 c_box.growHi(0,1);
             }
             bl.push_back(c_box);
-            
+
         }
         fft_ba.define(std::move(bl));
     }
 
     // storage for real, imaginary, magnitude, and phase
     MultiFab fft_data(fft_ba,dm,4,0);
-    
+
     // this copies the fft data into a distributed MultiFab
-    // this MultiFab 
+    // this MultiFab
     for (MFIter mfi(fft_data); mfi.isValid(); ++mfi) {
-        
+
         Array4<Real> const& data = fft_data.array(mfi);
         Array4< GpuComplex<Real> > spectral = spectral_field.array();
 
@@ -280,7 +280,7 @@ int main (int argc, char* argv[])
         {
             Real re = spectral(i,j,k).real() / sqrtnpts;
             Real im = spectral(i,j,k).imag() / sqrtnpts;
-            
+
             data(i,j,k,0) = re;
             data(i,j,k,1) = im;
             data(i,j,k,2) = std::sqrt(re*re + im*im);
@@ -311,11 +311,11 @@ int main (int argc, char* argv[])
     domain_fft.growHi(0,1);
 
     Geometry geom_fft(domain_fft, real_box, CoordSys::cartesian, is_periodic);
-    
+
     WriteSingleLevelPlotfile("fft_data", fft_data, {"real", "imag", "magitude", "phase"}, geom_fft, time, step);
 
     // unpack, shift, write to plotfile
-    
+
     BoxArray ba_onegrid(domain);
     DistributionMapping dm_onegrid(ba_onegrid);
 
@@ -384,7 +384,7 @@ int main (int argc, char* argv[])
                 }
             } else {
                 data(i,j,k,3) = std::atan(im/re);
-            }            
+            }
 
         });
     }
@@ -400,7 +400,7 @@ int main (int argc, char* argv[])
         for (MFIter mfi(fft_data_onegrid); mfi.isValid(); ++mfi) {
 
             const Box& bx = mfi.tilebox();
-        
+
             Array4<Real> const& data = fft_data_onegrid.array(mfi);
 
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
@@ -453,10 +453,10 @@ int main (int argc, char* argv[])
     }
 
     fft_data_onegrid_shifted.ParallelCopy(real_field, 0, 0, 1);
-  
+
     WriteSingleLevelPlotfile("plt", fft_data_onegrid_shifted,
                              {"phi", "phi_dft_real", "phi_dft_imag", "phi_dft_magitude", "phi_dft_phase"},
                              geom, time, step);
-        
+
     } amrex::Finalize();
 }
