@@ -139,6 +139,12 @@ int main (int argc, char* argv[])
         });
     }
 
+    Real time = 0.;
+    int step = 0;
+    
+    // write out phi to plotfile
+    WriteSingleLevelPlotfile("phi", phi, {"phi"}, geom, time, step);
+
     // since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
     Box local_box;
     int local_boxid;
@@ -211,20 +217,11 @@ int main (int argc, char* argv[])
     using heffte_complex = typename heffte::fft_output<Real>::type;
     heffte_complex* spectral_data = (heffte_complex*) spectral_field.dataPtr();
 
-    Real time = 0.;
-    int step = 0;
-
     { BL_PROFILE("HEFFTE-total");
         {
             BL_PROFILE("ForwardTransform");
             fft.forward(phi[local_boxid].dataPtr(), spectral_data);
         }
-
-        // for Poisson equation, implement the 1/k^2 scaling here
-        //
-        //
-        //
-
         {
             BL_PROFILE("BackwardTransform");
             fft.backward(spectral_data, phi[local_boxid].dataPtr());
@@ -305,7 +302,7 @@ int main (int argc, char* argv[])
         });
     }
 
-    // Box for fft data
+    // domain for fft data used to contruct a geometry object
     Box domain_fft = amrex::coarsen(domain, IntVect(AMREX_D_DECL(2,1,1)));
     // shrink by 1 in x in case there are an odd number of cells in the x-direction in domain
     if (domain_fft.bigEnd(0) * 2 == domain.bigEnd(0)) {
@@ -318,17 +315,22 @@ int main (int argc, char* argv[])
 
     WriteSingleLevelPlotfile("fft_data", fft_data, {"real", "imag", "magitude", "phase"}, geom_fft, time, step);
 
-    // unpack, shift, write to plotfile
+    // **********************************
+    // unpack data onto a 'full'-sized MultiFab
+    // shift data so k=0 mode is at the center
+    // **********************************
 
     BoxArray ba_onegrid(domain);
     DistributionMapping dm_onegrid(ba_onegrid);
 
+    // real, imaginary, magnitude, phase
     MultiFab fft_data_onegrid(ba_onegrid, dm_onegrid, 4, 0);
-    MultiFab fft_data_onegrid_shifted(ba_onegrid, dm_onegrid, 5, 0);  // put phi in component 0
+    MultiFab fft_data_onegrid_shifted(ba_onegrid, dm_onegrid, 4, 0);
+ 
     // copy in real and imaginary parts
     fft_data_onegrid.ParallelCopy(fft_data, 0, 0, 2);
 
-    // copy data to a full-sized MultiFab
+    // unpack data into a 'full'-sized MultiFab
     // this involves copying the complex conjugate from the half-sized field
     // into the appropriate place in the full MultiFab
     for (MFIter mfi(fft_data_onegrid); mfi.isValid(); ++mfi) {
@@ -393,8 +395,6 @@ int main (int argc, char* argv[])
         });
     }
 
-    // SHIFT DATA
-
     // zero_avg=0 means set the k=0 value to zero,
     // otherwise it sets the k=0 value to the average value of the signal in real space
     int zero_avg = 1;
@@ -410,16 +410,15 @@ int main (int argc, char* argv[])
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
             {
                 if (i == 0 && j == 0 && k == 0) {
-                    data(i,j,k,0) = 0.;
-                    data(i,j,k,1) = 0.;
-                    data(i,j,k,2) = 0.;
-                    data(i,j,k,3) = 0.;
+                    for (int comp=0; comp<4; ++comp) {
+                        data(i,j,k,comp) = 0.;
+                    }
                 }
             });
         }
     }
 
-    // Shift DFT by N/2+1 (pi)
+    // SHIFT DATA
     for (MFIter mfi(fft_data_onegrid); mfi.isValid(); ++mfi) {
 
         const Box& bx = mfi.tilebox();
@@ -450,16 +449,14 @@ int main (int argc, char* argv[])
             kp = (k+nzh)%nz;
 #endif
             for (int comp=0; comp<4; ++comp) {
-                dft(ip,jp,kp,comp+1) = dft_temp(i,j,k,comp);
+                dft(ip,jp,kp,comp) = dft_temp(i,j,k,comp);
             }
         });
 
     }
 
-    fft_data_onegrid_shifted.ParallelCopy(phi, 0, 0, 1);
-
     WriteSingleLevelPlotfile("plt", fft_data_onegrid_shifted,
-                             {"phi", "phi_dft_real", "phi_dft_imag", "phi_dft_magitude", "phi_dft_phase"},
+                             {"phi_dft_real", "phi_dft_imag", "phi_dft_magitude", "phi_dft_phase"},
                              geom, time, step);
 
     } amrex::Finalize();
