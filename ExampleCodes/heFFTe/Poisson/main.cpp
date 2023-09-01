@@ -213,40 +213,34 @@ int main (int argc, char* argv[])
             fft.forward(rhs[local_boxid].dataPtr(), spectral_data);
         }
 
-    // Now we take the standard FFT and scale it by 1/k^2
-    for (MFIter mfi(rhs); mfi.isValid(); ++mfi)
-    {
+        // Now we take the standard FFT and scale it by 1/k^2
         Array4< GpuComplex<Real> > spectral = spectral_field.array();
 
-        const Box& bx = mfi.fabbox();
-
-        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
+        ParallelFor(c_local_box, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
+            Real a = 2.*M_PI*i / L_x;
+            Real b = 2.*M_PI*j / L_y;
+            Real c = 2.*M_PI*k / L_z;
 
-                Real a = 2.*M_PI*i / L_x;
-                Real b = 2.*M_PI*j / L_y;
-                Real c = 2.*M_PI*k / L_z;
-
-                // the values in the upper-half of the spectral array in y and z are here interpreted as negative wavenumbers
-                if (j >= n_cell_y/2) b = 2.*M_PI*(n_cell_y-j) / L_y;
-                if (k >= n_cell_z/2) c = 2.*M_PI*(n_cell_z-k) / L_z;
+            // the values in the upper-half of the spectral array in y and z are here interpreted as negative wavenumbers
+            if (j >= n_cell_y/2) b = 2.*M_PI*(n_cell_y-j) / L_y;
+            if (k >= n_cell_z/2) c = 2.*M_PI*(n_cell_z-k) / L_z;
 
 #if (AMREX_SPACEDIM == 1)
-                Real k2 = -a*a;
+            Real k2 = -a*a;
 #elif (AMREX_SPACEDIM == 2)
-                Real k2 = -(a*a + b*b);
+            Real k2 = -(a*a + b*b);
 #elif (AMREX_SPACEDIM == 3)
-                Real k2 = -(a*a + b*b + c*c);
+            Real k2 = -(a*a + b*b + c*c);
 #endif
 
-                if (k2 != 0.) {
-                    spectral(i,j,k) /= k2;
-                } else {
-                    spectral(i,j,k) *= 0.; // interpretation here is that the average value of the solution is zero
-                }
+            if (k2 != 0.) {
+                spectral(i,j,k) /= k2;
+            } else {
+                spectral(i,j,k) *= 0.; // interpretation here is that the average value of the solution is zero
+            }
 
         });
-     }
 
 
         {
