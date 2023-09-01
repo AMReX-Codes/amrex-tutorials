@@ -155,7 +155,7 @@ int main (int argc, char* argv[])
 
     // now each MPI rank works on its own box
     // for real->complex fft's, the fft is stored in an (nx/2+1) x ny x nz dataset
-    
+
     // start by coarsening each box by 2 in the x-direction
     Box c_local_box = amrex::coarsen(local_box, IntVect(AMREX_D_DECL(2,1,1)));
 
@@ -240,7 +240,7 @@ int main (int argc, char* argv[])
 
     // create a BoxArray containing the fft boxes
     // by construction, these boxes correlate to the associated spectral_data
-    // this we can copy the spectral data into this multifab since we know they are owned by the same MPI rank    
+    // this we can copy the spectral data into this multifab since we know they are owned by the same MPI rank
     BoxArray fft_ba;
     {
         BoxList bl;
