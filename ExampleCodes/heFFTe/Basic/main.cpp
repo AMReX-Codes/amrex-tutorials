@@ -141,7 +141,7 @@ int main (int argc, char* argv[])
 
     Real time = 0.;
     int step = 0;
-    
+
     // write out phi to plotfile
     WriteSingleLevelPlotfile("phi", phi, {"phi"}, geom, time, step);
 
@@ -326,7 +326,7 @@ int main (int argc, char* argv[])
     // real, imaginary, magnitude, phase
     MultiFab fft_data_onegrid(ba_onegrid, dm_onegrid, 4, 0);
     MultiFab fft_data_onegrid_shifted(ba_onegrid, dm_onegrid, 4, 0);
- 
+
     // copy in real and imaginary parts
     fft_data_onegrid.ParallelCopy(fft_data, 0, 0, 2);
 
