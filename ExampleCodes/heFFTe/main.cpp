@@ -24,15 +24,15 @@ int main (int argc, char* argv[])
     int n_cell_y;
     int n_cell_z;
 
+    // maximum grid size in each direction
     int max_grid_size_x;
     int max_grid_size_y;
     int max_grid_size_z;
 
-    // dimensions of the domain
+    // physical dimensions of the domain
     Real prob_lo_x = 0.;
     Real prob_lo_y = 0.;
     Real prob_lo_z = 0.;
-
     Real prob_hi_x = 1.;
     Real prob_hi_y = 1.;
     Real prob_hi_z = 1.;
@@ -65,7 +65,7 @@ int main (int argc, char* argv[])
     }
 
 
-    // define lower and upper indices
+    // define lower and upper indices of domain
     IntVect dom_lo(AMREX_D_DECL(         0,          0,          0));
     IntVect dom_hi(AMREX_D_DECL(n_cell_x-1, n_cell_y-1, n_cell_z-1));
 
@@ -76,7 +76,17 @@ int main (int argc, char* argv[])
     long npts = domain.numPts();
     Real sqrtnpts = std::sqrt(npts);
 
+    // Initialize the boxarray "ba" from the single box "domain"
+    BoxArray ba(domain);
+
+    // create IntVect of max_grid_size
     IntVect max_grid_size(AMREX_D_DECL(max_grid_size_x,max_grid_size_y,max_grid_size_z));
+
+    // Break up boxarray "ba" into chunks no larger than "max_grid_size" along a direction
+    ba.maxSize(max_grid_size);
+
+    // How Boxes are distrubuted among MPI processes
+    DistributionMapping dm(ba);
 
     // This defines the physical box size in each direction
     RealBox real_box({ AMREX_D_DECL(prob_lo_x, prob_lo_y, prob_lo_z)},
@@ -85,30 +95,22 @@ int main (int argc, char* argv[])
     // periodic in all direction
     Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1,1,1)};
 
+    // geometry object for real data
     Geometry geom(domain, real_box, CoordSys::cartesian, is_periodic);
 
     // extract dx from the geometry object
     GpuArray<Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
 
-    // Initialize the boxarray "ba" from the single box "domain"
-    BoxArray ba(domain);
-
-    // Break up boxarray "ba" into chunks no larger than "max_grid_size" along a direction
-    ba.maxSize(max_grid_size);
-
-    // How Boxes are distrubuted among MPI processes
-    DistributionMapping dm(ba);
-
-    MultiFab real_field(ba,dm,1,0,MFInfo().SetArena(The_Device_Arena()));
+    MultiFab phi(ba,dm,1,0);
 
     // check to make sure each MPI rank has exactly 1 box
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(real_field.local_size() == 1, "Must have one Box per process");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(phi.local_size() == 1, "Must have one Box per MPI process");
 
     Real omega = M_PI/2.0;
 
-    for (MFIter mfi(real_field); mfi.isValid(); ++mfi) {
+    for (MFIter mfi(phi); mfi.isValid(); ++mfi) {
 
-        Array4<Real> const& fab = real_field.array(mfi);
+        Array4<Real> const& fab = phi.array(mfi);
 
         const Box& bx = mfi.fabbox();
 
@@ -141,9 +143,6 @@ int main (int argc, char* argv[])
     Box local_box;
     int local_boxid;
     {
-        BoxList bl;
-        bl.reserve(ba.size());
-
         for (int i = 0; i < ba.size(); ++i) {
             Box b = ba[i];
             // each MPI rank has its own local_box Box and local_boxid ID
@@ -151,26 +150,32 @@ int main (int argc, char* argv[])
                 local_box = b;
                 local_boxid = i;
             }
-
         }
     }
 
     // now each MPI rank works on its own box
+    // for real->complex fft's, the fft is stored in an (nx/2+1) x ny x nz dataset
+    
+    // start by coarsening each box by 2 in the x-direction
     Box c_local_box = amrex::coarsen(local_box, IntVect(AMREX_D_DECL(2,1,1)));
 
+    // if the coarsened box's high-x index is even, we shrink the size in 1 in x
+    // this avoids overlap between coarsened boxes
     if (c_local_box.bigEnd(0) * 2 == local_box.bigEnd(0)) {
-        // this avoids overlap for the cases when one or more local_box's
-        // have an even cell index in the hi-x cell
         c_local_box.setBig(0,c_local_box.bigEnd(0)-1);
     }
+    // for any boxes that touch the hi-x domain we
+    // increase the size of boxes by 1 in x
+    // this makes the overall fft dataset have size (Nx/2+1 x Ny x Nz)
     if (local_box.bigEnd(0) == geom.Domain().bigEnd(0)) {
-        // increase the size of boxes touching the hi-x domain by 1 in x
-        // this is an (Nx x Ny x Nz) -> (Nx/2+1 x Ny x Nz) real-to-complex sizing
         c_local_box.growHi(0,1);
     }
 
+    // each MPI rank gets storage for its piece of the fft
     BaseFab<GpuComplex<Real> > spectral_field(c_local_box, 1, The_Device_Arena());
 
+    // create real->complex fft objects with the appropriate backend and data about
+    // the domain size and its local box size
 #if (AMREX_SPACEDIM==2)
 
 #ifdef AMREX_USE_CUDA
@@ -209,12 +214,10 @@ int main (int argc, char* argv[])
     Real time = 0.;
     int step = 0;
 
-    WriteSingleLevelPlotfile("phi_in", real_field, {"phi"}, geom, time, step);
-
     { BL_PROFILE("HEFFTE-total");
         {
             BL_PROFILE("ForwardTransform");
-            fft.forward(real_field[local_boxid].dataPtr(), spectral_data);
+            fft.forward(phi[local_boxid].dataPtr(), spectral_data);
         }
 
         // for Poisson equation, implement the 1/k^2 scaling here
@@ -224,19 +227,20 @@ int main (int argc, char* argv[])
 
         {
             BL_PROFILE("BackwardTransform");
-            fft.backward(spectral_data, real_field[local_boxid].dataPtr());
+            fft.backward(spectral_data, phi[local_boxid].dataPtr());
         }
     }
 
     // scale by 1/npts (both forward and inverse need 1/sqrtnpts scaling so I am doing it all here)
-    real_field.mult(1./npts);
-
-    WriteSingleLevelPlotfile("phi_out", real_field, {"phi"}, geom, time, step);
+    phi.mult(1./npts);
 
     // **********************************
     // diagnostics
     // **********************************
 
+    // create a BoxArray containing the fft boxes
+    // by construction, these boxes correlate to the associated spectral_data
+    // this we can copy the spectral data into this multifab since we know they are owned by the same MPI rank    
     BoxArray fft_ba;
     {
         BoxList bl;
@@ -248,14 +252,15 @@ int main (int argc, char* argv[])
             Box r_box = b;
             Box c_box = amrex::coarsen(r_box, IntVect(AMREX_D_DECL(2,1,1)));
 
+            // this avoids overlap for the cases when one or more r_box's
+            // have an even cell index in the hi-x cell
             if (c_box.bigEnd(0) * 2 == r_box.bigEnd(0)) {
-                // this avoids overlap for the cases when one or more r_box's
-                // have an even cell index in the hi-x cell
                 c_box.setBig(0,c_box.bigEnd(0)-1);
             }
+
+            // increase the size of boxes touching the hi-x domain by 1 in x
+            // this is an (Nx x Ny x Nz) -> (Nx/2+1 x Ny x Nz) real-to-complex sizing
             if (b.bigEnd(0) == geom.Domain().bigEnd(0)) {
-                // increase the size of boxes touching the hi-x domain by 1 in x
-                // this is an (Nx x Ny x Nz) -> (Nx/2+1 x Ny x Nz) real-to-complex sizing
                 c_box.growHi(0,1);
             }
             bl.push_back(c_box);
@@ -267,8 +272,7 @@ int main (int argc, char* argv[])
     // storage for real, imaginary, magnitude, and phase
     MultiFab fft_data(fft_ba,dm,4,0);
 
-    // this copies the fft data into a distributed MultiFab
-    // this MultiFab
+    // this copies the spectral data into a distributed MultiFab
     for (MFIter mfi(fft_data); mfi.isValid(); ++mfi) {
 
         Array4<Real> const& data = fft_data.array(mfi);
@@ -303,11 +307,11 @@ int main (int argc, char* argv[])
 
     // Box for fft data
     Box domain_fft = amrex::coarsen(domain, IntVect(AMREX_D_DECL(2,1,1)));
+    // shrink by 1 in x in case there are an odd number of cells in the x-direction in domain
     if (domain_fft.bigEnd(0) * 2 == domain.bigEnd(0)) {
-        // this avoids overlap for the cases when one or more r_local_box's
-        // have an even cell index in the hi-x cell
         domain_fft.setBig(0,domain_fft.bigEnd(0)-1);
     }
+    // grow by 1 in the x-direction to match the size of the FFT
     domain_fft.growHi(0,1);
 
     Geometry geom_fft(domain_fft, real_box, CoordSys::cartesian, is_periodic);
@@ -452,7 +456,7 @@ int main (int argc, char* argv[])
 
     }
 
-    fft_data_onegrid_shifted.ParallelCopy(real_field, 0, 0, 1);
+    fft_data_onegrid_shifted.ParallelCopy(phi, 0, 0, 1);
 
     WriteSingleLevelPlotfile("plt", fft_data_onegrid_shifted,
                              {"phi", "phi_dft_real", "phi_dft_imag", "phi_dft_magitude", "phi_dft_phase"},
