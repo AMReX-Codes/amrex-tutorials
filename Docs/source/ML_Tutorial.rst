@@ -19,7 +19,7 @@ In this example, the machine learning model is a regression model pre-trained to
 .. math:: X_0(0) = 1; ~~~ X_1(0) = 0
 
 In the context of the pytorch model, the input is a time step ``dt`` and output is the two-component solution of the ODE system at time ``t = dt``.
-          
+
 **Pre-trained Model**
 ---------------------
 The TorchScript model that is included in this example is located at ``ML/PYTORCH/Exec/model.pt``.
