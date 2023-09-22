@@ -10,7 +10,7 @@ Located in the directory ``amrex-tutorials/ExampleCodes/ML/PYTORCH``, this examp
 Here we use a 1-input, 2-output model to illustrate the interface between the PyTorch model and a MultiFab.
 
 **Beta Decay Reaction**
---------------
+-----------------------
 
 In this example, the machine learning model is a regression model pre-trained to solve a two-component ODE system describing beta decay.
 
