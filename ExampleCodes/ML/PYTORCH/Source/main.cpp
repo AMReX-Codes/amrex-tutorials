@@ -133,8 +133,8 @@ void main_main ()
     BL_PROFILE_VAR("WriteInitPlot",WriteInitPlot);
 
     // Write a plotfile of the initial data
-    const std::string& pltfile = amrex::Concatenate("plt",0,5);
-    WriteSingleLevelPlotfile(pltfile, phi_in, {"x0"}, geom, 0.0, 0);
+    const std::string& pltfile = "plt_inputs";
+    WriteSingleLevelPlotfile(pltfile, phi_in, {"dt"}, geom, 0.0, 0);
 
     BL_PROFILE_VAR_STOP(WriteInitPlot);
 
@@ -253,8 +253,8 @@ void main_main ()
     amrex::Print() << "Finish evaluating model.\n";
 
     // Write a plotfile of the current data
-    const std::string& pltfile2 = amrex::Concatenate("plt",1,5);
-    WriteSingleLevelPlotfile(pltfile2, phi_out, {"y0", "y1"}, geom, 1.0, 1);
+    const std::string& pltfile2 = "plt_outputs";
+    WriteSingleLevelPlotfile(pltfile2, phi_out, {"X_0", "X_1"}, geom, 1.0, 1);
 
     // Call the timer again and compute the maximum difference between the start time
     // and stop time over all processors
