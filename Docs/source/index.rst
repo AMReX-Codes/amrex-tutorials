@@ -48,6 +48,7 @@ sorted by the following categories:
 - :ref:`ForkJoin<tutorials_forkjoin>` -- Parallel execution and subgrouping of MPI ranks.
 - :ref:`GPU<tutorials_gpu>`  -- Offload work to the GPUs using AMReX tools.
 - :ref:`Linear Solvers<tutorials_linearsolvers>`  -- Examples of several linear solvers.
+- :ref:`ML/PYTORCH<tutorials_ml>`  -- Use of pytorch models to replace point-wise computational kernels.
 - :ref:`MUI<tutorials_mui>`  -- Incorporates the MxUI/MUI (Multiscale Universal interface) frame into AMReX.
 - :ref:`Particles<tutorials_particles>`  -- Basic usage of AMReX's particle data structures.
 - :ref:`Python<tutorials_python>`  -- Using AMReX and interfacing with AMReX applications form Python - via `pyAMReX <https://github.com/AMReX-Codes/pyamrex/>`__

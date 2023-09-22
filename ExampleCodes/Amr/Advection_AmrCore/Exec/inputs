@@ -15,6 +15,9 @@ stop_time = 2.0
 # *****************************************************************
 geometry.prob_lo     =  0.0  0.0  0.0 
 geometry.prob_hi     =  1.0  1.0  0.125
+
+# 1 = periodic
+# 0 = walls (homogeneous Neumann, dphi/dn=0)
 geometry.is_periodic =  1    1    1
 
 # *****************************************************************

@@ -47,15 +47,16 @@ AmrCoreAdv::AmrCoreAdv ()
 
     facevel.resize(nlevs_max);
 
-    // periodic boundaries
-    int bc_lo[] = {BCType::int_dir, BCType::int_dir, BCType::int_dir};
-    int bc_hi[] = {BCType::int_dir, BCType::int_dir, BCType::int_dir};
+    int bc_lo[AMREX_SPACEDIM];
+    int bc_hi[AMREX_SPACEDIM];
 
-/*
-    // walls (Neumann)
-    int bc_lo[] = {BCType::foextrap, BCType::foextrap, BCType::foextrap};
-    int bc_hi[] = {BCType::foextrap, BCType::foextrap, BCType::foextrap};
-*/
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+        if (Geom(0).isPeriodic()[idim] == 1) {
+            bc_lo[idim] = bc_hi[idim] = BCType::int_dir;  // periodic
+        } else {
+            bc_lo[idim] = bc_hi[idim] = BCType::foextrap;  // walls (Neumann)
+        }
+    }
 
     bcs.resize(1);     // Setup 1-component
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
