@@ -10,8 +10,9 @@ AMReX applications can also be interfaced to Python with the same logic.
 In order to build the Python tutorials, add ``-DTUTORIAL_PYTHON=ON`` to the CMake configuration options.
 Then install with ``cmake --build build --target pyamrex_pip_install``.
 
-Examples:
+Guided Tutorial Examples:
 
-- ``GuidedTutorials/MultiFab/main.py``
+- :download:`MultiFab <../../GuidedTutorials/MultiFab/main.py>`
+- :download:`Heat Equation <../../GuidedTutorials/HeatEquation/Source/main.py>`
 
 Please see `pyAMReX <https://github.com/AMReX-Codes/pyamrex/>`__ for more details.
