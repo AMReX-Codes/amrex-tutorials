@@ -88,7 +88,6 @@ geom = amr.Geometry(domain, real_box, coord, is_per)
 dx = geom.data().CellSize() # dx[0]=dx dx[1]=dy dx[2]=dz
 
 # Fill a MultiFab with data
-mf_val = 0.
 for mfi in mf:
     bx = mfi.validbox()
     # Preferred way to fill array using fast ranged operations:
@@ -102,7 +101,10 @@ for mfi in mf:
     v = (x[xp.newaxis,xp.newaxis,:]
        + y[xp.newaxis,:,xp.newaxis]*0.1
        + z[:,xp.newaxis,xp.newaxis]*0.01)
-    mf_array = 1. + xp.exp(-v)
+    rsquared = ((z[xp.newaxis, xp.newaxis,          :] - 0.5)**2
+              + (y[xp.newaxis,          :, xp.newaxis] - 0.5)**2
+              + (x[         :, xp.newaxis, xp.newaxis] - 0.5)**2) / 0.01
+    mf_array[:, :, :, 0] = 1. + xp.exp(-rsquared)
 
 # Plot MultiFab data
 plotfile = amr.concatenate(root="plt", num=1, mindigits=3)
