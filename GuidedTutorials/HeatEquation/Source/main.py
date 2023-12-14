@@ -88,7 +88,7 @@ def main(n_cell, max_grid_size, nsteps, plot_int, dt):
     time = 0.
 
     # Ghost cells
-    ng = phi_old.nGrowVect
+    ng = phi_old.n_grow_vect
     ngx = ng[0]
     ngy = ng[1]
     ngz = ng[2]
