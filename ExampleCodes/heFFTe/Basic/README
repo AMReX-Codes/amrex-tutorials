@@ -13,19 +13,15 @@ OR
 
 HOST BUILD
 
->> cmake -DCMAKE_BUILD_TYPE=Release \
-   	 -DCMAKE_CXX_STANDARD=17 \
-   	 -DBUILD_SHARED_LIBS=OFF \
-  	 -DCMAKE_INSTALL_PREFIX=. \  # can choose any installation /path/to/heffte
-  	 -DHeffte_ENABLE_FFTW=ON \
-  	 -DHeffte_ENABLE_CUDA=OFF \
-  	 ..
+# NOTE: -DCMAKE_INSTALL_PREFIX can be a different location /path/to/DCMAKE_INSTALL_PREFIX
+
+>> cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=17 -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=. -DHeffte_ENABLE_FFTW=ON -DHeffte_ENABLE_CUDA=OFF ..
 
 >> make -j4
 >> make install
 
 >> cd /path/to/amrex-tutorials/ExampleCodes/heFFTe/Basic
->> make -j4 HEFFTE_HOME=/path/to/heffte
+>> make -j4 HEFFTE_HOME=/path/to/DCMAKE_INSTALL_PREFIX
 
 NVIDIA/CUDA BUILD
 
