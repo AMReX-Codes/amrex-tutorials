@@ -290,7 +290,7 @@ int main (int argc, char* argv[])
             // Avoid division by zero
             if (re == 0.0) {
                 if (im == 0.0){
-                    data(i,j,k,4) = 0.0;
+                    data(i,j,k,3) = 0.0;
                 } else if (im > 0.0) {
                     data(i,j,k,3) = M_PI/2.0;
                 } else {
@@ -382,7 +382,7 @@ int main (int argc, char* argv[])
             // Avoid division by zero
             if (re == 0.0) {
                 if (im == 0.0){
-                    data(i,j,k,4) = 0.0;
+                    data(i,j,k,3) = 0.0;
                 } else if (im > 0.0) {
                     data(i,j,k,3) = M_PI/2.0;
                 } else {
