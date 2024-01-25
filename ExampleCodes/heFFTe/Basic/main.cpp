@@ -1,13 +1,12 @@
+#include <heffte.h>
+
 #include <AMReX.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_GpuComplex.H>
 #include <AMReX_PlotFileUtil.H>
 
-#include <heffte.h>
-
 using namespace amrex;
-//using namespace HEFFTE;
 
 int main (int argc, char* argv[])
 {
