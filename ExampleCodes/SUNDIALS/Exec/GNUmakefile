@@ -29,6 +29,11 @@ LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
 LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_cvode
 LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_arkode
 LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvecmanyvector
+
+ifeq ($(USE_CUDA),TRUE)
+LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda
+endif
+
 endif
 
 include $(AMREX_HOME)/Src/Base/Make.package
