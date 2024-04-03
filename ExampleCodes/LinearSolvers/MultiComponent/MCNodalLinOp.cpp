@@ -360,7 +360,7 @@ void MCNodalLinOp::fixUpResidualMask (int amrlev, iMultiFab& resmsk)
             Array4<int const> const& fmsk = cfmask.const_array(mfi);
             amrex::ParallelFor(bx, [=] (int i, int j, int k) noexcept
             {
-                if (fmsk(i,j,k) == crse_fine_node) rmsk(i,j,k) = 1;
+                if (fmsk(i,j,k) == nodelap_detail::crse_fine_node) rmsk(i,j,k) = 1;
             });
     }
 
