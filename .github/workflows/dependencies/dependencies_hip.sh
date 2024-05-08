@@ -31,6 +31,7 @@ sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
     build-essential \
     gfortran        \
+    hiprand-dev     \
     libnuma-dev     \
     libopenmpi-dev  \
     openmpi-bin     \
