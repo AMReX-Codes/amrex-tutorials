@@ -8,9 +8,9 @@ using namespace amrex;
 Real compute_dt(const Geometry& geom, const amrex::Real& cfl)
 {
     const Real* dx = geom.CellSize();
-    const Real dt  = cfl * 1./( std::sqrt(D_TERM(  1./(dx[0]*dx[0]),
-                                                 + 1./(dx[1]*dx[1]),
-                                                 + 1./(dx[2]*dx[2]))) * PhysConst::c );
+    const Real dt  = cfl * 1./( std::sqrt(AMREX_D_TERM(  1./(dx[0]*dx[0]),
+                                                       + 1./(dx[1]*dx[1]),
+                                                       + 1./(dx[2]*dx[2]))) * PhysConst::c );
     return dt;
 }
 
