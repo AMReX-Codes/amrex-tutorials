@@ -1,8 +1,10 @@
+.. _tutorials_mpmd:
+
 AMReX-MPMD
 ==========
 
 AMReX-MPMD utilizes the Multiple Program Multiple Data (MPMD) feature of MPI to provide cross-functionality for AMReX-based codes.
-The framework enables data transfer across two different applications through **MPMD::Copier** class, which takes **BoxArray** of its application as an argument.
+The framework enables data transfer across two different applications through **MPMD::Copier** class, which typically takes **BoxArray** of its application as an argument.
 **Copier** instances created in both the applications together identify the overlapping cells for which the data transfer must occur.
 **Copier::send** & **Copier::recv** functions, which take a **MultiFab** as an argument, are used to transfer the desired data of overlapping regions.
 
@@ -22,6 +24,8 @@ Overview
 
 The domain in ``main_1.cpp`` is set to ``lo = {0, 0, 0}`` and ``hi = {31, 31, 31}``, while the domain in ``main_2.cpp`` is set to ``lo = {16, 16, 16}`` and ``hi = {31, 31, 31}``.
 Hence, the data transfer will occur for the region ``lo = {16, 16, 16}`` and ``hi = {31, 31, 31}``.
+Furthermore, the domain in ``main_1.cpp`` is split into boxes using ``max_grid_size=16``, while the domain in ``main_2.cpp`` is split using ``max_grid_size=8``.
+Therefore, the **BoxArray**, and moreover, the number of boxes for the overlapping region are different across the two applications.
 The data transfer demonstration is performed using a two component *MultiFab*.
 The first component is populated in ``main_1.cpp`` before it is transferred to ``main_2.cpp``.
 The second component is populated in ``main_2.cpp`` based on the received first component.
@@ -58,6 +62,19 @@ Furthermore, the run process here assumes that the current working directory is 
    # Running the MPMD process with 12 ranks
    mpirun -np 8 Source_1/main3d.gnu.DEBUG.MPI.ex : -np 4 Source_2/main3d.gnu.DEBUG.MPI.ex
 
+Running on Perlmutter (NERSC)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This section presents information regarding sample scripts that can be used to run this case on `Perlmutter (NERSC) <https://docs.nersc.gov/systems/perlmutter/>`_.
+The scripts ``mpmd_cpu.sh`` and ``mpmd_cpu.conf`` can be used to run the CPU version.
+Similarly, ``mpmd_gpu.sh`` and ``mpmd_gpu.conf`` can be used to run the GPU version.
+Please note that ``perlmutter_gpu.profile`` must be leveraged to compile the GPU version of the applications.
+
+The content presented here is based on the following references:
+
+   * `NERSC documentation <https://docs.nersc.gov/jobs/examples/#mpmd-multiple-program-multiple-data-jobs>`_
+   * `WarpX documentation <https://warpx.readthedocs.io/en/latest/install/hpc/perlmutter.html>`_
+
 Case-2
 ------
 
@@ -72,7 +89,7 @@ Contents
 Overview
 ^^^^^^^^
 
-In the previous case (Case-1) of MPMD each application has its own domain, and, therefore, different **BoxArray**.
+In the previous case (Case-1) of MPMD each application has its own domain, and therefore, different **BoxArray**.
 However, there exist scenarios where both applications deal with the same **BoxArray**.
 The current case presents such a scenario where the **BoxArray** is defined only in the ``main.cpp`` application, but this information is relayed to ``main.py`` application through the **MPMD::Copier**.
 
@@ -115,3 +132,45 @@ Furthermore, the run process here assumes that the current working directory is 
 
    # Running the MPMD process with 12 ranks
    mpirun -np 8 ./main3d.gnu.DEBUG.MPI.ex : -np 4 python main.py
+
+Running on Perlmutter (NERSC)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Running this case on perlmutter involves creating a python virtual environment.
+pyAMReX must be compiled and installed into this virtual environment after its creation.
+Similar to the previous case, this case also has supporting scripts to run on CPUs and GPUs.
+
+Creating a virtual environment
+""""""""""""""""""""""""""""""
+
+.. code-block:: bash
+
+   # Setup the required environment variables
+   source perlmutter_gpu.profile
+
+   # BEFORE PERFORMING THE FOLLOWING COMMANDS
+   # MOVE TO A DIRECTORY WHERE THE PYTHON VIRTUAL ENVIRONMENT MUST EXIST
+
+   python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade virtualenv
+   python3 -m pip cache purge
+   python3 -m venv pyamrex-gpu
+   source pyamrex-gpu/bin/activate
+   python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade build
+   python3 -m pip install --upgrade packaging
+   python3 -m pip install --upgrade wheel
+   python3 -m pip install --upgrade setuptools
+   python3 -m pip install --upgrade cython
+   python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade pandas
+   python3 -m pip install --upgrade scipy
+   MPICC="cc -target-accel=nvidia80 -shared" python3 -m pip install --upgrade mpi4py --no-cache-dir --no-build-isolation --no-binary mpi4py
+   python3 -m pip install --upgrade openpmd-api
+   python3 -m pip install --upgrade matplotlib
+   python3 -m pip install --upgrade yt
+   python3 -m pip install --upgrade cupy-cuda12x  # CUDA 12 compatible wheel
+
+The content presented here is based on the following reference:
+
+   * `WarpX documentation <https://warpx.readthedocs.io/en/latest/install/hpc/perlmutter.html>`_
