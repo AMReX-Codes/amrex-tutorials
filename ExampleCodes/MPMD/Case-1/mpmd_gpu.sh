@@ -9,7 +9,7 @@
 #SBATCH -t 00:05:00
 #SBATCH -A mpxxx
 
-source ./perlmutter_gpu.profile 
+source ./perlmutter_gpu.profile
 
 #OpenMP settings:
 export OMP_NUM_THREADS=1

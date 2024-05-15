@@ -99,7 +99,8 @@ pyAMReX compile
 ^^^^^^^^^^^^^^^
 The compile process for pyAMReX is only briefly described here.
 Please refer to the `pyAMReX documentation <https://pyamrex.readthedocs.io/en/latest/install/cmake.html#>`_ for more details.
-It must be mentioned that **mpi4py** is an important dependency.
+**It must be mentioned that mpi4py is an important dependency that should exist in the utilized environment**.
+For pyAMReX conda environment, it can be installed using ``conda install -c conda-forge mpi4py``, `resource <https://mpi4py.readthedocs.io/en/latest/install.html#using-conda>`_.
 
 .. code-block:: bash
 
