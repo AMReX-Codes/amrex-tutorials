@@ -135,7 +135,7 @@ Furthermore, the run process here assumes that the current working directory is 
    mpirun -np 8 ./main3d.gnu.DEBUG.MPI.ex : -np 4 python main.py
 
 Compiling and Running on Perlmutter (NERSC)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Running this case on perlmutter involves creating a python virtual environment.
 pyAMReX must be compiled and installed into this virtual environment after its creation.
