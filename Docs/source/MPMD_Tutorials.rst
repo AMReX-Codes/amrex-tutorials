@@ -135,7 +135,7 @@ Furthermore, the run process here assumes that the current working directory is 
    # Running the MPMD process with 12 ranks
    mpirun -np 8 ./main3d.gnu.DEBUG.MPI.ex : -np 4 python main.py
 
-Running on Perlmutter (NERSC)
+Compiling and Running on Perlmutter (NERSC)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Running this case on perlmutter involves creating a python virtual environment.
