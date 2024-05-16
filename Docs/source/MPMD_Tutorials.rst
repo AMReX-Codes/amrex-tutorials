@@ -97,6 +97,7 @@ The current case presents such a scenario where the **BoxArray** is defined only
 
 Compiling and Running on a local system
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The compile process for pyAMReX is only briefly described here.
 Please refer to the `pyAMReX documentation <https://pyamrex.readthedocs.io/en/latest/install/cmake.html#>`_ for more details.
 **It must be mentioned that mpi4py is an important dependency that should exist in the utilized environment**.
@@ -140,6 +141,8 @@ Compiling and Running on Perlmutter (NERSC)
 Running this case on perlmutter involves creating a python virtual environment.
 pyAMReX must be compiled and installed into this virtual environment after its creation.
 Similar to the previous case, this case also has supporting scripts to run on CPUs and GPUs.
+
+The process detailed below assumes that the current working directory is ``ExampleCodes/MPMD/Case-2/``.
 
 Creating a virtual environment
 """"""""""""""""""""""""""""""
