@@ -95,6 +95,7 @@ The current case presents such a scenario where the **BoxArray** is defined only
 
 **Please ensure that the same AMReX source code is used to compile both the applications.**
 
+Compiling and Running on a local system
 pyAMReX compile
 ^^^^^^^^^^^^^^^
 The compile process for pyAMReX is only briefly described here.
