@@ -96,8 +96,7 @@ The current case presents such a scenario where the **BoxArray** is defined only
 **Please ensure that the same AMReX source code is used to compile both the applications.**
 
 Compiling and Running on a local system
-pyAMReX compile
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The compile process for pyAMReX is only briefly described here.
 Please refer to the `pyAMReX documentation <https://pyamrex.readthedocs.io/en/latest/install/cmake.html#>`_ for more details.
 **It must be mentioned that mpi4py is an important dependency that should exist in the utilized environment**.
