@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
@@ -13,7 +13,8 @@ jobs:
         run: |
           .github/workflows/dependencies/documentation.sh
           echo "Installing python packages for docs..."
-          pip3 install sphinx sphinx_rtd_theme breathe
+          python3 -m pip install --upgrade pip
+          python3 -m pip install sphinx sphinx_rtd_theme breathe sphinxcontrib.bibtex docutils
 
       - name: Install and Build
         run: |
@@ -25,12 +26,10 @@ jobs:
 
       - name: Deploy
         if: github.event_name == 'push' && github.repository == 'AMReX-Codes/amrex-tutorials' && github.ref == 'refs/heads/main'
-        uses: JamesIves/github-pages-deploy-action@3.7.1
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACCESS_TOKEN: ${{ secrets.DEPLOY_DOCS_TUTORIALS }}
-          REPOSITORY_NAME: AMReX-Codes/AMReX-Codes.github.io
-          BRANCH: main # The branch the action should deploy to.
-          FOLDER: Docs/build/html # The folder the action should deploy.
-          TARGET_FOLDER: amrex/tutorials_html # The folder the action should deploy to.
-          CLEAN: false # Do not remove existing files from the deploy target.
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+          branch: main # The branch the action should deploy to.
+          folder: Docs/build/html # The folder the action should deploy.
+          target_folder: amrex/tutorials_html # The folder the action should deploy to.
+          clean: false # Do not remove existing files from the deploy target.
