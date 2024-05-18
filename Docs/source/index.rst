@@ -134,5 +134,4 @@ Please let us know how we can improve by posting on `AMReX's GitHub Discussions`
 The copyright notice of AMReX is included in the AMReX home directory as README.md.
 
 Your use of this software is under the 3-clause BSD license -- the license agreement is included in the
-AMReX home directory as license.txt.
-
+AMReX home directory as LICENSE.
