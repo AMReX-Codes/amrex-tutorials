@@ -54,7 +54,7 @@ jobs:
           DEPLOY_SOURCE_HEAD=$(git rev-parse --short HEAD)
           cd ..
           echo "git clone AMReX-Codes.github.io"
-          git clone --depth=1 -b main git@github.com:AMReX-Codes/AMReX-Codes.github.io
+          git clone --quiet --depth=1 -b main git@github.com:AMReX-Codes/AMReX-Codes.github.io
           cd AMReX-Codes.github.io/amrex/tutorials_html/
           rsync -q -av --checksum --progress ${DEPLOY_SOURCE}/. .
           git add --all .
