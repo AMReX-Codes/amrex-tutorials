@@ -59,7 +59,7 @@ jobs:
           rsync -q -av --checksum --progress ${DEPLOY_SOURCE}/. .
           git add --all .
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "Deoploying from amrex-tutorials ${DEPLOY_SOURCE_HEAD}" --no-verify
+            git commit -m "Deploying from amrex-tutorials ${DEPLOY_SOURCE_HEAD}" --no-verify
             echo "git push to AMReX-Codes.github.io"
             git push
             echo "Successfully completed deployment"
