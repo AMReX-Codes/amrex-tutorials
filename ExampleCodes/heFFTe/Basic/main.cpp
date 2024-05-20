@@ -424,7 +424,7 @@ AllPrint() << "local_x" " " << local_box.smallEnd(0) << " " <<local_box.bigEnd(0
         }
     }
      */
-    // SHIFT DATA
+    // SHIFTED DATA
     for (MFIter mfi(fft_data_onegrid); mfi.isValid(); ++mfi) {
 
         const Box& bx = mfi.tilebox();
