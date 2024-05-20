@@ -143,7 +143,7 @@ def main(n_cell, max_grid_size, nsteps, plot_int, dt):
         time = time + dt
 
         # Copy new solution into old solution
-        phi_old.copy(dst=phi_old, src=phi_new, srccomp=0, dstcomp=0, numcomp=1, nghost=0)
+        amr.copy_mfab(dst=phi_old, src=phi_new, srccomp=0, dstcomp=0, numcomp=1, nghost=0)
 
         # Tell the I/O Processor to write out which step we're doing
         amr.Print(f'Advanced step {step}\n')

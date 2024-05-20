@@ -1,11 +1,16 @@
 name: Build and Deploy
 on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.head_ref }}-docs
+  cancel-in-progress: true
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
@@ -13,7 +18,8 @@ jobs:
         run: |
           .github/workflows/dependencies/documentation.sh
           echo "Installing python packages for docs..."
-          pip3 install sphinx sphinx_rtd_theme breathe
+          python3 -m pip install --upgrade pip
+          python3 -m pip install sphinx sphinx_rtd_theme breathe sphinxcontrib.bibtex docutils
 
       - name: Install and Build
         run: |
@@ -25,12 +31,38 @@ jobs:
 
       - name: Deploy
         if: github.event_name == 'push' && github.repository == 'AMReX-Codes/amrex-tutorials' && github.ref == 'refs/heads/main'
-        uses: JamesIves/github-pages-deploy-action@3.7.1
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACCESS_TOKEN: ${{ secrets.DEPLOY_DOCS_TUTORIALS }}
-          REPOSITORY_NAME: AMReX-Codes/AMReX-Codes.github.io
-          BRANCH: main # The branch the action should deploy to.
-          FOLDER: Docs/build/html # The folder the action should deploy.
-          TARGET_FOLDER: amrex/tutorials_html # The folder the action should deploy to.
-          CLEAN: false # Do not remove existing files from the deploy target.
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          # https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
+          echo "Configure SSH"
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          cat >>~/.ssh/config <<END
+          Host *
+            IdentityFile ~/.ssh/deploy_key
+            StrictHostKeyChecking no
+          END
+
+          echo "Configure git"
+          git config --global user.name "$(git log -1 --pretty=format:'%an')"
+          git config --global user.email $(git log -1 --pretty=format:'%ae')
+          git config --global core.ignorecase false
+
+          DEPLOY_SOURCE=${PWD}/Docs/build/html
+          DEPLOY_SOURCE_HEAD=$(git rev-parse --short HEAD)
+          cd ..
+          echo "git clone AMReX-Codes.github.io"
+          git clone --quiet --depth=1 -b main git@github.com:AMReX-Codes/AMReX-Codes.github.io
+          cd AMReX-Codes.github.io/amrex/tutorials_html/
+          rsync -q -av --checksum --progress ${DEPLOY_SOURCE}/. .
+          git add --all .
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Deploying from amrex-tutorials ${DEPLOY_SOURCE_HEAD}" --no-verify
+            echo "git push to AMReX-Codes.github.io"
+            git push
+            echo "Successfully completed deployment"
+          else
+            echo "No changes to deploy"
+          fi

@@ -11,7 +11,7 @@ jobs:
     name: AppleClang@14.0 GFortran@12.2 [tutorials]
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Dependencies
       run: .github/workflows/dependencies/dependencies_mac.sh
     - name: Build & Install

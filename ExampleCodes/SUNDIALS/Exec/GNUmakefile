@@ -26,12 +26,16 @@ DEFINES += -DAMREX_USE_SUNDIALS
 INCLUDE_LOCATIONS += $(SUNDIALS_ROOT)/include
 LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
 
-LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_cvode
-LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_arkode
-LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvecmanyvector
+LIBRARIES += -lsundials_cvode
+LIBRARIES += -lsundials_arkode
+LIBRARIES += -lsundials_nvecmanyvector
+
+ifneq (,$(wildcard $(SUNDIALS_LIB_DIR)/libsundials_core*))
+  LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_core
+endif
 
 ifeq ($(USE_CUDA),TRUE)
-LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda
+  LIBRARIES += -lsundials_nveccuda
 endif
 
 endif
