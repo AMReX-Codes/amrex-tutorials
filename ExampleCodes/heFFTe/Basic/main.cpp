@@ -5,6 +5,7 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_GpuComplex.H>
 #include <AMReX_PlotFileUtil.H>
+#include <cmath>
 
 using namespace amrex;
 
@@ -29,12 +30,12 @@ int main (int argc, char* argv[])
     int max_grid_size_z;
 
     // physical dimensions of the domain
-    Real prob_lo_x = 0.;
-    Real prob_lo_y = 0.;
-    Real prob_lo_z = 0.;
-    Real prob_hi_x = 1.;
-    Real prob_hi_y = 1.;
-    Real prob_hi_z = 1.;
+    Real prob_lo_x = -10.;
+    Real prob_lo_y = -10.;
+    Real prob_lo_z = -10.;
+    Real prob_hi_x = 10.;
+    Real prob_hi_y = 10.;
+    Real prob_hi_z = 10.;
 
     // **********************************
     // READ PARAMETER VALUES FROM INPUTS FILE
@@ -69,7 +70,7 @@ int main (int argc, char* argv[])
     IntVect dom_hi(AMREX_D_DECL(n_cell_x-1, n_cell_y-1, n_cell_z-1));
 
     // Make a single box that is the entire domain
-    Box domain(dom_lo, dom_hi);
+    Box domain(dom_lo, dom_hi, amrex::IntVect::TheNodeVector());
 
     // number of points in the domain
     long npts = domain.numPts();
@@ -77,13 +78,14 @@ int main (int argc, char* argv[])
 
     // Initialize the boxarray "ba" from the single box "domain"
     BoxArray ba(domain);
-
+Print() << "ba" " " << ba << " "<< std::endl;
     // create IntVect of max_grid_size
     IntVect max_grid_size(AMREX_D_DECL(max_grid_size_x,max_grid_size_y,max_grid_size_z));
 
     // Break up boxarray "ba" into chunks no larger than "max_grid_size" along a direction
     ba.maxSize(max_grid_size);
-
+Print() << "ba.maxSize" " " << max_grid_size << " "<< std::endl;
+Print() << "ba_after_maxSize" " " << ba << " "<< std::endl;
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
@@ -123,9 +125,9 @@ int main (int argc, char* argv[])
             Real x = prob_lo_x + (i+0.5) * dx[0];
             Real y = (AMREX_SPACEDIM>=2) ? prob_lo_y + (j+0.5) * dx[1] : 0.;
             Real z = (AMREX_SPACEDIM==3) ? prob_lo_z + (k+0.5) * dx[2] : 0.;
-            fab(i,j,k) = std::sin(4*M_PI*x/prob_hi_x + omega);
+            fab(i,j,k) = std::exp(-x*x*0.5);
             if (AMREX_SPACEDIM >= 2) {
-                fab(i,j,k) *= std::sin(6*M_PI*y/prob_hi_y + omega);
+                fab(i,j,k) *= std::exp(-y*y*0.2);
             }
             if (AMREX_SPACEDIM == 3) {
                 fab(i,j,k) *= std::sin(8*M_PI*z/prob_hi_z + omega);
@@ -211,6 +213,10 @@ int main (int argc, char* argv[])
           {c_local_box.bigEnd(0)  ,c_local_box.bigEnd(1)  ,c_local_box.bigEnd(2)}},
          0, ParallelDescriptor::Communicator());
 
+AllPrint() << "local_z" " " << local_box.smallEnd(2) << " " <<local_box.bigEnd(2) << "  " << c_local_box.smallEnd(2) << " " << c_local_box.bigEnd(2)<< " " << std::endl;
+AllPrint() << "local_y" " " << local_box.smallEnd(1) << " " <<local_box.bigEnd(1) << "  " << c_local_box.smallEnd(1) << " " << c_local_box.bigEnd(1)<< " " << std::endl;
+AllPrint() << "local_x" " " << local_box.smallEnd(0) << " " <<local_box.bigEnd(0) << "  " << c_local_box.smallEnd(0) << " " << c_local_box.bigEnd(0)<< " " << std::endl;
+
 #endif
 
     using heffte_complex = typename heffte::fft_output<Real>::type;
@@ -255,7 +261,7 @@ int main (int argc, char* argv[])
             }
 
             // increase the size of boxes touching the hi-x domain by 1 in x
-            // this is an (Nx x Ny x Nz) -> (Nx/2+1 x Ny x Nz) real-to-complex sizing
+            // this is an (Nx x Ny x Nz) i-> (Nx/2+1 x Ny x Nz) real-to-complex sizing
             if (b.bigEnd(0) == geom.Domain().bigEnd(0)) {
                 c_box.growHi(0,1);
             }
@@ -396,9 +402,10 @@ int main (int argc, char* argv[])
 
     // zero_avg=0 means set the k=0 value to zero,
     // otherwise it sets the k=0 value to the average value of the signal in real space
-    int zero_avg = 1;
+    //int zero_avg = 0;
 
     // zero k=0 mode
+    /*
     if (zero_avg == 1) {
         for (MFIter mfi(fft_data_onegrid); mfi.isValid(); ++mfi) {
 
@@ -416,7 +423,7 @@ int main (int argc, char* argv[])
             });
         }
     }
-
+     */
     // SHIFT DATA
     for (MFIter mfi(fft_data_onegrid); mfi.isValid(); ++mfi) {
 
