@@ -30,12 +30,12 @@ int main (int argc, char* argv[])
     int max_grid_size_z;
 
     // physical dimensions of the domain
-    Real prob_lo_x = -10.;
-    Real prob_lo_y = -10.;
-    Real prob_lo_z = -10.;
-    Real prob_hi_x = 10.;
-    Real prob_hi_y = 10.;
-    Real prob_hi_z = 10.;
+    Real prob_lo_x = 0.;
+    Real prob_lo_y = 0.;
+    Real prob_lo_z = 0.;
+    Real prob_hi_x = 1.;
+    Real prob_hi_y = 1.;
+    Real prob_hi_z = 1.;
 
     // **********************************
     // READ PARAMETER VALUES FROM INPUTS FILE
@@ -84,8 +84,6 @@ Print() << "ba" " " << ba << " "<< std::endl;
 
     // Break up boxarray "ba" into chunks no larger than "max_grid_size" along a direction
     ba.maxSize(max_grid_size);
-Print() << "ba.maxSize" " " << max_grid_size << " "<< std::endl;
-Print() << "ba_after_maxSize" " " << ba << " "<< std::endl;
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
@@ -125,9 +123,9 @@ Print() << "ba_after_maxSize" " " << ba << " "<< std::endl;
             Real x = prob_lo_x + (i+0.5) * dx[0];
             Real y = (AMREX_SPACEDIM>=2) ? prob_lo_y + (j+0.5) * dx[1] : 0.;
             Real z = (AMREX_SPACEDIM==3) ? prob_lo_z + (k+0.5) * dx[2] : 0.;
-            fab(i,j,k) = std::exp(-x*x*0.5);
+            fab(i,j,k) = std::sin(4*M_PI*z/prob_hi_x + omega);
             if (AMREX_SPACEDIM >= 2) {
-                fab(i,j,k) *= std::exp(-y*y*0.2);
+                fab(i,j,k) *= std::sin(6*M_PI*z/prob_hi_y + omega);
             }
             if (AMREX_SPACEDIM == 3) {
                 fab(i,j,k) *= std::sin(8*M_PI*z/prob_hi_z + omega);
