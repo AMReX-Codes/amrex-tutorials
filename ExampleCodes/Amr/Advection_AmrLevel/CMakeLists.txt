@@ -1,4 +1,4 @@
-if ( (AMReX_SPACEDIM EQUAL 1) OR NOT AMReX_FINTERFACES )
+if ( (AMReX_SPACEDIM EQUAL 1) OR NOT AMReX_FORTRAN )
    return()
 endif ()
 
