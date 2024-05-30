@@ -7,28 +7,21 @@ plot_int = 100
 dt = 1.e-5
 
 # INTEGRATION
-## integration.type can take on the following values:
-## 0 or "ForwardEuler" => Native AMReX Forward Euler integrator
-## 1 or "RungeKutta"   => Native AMReX Explicit Runge Kutta controlled by integration.rk.type
-## 2 or "SUNDIALS"     => SUNDIALS backend controlled by integration.sundials.strategy
+# integration.type can take on the following values:
+# 0 or "ForwardEuler" => Native AMReX Forward Euler integrator
+# 1 or "RungeKutta"   => Native AMReX Explicit Runge Kutta controlled by integration.rk.type
+# 2 or "SUNDIALS"     => SUNDIALS backend controlled by integration.sundials.type
 integration.type = SUNDIALS
 
-## Native AMReX Explicit Runge-Kutta parameters
+# If using the SUNDIALS Submodule, then compile with USE_SUNDIALS=TRUE or
+# AMReX_SUNDIALS=ON and set method type here:
 #
-## integration.rk.type can take the following values:
-### 0 = User-specified Butcher Tableau
-### 1 = Forward Euler
-### 2 = Trapezoid Method
-### 3 = SSPRK3 Method
-### 4 = RK4 Method
-integration.rk.type = 3
+# ERK  = Explicit Runge-Kutta method
+# DIRK = Diagonally Implicit Runge-Kutta method
+# IMEX = Implicit-Explicit Additive Runge-Kutta method
+# MRI  = Multirate Infatesimal Method
+integration.sundials.type = ERK
 
-## If using the SUNDIALS Submodule, then
-## compile with USE_SUNDIALS=TRUE or AMReX_SUNDIALS=ON and
-## set strategy here:
-#
-## integration.sundials.strategy can take the following values:
-### ERK     = ERKStep from ARKode with SSPRK3 Method
-### MRI     = MRIStep from ARKode with Explict Trapezoid Method
-### MRITEST = MRIStep from ARKode modified to use no-op inner f0
-integration.sundials.strategy = ERK
+# To select a specific SUNDIALS ERK or DIRK method set integration.sundials.method
+# to a method name from https://sundials.readthedocs.io/en/latest/arkode/Butcher_link.html
+integration.sundials.method = ARKODE_FORWARD_EULER_1_1

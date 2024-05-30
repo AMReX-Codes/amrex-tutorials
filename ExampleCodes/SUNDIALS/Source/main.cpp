@@ -155,43 +155,43 @@ void main_main ()
     // fill periodic ghost cells
     phi_old.FillBoundary(geom.periodicity());
 
+    auto rhs_function = [&](Vector<MultiFab>& S_rhs,
+                            Vector<MultiFab>& S_data, const Real /* time */) {
+
+        // loop over boxes
+        auto& phi_data = S_data[0];
+        auto& phi_rhs  = S_rhs[0];
+        for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
+        {
+            const Box& bx = mfi.validbox();
+
+            const Array4<const Real>& phi_array = phi_data.array(mfi);
+            const Array4<Real>& phi_rhs_array = phi_rhs.array(mfi);
+
+            // fill the right-hand-side for phi
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+                phi_rhs_array(i,j,k) = ( (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
+                                         +(phi_array(i,j+1,k) - 2.*phi_array(i,j,k) + phi_array(i,j-1,k)) / (dx[1]*dx[1])
+#if (AMREX_SPACEDIM == 3)
+                                         +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2])
+#endif
+                                         );
+            });
+        }
+    };
+
+    auto post_update_function = [&](Vector<MultiFab>& S_data, const Real /* time */) {
+        // fill periodic ghost cells
+        S_data[0].FillBoundary(geom.periodicity());
+    };
+
+    TimeIntegrator<Vector<MultiFab> > integrator(state_old, time);
+    integrator.set_rhs(rhs_function);
+    integrator.set_post_update(post_update_function);
+
     for (int step = 1; step <= nsteps; ++step)
     {
-        auto rhs_function = [&](Vector<MultiFab>& S_rhs,
-                                const Vector<MultiFab>& S_data, const Real /* time */) {
-            // loop over boxes
-            auto& phi_data = S_data[0];
-            auto& phi_rhs  = S_rhs[0];
-            for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
-            {
-                const Box& bx = mfi.validbox();
-
-                const Array4<const Real>& phi_array = phi_data.array(mfi);
-                const Array4<Real>& phi_rhs_array = phi_rhs.array(mfi);
-
-                // fill the right-hand-side for phi
-                amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
-                {
-                    phi_rhs_array(i,j,k) = ( (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
-                            +(phi_array(i,j+1,k) - 2.*phi_array(i,j,k) + phi_array(i,j-1,k)) / (dx[1]*dx[1])
-        #if (AMREX_SPACEDIM == 3)
-                            +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2])
-        #endif
-                            );
-                });
-            }
-        };
-
-        auto post_update_function = [&](Vector<MultiFab>& S_data, const Real /* time */) {
-            // fill periodic ghost cells
-            S_data[0].FillBoundary(geom.periodicity());
-        };
-
-        TimeIntegrator<Vector<MultiFab> > integrator(state_old);
-
-        integrator.set_rhs(rhs_function);
-        integrator.set_post_update(post_update_function);
-
         // advance from state_old at time to state_new at time + dt
         integrator.advance(state_old, state_new, time, dt);
 
