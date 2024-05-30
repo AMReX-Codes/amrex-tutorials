@@ -1,4 +1,4 @@
-if ( NOT CMAKE_Fortran_COMPILER_LOADED OR ( AMReX_SPACEDIM EQUAL 1) )
+if ( NOT AMReX_FINTERFACES OR ( AMReX_SPACEDIM EQUAL 1) )
    return()
 endif ()
 
