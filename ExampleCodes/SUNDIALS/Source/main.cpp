@@ -160,7 +160,7 @@ void main_main ()
     phi.FillBoundary(geom.periodicity());
 
     auto rhs_function = [&](Vector<MultiFab>& S_rhs,
-                            Vector<MultiFab>& S_data, const Real /* time */) {
+                            const Vector<MultiFab>& S_data, const Real /* time */) {
 
         // loop over boxes
         auto& phi_data = S_data[0];
