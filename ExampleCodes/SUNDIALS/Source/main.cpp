@@ -156,8 +156,10 @@ void main_main ()
         WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, 0);
     }
 
-    // fill periodic ghost cells
-    phi.FillBoundary(geom.periodicity());
+    auto pre_rhs_function = [&](Vector<MultiFab>& S_data, const Real /* time */) {
+        // fill periodic ghost cells
+        S_data[0].FillBoundary(geom.periodicity());
+    };
 
     auto rhs_function = [&](Vector<MultiFab>& S_rhs,
                             const Vector<MultiFab>& S_data, const Real /* time */) {
@@ -185,14 +187,9 @@ void main_main ()
         }
     };
 
-    auto post_update_function = [&](Vector<MultiFab>& S_data, const Real /* time */) {
-        // fill periodic ghost cells
-        S_data[0].FillBoundary(geom.periodicity());
-    };
-
-    TimeIntegrator<Vector<MultiFab> > integrator(state, time);
+    TimeIntegrator<Vector<MultiFab>> integrator(state, time);
+    integrator.set_pre_rhs_update(pre_rhs_function);
     integrator.set_rhs(rhs_function);
-    integrator.set_post_update(post_update_function);
 
     for (int step = 1; step <= nsteps; ++step)
     {
