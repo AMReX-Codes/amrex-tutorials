@@ -19,14 +19,29 @@ t_final = 1.e-2
 integration.type = SUNDIALS
 
 # If using the SUNDIALS Submodule, then compile with USE_SUNDIALS=TRUE or
-# AMReX_SUNDIALS=ON and set method type here:
-#
-# ERK  = Explicit Runge-Kutta method
-# DIRK = Diagonally Implicit Runge-Kutta method
-# IMEX = Implicit-Explicit Additive Runge-Kutta method
-# MRI  = Multirate Infatesimal Method
+# AMReX_SUNDIALS=ON
+
+# Set the SUNDIALS method type:
+# ERK      = Explicit Runge-Kutta method
+# DIRK     = Diagonally Implicit Runge-Kutta method
+# IMEX-RK  = Implicit-Explicit Additive Runge-Kutta method
+# EX-MRI   = Explicit Multirate Infatesimal method
+# IM-MRI   = Implicit Multirate Infatesimal method
+# IMEX-MRI = Implicit-Explicit Multirate Infatesimal method
 integration.sundials.type = ERK
 
-# To select a specific SUNDIALS ERK or DIRK method set integration.sundials.method
-# to a method name from https://sundials.readthedocs.io/en/latest/arkode/Butcher_link.html
+# Select a specific SUNDIALS method by name, see the SUNDIALS documentation for
+# the supported method names
+# RK Butcher tables: https://sundials.readthedocs.io/en/latest/arkode/Butcher_link.html
+# MRI Coupling tables: https://sundials.readthedocs.io/en/latest/arkode/Usage/MRIStep_c_interface/MRIStepCoupling.html#arkode-usage-mristep-mristepcoupling-tables
 # integration.sundials.method = ARKODE_FORWARD_EULER_1_1
+
+# For IMEX-RK methods specify the DIRK and ERK method table names
+# integration.sundials.method_i = ARKODE_ARK2_DIRK_3_1_2
+# integration.sundials.method_e = ARKODE_ARK2_ERK_3_1_2
+
+# If using an an MRI method, then select the fast method type: ERK or DIRK
+# integration.sundials.fast_type = ERK
+
+# Select a specific fast method by name
+# integration.sundials.fast_method = ARKODE_FORWARD_EULER_1_1
