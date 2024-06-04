@@ -35,10 +35,10 @@ void main_main ()
     int plot_int;
 
     // time step
-    Real dt_out;
+    Real dt;
 
-    // final time
-    Real t_final;
+    // use adaptive time step (dt used for output time)
+    bool adapt_dt = false;
 
     // inputs parameters
     {
@@ -64,10 +64,10 @@ void main_main ()
         pp.query("plot_int",plot_int);
 
         // time step
-        pp.get("dt_out",dt_out);
+        pp.get("dt",dt);
 
-        // time step
-        pp.get("t_final",t_final);
+        // use adaptive step sizes
+        pp.query("adapt_dt",adapt_dt);
     }
 
     // **********************************
@@ -188,11 +188,15 @@ void main_main ()
     TimeIntegrator<MultiFab> integrator(phi, time);
     integrator.set_pre_rhs_action(pre_rhs_function);
     integrator.set_rhs(rhs_function);
+    integrator.set_time_step(dt);
+    if (adapt_dt) {
+        integrator.set_adaptive_step();
+    }
 
     for (int step = 1; step <= nsteps; ++step)
     {
-        // Set output time
-        time += dt_out;
+        // Set time to evolve to
+        time += dt;
 
         // Advance to output time
         integrator.evolve(phi, time);
@@ -206,7 +210,5 @@ void main_main ()
             const std::string& pltfile = amrex::Concatenate("plt",step,5);
             WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, step);
         }
-
-        if (time > t_final) break;
     }
 }
