@@ -116,8 +116,7 @@ void main_main ()
     DistributionMapping dm(ba);
 
     // we allocate two phi multifabs; one will store the old state, the other the new.
-    MultiFab state(ba, dm, Ncomp, Nghost);
-    auto& phi = state;
+    MultiFab phi(ba, dm, Ncomp, Nghost);
 
     // time = starting time in the simulation
     Real time = 0.0;
@@ -130,7 +129,7 @@ void main_main ()
     {
         const Box& bx = mfi.validbox();
 
-        const Array4<Real>& phiOld = phi.array(mfi);
+        const Array4<Real>& phi_array = phi.array(mfi);
 
         // set phi = 1 + e^(-(r-0.5)^2)
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
@@ -143,7 +142,7 @@ void main_main ()
             Real z= (k+0.5) * dx[2];
             Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;
 #endif
-            phiOld(i,j,k) = 1. + std::exp(-rsquared);
+            phi_array(i,j,k) = 1. + std::exp(-rsquared);
         });
     }
 
@@ -186,7 +185,7 @@ void main_main ()
         }
     };
 
-    TimeIntegrator<MultiFab> integrator(state, time);
+    TimeIntegrator<MultiFab> integrator(phi, time);
     integrator.set_pre_rhs_action(pre_rhs_function);
     integrator.set_rhs(rhs_function);
 
@@ -196,7 +195,7 @@ void main_main ()
         time += dt_out;
 
         // Advance to output time
-        integrator.evolve(state, time);
+        integrator.evolve(phi, time);
 
         // Tell the I/O Processor to write out which step we're doing
         amrex::Print() << "Advanced step " << step << "\n";
