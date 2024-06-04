@@ -188,7 +188,7 @@ void main_main ()
     };
 
     TimeIntegrator<Vector<MultiFab>> integrator(state, time);
-    integrator.set_pre_rhs_update(pre_rhs_function);
+    integrator.set_pre_rhs_action(pre_rhs_function);
     integrator.set_rhs(rhs_function);
 
     for (int step = 1; step <= nsteps; ++step)
