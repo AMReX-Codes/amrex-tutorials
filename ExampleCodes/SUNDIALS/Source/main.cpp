@@ -116,9 +116,8 @@ void main_main ()
     DistributionMapping dm(ba);
 
     // we allocate two phi multifabs; one will store the old state, the other the new.
-    Vector<MultiFab> state;
-    state.push_back(MultiFab(ba, dm, Ncomp, Nghost));
-    auto& phi = state[0];
+    MultiFab state(ba, dm, Ncomp, Nghost);
+    auto& phi = state;
 
     // time = starting time in the simulation
     Real time = 0.0;
@@ -156,17 +155,17 @@ void main_main ()
         WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, 0);
     }
 
-    auto pre_rhs_function = [&](Vector<MultiFab>& S_data, const Real /* time */) {
+    auto pre_rhs_function = [&](MultiFab& S_data, const Real /* time */) {
         // fill periodic ghost cells
-        S_data[0].FillBoundary(geom.periodicity());
+        S_data.FillBoundary(geom.periodicity());
     };
 
-    auto rhs_function = [&](Vector<MultiFab>& S_rhs,
-                            const Vector<MultiFab>& S_data, const Real /* time */) {
+    auto rhs_function = [&](MultiFab& S_rhs, const MultiFab& S_data,
+                            const Real /* time */) {
 
         // loop over boxes
-        auto& phi_data = S_data[0];
-        auto& phi_rhs  = S_rhs[0];
+        auto& phi_data = S_data;
+        auto& phi_rhs  = S_rhs;
         for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
         {
             const Box& bx = mfi.validbox();
@@ -187,7 +186,7 @@ void main_main ()
         }
     };
 
-    TimeIntegrator<Vector<MultiFab>> integrator(state, time);
+    TimeIntegrator<MultiFab> integrator(state, time);
     integrator.set_pre_rhs_action(pre_rhs_function);
     integrator.set_rhs(rhs_function);
 
