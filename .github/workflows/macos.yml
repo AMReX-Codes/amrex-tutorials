@@ -3,12 +3,12 @@ name: macos
 on: [push, pull_request]
 
 env:
-  CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names"
+  CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names -Wno-pass-failed"
 
 jobs:
   # Build all tutorials
   tests-macos:
-    name: AppleClang@14.0 GFortran@12.2 [tutorials]
+    name: AppleClang@15.0 GFortran@14.1 [tutorials]
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
@@ -16,7 +16,7 @@ jobs:
       run: .github/workflows/dependencies/dependencies_mac.sh
     - name: Build & Install
       run: |
-        export LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/current
+        export LIBRARY_PATH=/opt/homebrew/opt/gcc/lib/gcc/current/
 
         cd ExampleCodes
         cmake -S . -B build             \
@@ -28,8 +28,6 @@ jobs:
             -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON                 \
             -DAMReX_PARTICLES=ON        \
-            -DCMAKE_C_COMPILER=$(which gcc)              \
-            -DCMAKE_CXX_COMPILER=$(which g++)            \
             -DCMAKE_Fortran_COMPILER=$(which gfortran)   \
             -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)
         cmake --build build --parallel 2
@@ -42,8 +40,6 @@ jobs:
             -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON                 \
             -DAMReX_PARTICLES=ON        \
-            -DCMAKE_C_COMPILER=$(which gcc)              \
-            -DCMAKE_CXX_COMPILER=$(which g++)            \
             -DCMAKE_Fortran_COMPILER=$(which gfortran)   \
             -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)
         cmake --build build --parallel 2
