@@ -12,23 +12,3 @@ dt = 1.e-5
 ## 1 or "RungeKutta"   => Native AMReX Explicit Runge Kutta controlled by integration.rk.type
 ## 2 or "SUNDIALS"     => SUNDIALS backend controlled by integration.sundials.strategy
 integration.type = ForwardEuler
-
-## Native AMReX Explicit Runge-Kutta parameters
-#
-## integration.rk.type can take the following values:
-### 0 = User-specified Butcher Tableau
-### 1 = Forward Euler
-### 2 = Trapezoid Method
-### 3 = SSPRK3 Method
-### 4 = RK4 Method
-integration.rk.type = 3
-
-## If using the SUNDIALS Submodule, then
-## compile with USE_SUNDIALS=TRUE or AMReX_SUNDIALS=ON and
-## set strategy here:
-#
-## integration.sundials.strategy can take the following values:
-### ERK     = ERKStep from ARKode with SSPRK3 Method
-### MRI     = MRIStep from ARKode with Explict Trapezoid Method
-### MRITEST = MRIStep from ARKode modified to use no-op inner f0
-integration.sundials.strategy = ERK
