@@ -195,8 +195,8 @@ void main_main ()
         // advance from state_old at time to state_new at time + dt
         integrator.advance(state_old, state_new, time, dt);
 
-        // swap old/new and update time by dt
-        std::swap(state_old, state_new);
+        // update old state and update time by dt
+        amrex::MultiFab::Copy(state_old[0], state_new[0], 0, 0, Ncomp, Nghost);
         time += dt;
 
         // Tell the I/O Processor to write out which step we're doing
