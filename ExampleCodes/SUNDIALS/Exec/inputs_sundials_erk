@@ -1,7 +1,6 @@
 n_cell = 32
 max_grid_size = 16
 
-# number of output steps
 nsteps = 1000
 plot_int = 100
 
