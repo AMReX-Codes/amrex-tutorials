@@ -37,8 +37,12 @@ void main_main ()
     // time step
     Real dt;
 
-    // use adaptive time step (dt used for output time)
+    // use adaptive time step (dt used to set output times)
     bool adapt_dt = false;
+
+    // adaptive time step relative and absolute tolerances
+    Real reltol = 1.0e-4;
+    Real abstol = 1.0e-9;
 
     // inputs parameters
     {
@@ -68,6 +72,10 @@ void main_main ()
 
         // use adaptive step sizes
         pp.query("adapt_dt",adapt_dt);
+
+        // adaptive step tolerances
+        pp.query("reltol",reltol);
+        pp.query("abstol",abstol);
     }
 
     // **********************************
@@ -188,9 +196,11 @@ void main_main ()
     TimeIntegrator<MultiFab> integrator(phi, time);
     integrator.set_pre_rhs_action(pre_rhs_function);
     integrator.set_rhs(rhs_function);
-    integrator.set_time_step(dt);
     if (adapt_dt) {
         integrator.set_adaptive_step();
+        integrator.set_tolerances(reltol, abstol);
+    } else {
+        integrator.set_time_step(dt);
     }
 
     for (int step = 1; step <= nsteps; ++step)
