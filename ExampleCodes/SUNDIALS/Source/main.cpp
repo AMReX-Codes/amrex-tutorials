@@ -37,6 +37,13 @@ void main_main ()
     // time step
     Real dt;
 
+    // use adaptive time step (dt used to set output times)
+    bool adapt_dt = false;
+
+    // adaptive time step relative and absolute tolerances
+    Real reltol = 1.0e-4;
+    Real abstol = 1.0e-9;
+
     // inputs parameters
     {
         // ParmParse is way of reading inputs from the inputs file
@@ -62,6 +69,13 @@ void main_main ()
 
         // time step
         pp.get("dt",dt);
+
+        // use adaptive step sizes
+        pp.query("adapt_dt",adapt_dt);
+
+        // adaptive step tolerances
+        pp.query("reltol",reltol);
+        pp.query("abstol",abstol);
     }
 
     // **********************************
@@ -110,11 +124,7 @@ void main_main ()
     DistributionMapping dm(ba);
 
     // we allocate two phi multifabs; one will store the old state, the other the new.
-    Vector<MultiFab> state_old, state_new;
-    state_old.push_back(MultiFab(ba, dm, Ncomp, Nghost));
-    state_new.push_back(MultiFab(ba, dm, Ncomp, Nghost));
-    auto& phi_old = state_old[0];
-    auto& phi_new = state_new[0];
+    MultiFab phi(ba, dm, Ncomp, Nghost);
 
     // time = starting time in the simulation
     Real time = 0.0;
@@ -123,11 +133,11 @@ void main_main ()
     // INITIALIZE DATA
 
     // loop over boxes
-    for (MFIter mfi(phi_old); mfi.isValid(); ++mfi)
+    for (MFIter mfi(phi); mfi.isValid(); ++mfi)
     {
         const Box& bx = mfi.validbox();
 
-        const Array4<Real>& phiOld = phi_old.array(mfi);
+        const Array4<Real>& phi_array = phi.array(mfi);
 
         // set phi = 1 + e^(-(r-0.5)^2)
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
@@ -140,7 +150,7 @@ void main_main ()
             Real z= (k+0.5) * dx[2];
             Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;
 #endif
-            phiOld(i,j,k) = 1. + std::exp(-rsquared);
+            phi_array(i,j,k) = 1. + std::exp(-rsquared);
         });
     }
 
@@ -149,55 +159,57 @@ void main_main ()
     {
         int step = 0;
         const std::string& pltfile = amrex::Concatenate("plt",step,5);
-        WriteSingleLevelPlotfile(pltfile, phi_old, {"phi"}, geom, time, 0);
+        WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, 0);
     }
 
-    // fill periodic ghost cells
-    phi_old.FillBoundary(geom.periodicity());
+    auto pre_rhs_function = [&](MultiFab& S_data, const Real /* time */) {
+        // fill periodic ghost cells
+        S_data.FillBoundary(geom.periodicity());
+    };
+
+    auto rhs_function = [&](MultiFab& S_rhs, const MultiFab& S_data,
+                            const Real /* time */) {
+
+        // loop over boxes
+        auto& phi_data = S_data;
+        auto& phi_rhs  = S_rhs;
+        for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
+        {
+            const Box& bx = mfi.validbox();
+
+            const Array4<const Real>& phi_array = phi_data.array(mfi);
+            const Array4<Real>& phi_rhs_array = phi_rhs.array(mfi);
+
+            // fill the right-hand-side for phi
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+                phi_rhs_array(i,j,k) = ( (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
+                                         +(phi_array(i,j+1,k) - 2.*phi_array(i,j,k) + phi_array(i,j-1,k)) / (dx[1]*dx[1])
+#if (AMREX_SPACEDIM == 3)
+                                         +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2])
+#endif
+                                         );
+            });
+        }
+    };
+
+    TimeIntegrator<MultiFab> integrator(phi, time);
+    integrator.set_pre_rhs_action(pre_rhs_function);
+    integrator.set_rhs(rhs_function);
+    if (adapt_dt) {
+        integrator.set_adaptive_step();
+        integrator.set_tolerances(reltol, abstol);
+    } else {
+        integrator.set_time_step(dt);
+    }
 
     for (int step = 1; step <= nsteps; ++step)
     {
-        auto rhs_function = [&](Vector<MultiFab>& S_rhs,
-                                const Vector<MultiFab>& S_data, const Real /* time */) {
-            // loop over boxes
-            auto& phi_data = S_data[0];
-            auto& phi_rhs  = S_rhs[0];
-            for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
-            {
-                const Box& bx = mfi.validbox();
-
-                const Array4<const Real>& phi_array = phi_data.array(mfi);
-                const Array4<Real>& phi_rhs_array = phi_rhs.array(mfi);
-
-                // fill the right-hand-side for phi
-                amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
-                {
-                    phi_rhs_array(i,j,k) = ( (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
-                            +(phi_array(i,j+1,k) - 2.*phi_array(i,j,k) + phi_array(i,j-1,k)) / (dx[1]*dx[1])
-        #if (AMREX_SPACEDIM == 3)
-                            +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2])
-        #endif
-                            );
-                });
-            }
-        };
-
-        auto post_update_function = [&](Vector<MultiFab>& S_data, const Real /* time */) {
-            // fill periodic ghost cells
-            S_data[0].FillBoundary(geom.periodicity());
-        };
-
-        TimeIntegrator<Vector<MultiFab> > integrator(state_old);
-
-        integrator.set_rhs(rhs_function);
-        integrator.set_post_update(post_update_function);
-
-        // advance from state_old at time to state_new at time + dt
-        integrator.advance(state_old, state_new, time, dt);
-
-        // swap old/new and update time by dt
-        std::swap(state_old, state_new);
+        // Set time to evolve to
         time += dt;
+
+        // Advance to output time
+        integrator.evolve(phi, time);
 
         // Tell the I/O Processor to write out which step we're doing
         amrex::Print() << "Advanced step " << step << "\n";
@@ -206,7 +218,7 @@ void main_main ()
         if (plot_int > 0 && step%plot_int == 0)
         {
             const std::string& pltfile = amrex::Concatenate("plt",step,5);
-            WriteSingleLevelPlotfile(pltfile, phi_new, {"phi"}, geom, time, step);
+            WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, step);
         }
     }
 }

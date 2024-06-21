@@ -22,13 +22,3 @@ integration.type = RungeKutta
 ### 3 = SSPRK3 Method
 ### 4 = RK4 Method
 integration.rk.type = 3
-
-## If using the SUNDIALS Submodule, then
-## compile with USE_SUNDIALS=TRUE or AMReX_SUNDIALS=ON and
-## set strategy here:
-#
-## integration.sundials.strategy can take the following values:
-### ERK     = ERKStep from ARKode with SSPRK3 Method
-### MRI     = MRIStep from ARKode with Explict Trapezoid Method
-### MRITEST = MRIStep from ARKode modified to use no-op inner f0
-integration.sundials.strategy = ERK
