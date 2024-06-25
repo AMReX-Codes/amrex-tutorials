@@ -18,7 +18,7 @@ int main (int argc, char* argv[])
     {
         int nghost = 1;
         int max_grid_size=64;
-        MultiFab marker,apx,apy,apz;
+
         std::string stl_fname;
 
         Vector<Real> plo;
@@ -27,11 +27,11 @@ int main (int argc, char* argv[])
         Vector<Real> pointoutside;
         Real dx[3];
 
-        ParmParse pp;
+        amrex::ParmParse pp("eb2");
+        pp.get("stl_file",stl_fname);
         pp.getarr("prob_lo",plo);
         pp.getarr("prob_hi",phi);
         pp.getarr("ncells",ncells);
-        pp.get("stl_file",stl_fname);
         pp.getarr("outside_point",pointoutside);
         pp.query("max_grid_size",max_grid_size);
 
@@ -53,25 +53,18 @@ int main (int argc, char* argv[])
 
         Geometry geom(domain,real_box,CoordSys::cartesian,is_periodic);
         DistributionMapping dm(ba);
-        BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
 
-        marker.define(nodal_ba, dm, 1, nghost);
-
-        STLtools stlobj;
-
-        stlobj.read_ascii_stl_file(stl_fname);
-
-        Real plo_arr[]={plo[0],plo[1],plo[2]};
-        Real po_arr[]={pointoutside[0],pointoutside[1],pointoutside[2]};
-
-        stlobj.stl_to_markerfab(marker,geom,po_arr);
-
-        marker.FillBoundary(geom.periodicity());
+        int required_coarsening_level = 0; // typically the same as the max AMR level index
+        int max_coarsening_level = 0;    // typically a huge number so MG coarsens as much as possible
+        
+        // build a simple geometry using the "eb2." parameters in the inputs file
+        EB2::Build(geom, required_coarsening_level, max_coarsening_level);
 
         //write plot file
         std::string pltfile;
-        pltfile = "plt";
-        WriteSingleLevelPlotfile(pltfile, marker, {"marker"}, geom, 0.0, 0);
+        auto const& factory = makeEBFabFactory(geom, ba, dm, {1,1,1}, EBSupport::full);
+        MultiFab const& vfrc = factory->getVolFrac();
+        amrex::WriteMLMF("plt", {&vfrc}, {geom});
     }
 
     amrex::Finalize();
