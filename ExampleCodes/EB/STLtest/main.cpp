@@ -19,20 +19,15 @@ int main (int argc, char* argv[])
         int nghost = 1;
         int max_grid_size=64;
 
-        std::string stl_fname;
-
         Vector<Real> plo;
         Vector<Real> phi;
-        Vector<int> ncells;
-        Vector<Real> pointoutside;
+        Vector<int>  ncells;
         Real dx[3];
 
-        amrex::ParmParse pp("eb2");
-        pp.get("stl_file",stl_fname);
+        amrex::ParmParse pp;
         pp.getarr("prob_lo",plo);
         pp.getarr("prob_hi",phi);
         pp.getarr("ncells",ncells);
-        pp.getarr("outside_point",pointoutside);
         pp.query("max_grid_size",max_grid_size);
 
         RealBox real_box({AMREX_D_DECL(plo[0], plo[1], plo[2])},

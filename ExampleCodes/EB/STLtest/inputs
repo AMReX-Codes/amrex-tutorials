@@ -3,11 +3,11 @@ eb2.stl_file              = airfoil.stl
 
 eb2.stl_scale             = 1                   # default is 1
 eb2.stl_center            = 0      0      0     # default is (0,0,0)
-eb2.stl_reverse_normal    = 1                   # default is 0. use "1" to see the volume of the stl object 
+eb2.stl_reverse_normal    = 0                   # default is 0.
 
-eb2.prob_lo               = 0      0      0
-eb2.prob_hi               = 220    35     60
-eb2.ncells                = 128    32     64
+prob_lo               = 0      0      0
+prob_hi               = 220    35     60
+ncells                = 128    32     64
 
-eb2.max_grid_size         = 8
-eb2.outside_point         = 250.0  250.0  250.0
+max_grid_size         = 8
+
