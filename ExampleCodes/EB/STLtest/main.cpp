@@ -57,7 +57,12 @@ int main (int argc, char* argv[])
         std::string pltfile;
         auto const& factory = makeEBFabFactory(geom, ba, dm, {1,1,1}, EBSupport::full);
         MultiFab const& vfrc = factory->getVolFrac();
-        amrex::WriteMLMF("plt", {&vfrc}, {geom});
+        MultiFab object(ba,dm,1,0); 
+        object.setVal(1.0);  
+        
+        MultiFab::Subtract(object, vfrc, 0,0,1,0);
+        amrex::WriteMLMF("plt", {&object}, {geom});
+
     }
 
     amrex::Finalize();
