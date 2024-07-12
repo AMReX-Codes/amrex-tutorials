@@ -77,7 +77,7 @@ void main_main ()
         pp.query("reltol",reltol);
         pp.query("abstol",abstol);
     }
-    
+
     // **********************************
     // SIMULATION SETUP
 
@@ -131,7 +131,7 @@ void main_main ()
 
     Print() << "dt = " << dt << std::endl;
     Print() << "Diffusive CFL time step = " << dx[0]*dx[0]/(2.*AMREX_SPACEDIM) << std::endl;
-    
+
     // **********************************
     // INITIALIZE DATA
 
