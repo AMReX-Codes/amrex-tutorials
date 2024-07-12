@@ -77,7 +77,7 @@ void main_main ()
         pp.query("reltol",reltol);
         pp.query("abstol",abstol);
     }
-
+    
     // **********************************
     // SIMULATION SETUP
 
@@ -129,6 +129,9 @@ void main_main ()
     // time = starting time in the simulation
     Real time = 0.0;
 
+    Print() << "dt = " << dt << std::endl;
+    Print() << "Diffusive CFL time step = " << dx[0]*dx[0]/(2.*AMREX_SPACEDIM) << std::endl;
+    
     // **********************************
     // INITIALIZE DATA
 
@@ -203,16 +206,23 @@ void main_main ()
         integrator.set_time_step(dt);
     }
 
+    Real evolution_start_time = ParallelDescriptor::second();
+
     for (int step = 1; step <= nsteps; ++step)
     {
         // Set time to evolve to
         time += dt;
 
+        Real step_start_time = ParallelDescriptor::second();
+
         // Advance to output time
         integrator.evolve(phi, time);
 
+        Real step_stop_time = ParallelDescriptor::second() - step_start_time;
+        ParallelDescriptor::ReduceRealMax(step_stop_time);
+
         // Tell the I/O Processor to write out which step we're doing
-        amrex::Print() << "Advanced step " << step << "\n";
+        amrex::Print() << "Advanced step " << step << " in " << step_stop_time << " seconds; time = " << time << "\n";
 
         // Write a plotfile of the current data (plot_int was defined in the inputs file)
         if (plot_int > 0 && step%plot_int == 0)
@@ -221,4 +231,8 @@ void main_main ()
             WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, step);
         }
     }
+
+    Real evolution_stop_time = ParallelDescriptor::second() - evolution_start_time;
+    ParallelDescriptor::ReduceRealMax(evolution_stop_time);
+    amrex::Print() << "Total evolution time = " << evolution_stop_time << " seconds\n";
 }

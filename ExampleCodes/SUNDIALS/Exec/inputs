@@ -1,0 +1,50 @@
+n_cell = 32
+max_grid_size = 16
+
+nsteps = 5
+plot_int = 5
+dt = 1.e-4
+
+#nsteps = 10
+#plot_int = 10
+#dt = 5.e-5
+
+#nsteps = 20
+#plot_int = 20
+#dt = 2.5e-5
+
+adapt_dt = true
+
+# INTEGRATION
+## integration.type can take on the following values:
+## 0 or "ForwardEuler" => Native AMReX Forward Euler integrator
+## 1 or "RungeKutta"   => Native AMReX Explicit Runge Kutta controlled by integration.rk.type
+## 2 or "SUNDIALS"     => SUNDIALS backend controlled by integration.sundials.strategy
+integration.type = ForwardEuler
+#integration.type = RungeKutta
+#integration.type = SUNDIALS
+
+## Native AMReX Explicit Runge-Kutta parameters
+#
+## integration.rk.type can take the following values:
+### 0 = User-specified Butcher Tableau
+### 1 = Forward Euler
+### 2 = Trapezoid Method
+### 3 = SSPRK3 Method
+### 4 = RK4 Method
+integration.rk.type = 1
+
+# Set the SUNDIALS method type:
+# ERK      = Explicit Runge-Kutta method
+# DIRK     = Diagonally Implicit Runge-Kutta method
+#
+# Optionally select a specific SUNDIALS method by name, see the SUNDIALS
+# documentation for the supported method names
+
+# Use forward Euler (fixed step sizes only)
+integration.sundials.type = ERK
+integration.sundials.method = ARKODE_FORWARD_EULER_1_1
+
+# Use backward Euler (fixed step sizes only)
+#integration.sundials.type = DIRK
+#integration.sundials.method = ARKODE_BACKWARD_EULER_1_1
