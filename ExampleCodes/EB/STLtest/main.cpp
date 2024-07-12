@@ -14,7 +14,6 @@ using namespace amrex;
 int main (int argc, char* argv[])
 {
     amrex::Initialize(argc,argv);
-
     {
         int nghost = 1;
         int max_grid_size=64;
@@ -62,8 +61,6 @@ int main (int argc, char* argv[])
         
         MultiFab::Subtract(object, vfrc, 0,0,1,0);
         amrex::WriteMLMF("plt", {&object}, {geom});
-
     }
-
     amrex::Finalize();
 }
