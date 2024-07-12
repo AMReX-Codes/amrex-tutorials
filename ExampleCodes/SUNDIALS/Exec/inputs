@@ -13,8 +13,6 @@ dt = 1.e-4
 #plot_int = 20
 #dt = 2.5e-5
 
-adapt_dt = true
-
 # INTEGRATION
 ## integration.type can take on the following values:
 ## 0 or "ForwardEuler" => Native AMReX Forward Euler integrator
