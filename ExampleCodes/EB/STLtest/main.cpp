@@ -49,16 +49,15 @@ int main (int argc, char* argv[])
         DistributionMapping dm(ba);
 
         int required_coarsening_level = 0; // typically the same as the max AMR level index
-        int max_coarsening_level = 0;    // typically a huge number so MG coarsens as much as possible
+        int max_coarsening_level = 0; // typically a huge number so MG coarsens as much as possible
         // build a simple geometry using the "eb2." parameters in the inputs file
         EB2::Build(geom, required_coarsening_level, max_coarsening_level);
 
         std::string pltfile;
         auto const& factory = makeEBFabFactory(geom, ba, dm, {1,1,1}, EBSupport::full);
         MultiFab const& vfrc = factory->getVolFrac();
-        MultiFab object(ba,dm,1,0); 
-        object.setVal(1.0);  
-        
+        MultiFab object(ba,dm,1,0);
+        object.setVal(1.0);
         MultiFab::Subtract(object, vfrc, 0,0,1,0);
         amrex::WriteMLMF("plt", {&object}, {geom});
     }
