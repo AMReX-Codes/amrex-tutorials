@@ -125,9 +125,13 @@ void main_main ()
 
     // we allocate two phi multifabs; one will store the old state, the other the new.
     MultiFab phi(ba, dm, Ncomp, Nghost);
+    MultiFab phi_new(ba, dm, Ncomp, Nghost);
 
     // time = starting time in the simulation
     Real time = 0.0;
+
+    Print() << "dt = " << dt << std::endl;
+    Print() << "Diffusive CFL time step = " << dx[0]*dx[0]/(2.*AMREX_SPACEDIM) << std::endl;
 
     // **********************************
     // INITIALIZE DATA
@@ -167,6 +171,11 @@ void main_main ()
         S_data.FillBoundary(geom.periodicity());
     };
 
+//    auto post_step_function = [&](MultiFab& S_data, const Real /* time */) {
+//        // fill periodic ghost cells
+//        S_data.FillBoundary(geom.periodicity());
+//    };
+
     auto rhs_function = [&](MultiFab& S_rhs, const MultiFab& S_data,
                             const Real /* time */) {
 
@@ -195,6 +204,7 @@ void main_main ()
 
     TimeIntegrator<MultiFab> integrator(phi, time);
     integrator.set_pre_rhs_action(pre_rhs_function);
+//    integrator.set_post_step_action(post_step_function);
     integrator.set_rhs(rhs_function);
     if (adapt_dt) {
         integrator.set_adaptive_step();
@@ -203,16 +213,26 @@ void main_main ()
         integrator.set_time_step(dt);
     }
 
+    Real evolution_start_time = ParallelDescriptor::second();
+
     for (int step = 1; step <= nsteps; ++step)
     {
         // Set time to evolve to
         time += dt;
 
+        Real step_start_time = ParallelDescriptor::second();
+
         // Advance to output time
         integrator.evolve(phi, time);
 
+//        integrator.advance(phi,phi_new,time,dt);
+//        MultiFab::Copy(phi,phi_new,0,0,1,0);
+
+        Real step_stop_time = ParallelDescriptor::second() - step_start_time;
+        ParallelDescriptor::ReduceRealMax(step_stop_time);
+
         // Tell the I/O Processor to write out which step we're doing
-        amrex::Print() << "Advanced step " << step << "\n";
+        amrex::Print() << "Advanced step " << step << " in " << step_stop_time << " seconds; time = " << time << "\n";
 
         // Write a plotfile of the current data (plot_int was defined in the inputs file)
         if (plot_int > 0 && step%plot_int == 0)
@@ -221,4 +241,8 @@ void main_main ()
             WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, step);
         }
     }
+
+    Real evolution_stop_time = ParallelDescriptor::second() - evolution_start_time;
+    ParallelDescriptor::ReduceRealMax(evolution_stop_time);
+    amrex::Print() << "Total evolution time = " << evolution_stop_time << " seconds\n";
 }
