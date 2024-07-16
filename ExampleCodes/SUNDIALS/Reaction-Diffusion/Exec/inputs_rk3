@@ -1,0 +1,24 @@
+n_cell = 32
+max_grid_size = 16
+
+nsteps = 1000
+plot_int = 100
+
+dt = 1.e-5
+
+# INTEGRATION
+## integration.type can take on the following values:
+## 0 or "ForwardEuler" => Native AMReX Forward Euler integrator
+## 1 or "RungeKutta"   => Native AMReX Explicit Runge Kutta controlled by integration.rk.type
+## 2 or "SUNDIALS"     => SUNDIALS backend controlled by integration.sundials.strategy
+integration.type = RungeKutta
+
+## Native AMReX Explicit Runge-Kutta parameters
+#
+## integration.rk.type can take the following values:
+### 0 = User-specified Butcher Tableau
+### 1 = Forward Euler
+### 2 = Trapezoid Method
+### 3 = SSPRK3 Method
+### 4 = RK4 Method
+integration.rk.type = 3
