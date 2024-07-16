@@ -125,6 +125,7 @@ void main_main ()
 
     // we allocate two phi multifabs; one will store the old state, the other the new.
     MultiFab phi(ba, dm, Ncomp, Nghost);
+    MultiFab phi_new(ba, dm, Ncomp, Nghost);
 
     // time = starting time in the simulation
     Real time = 0.0;
@@ -170,6 +171,11 @@ void main_main ()
         S_data.FillBoundary(geom.periodicity());
     };
 
+//    auto post_step_function = [&](MultiFab& S_data, const Real /* time */) {
+//        // fill periodic ghost cells
+//        S_data.FillBoundary(geom.periodicity());
+//    };
+
     auto rhs_function = [&](MultiFab& S_rhs, const MultiFab& S_data,
                             const Real /* time */) {
 
@@ -198,6 +204,7 @@ void main_main ()
 
     TimeIntegrator<MultiFab> integrator(phi, time);
     integrator.set_pre_rhs_action(pre_rhs_function);
+//    integrator.set_post_step_action(post_step_function);
     integrator.set_rhs(rhs_function);
     if (adapt_dt) {
         integrator.set_adaptive_step();
@@ -217,6 +224,9 @@ void main_main ()
 
         // Advance to output time
         integrator.evolve(phi, time);
+
+//        integrator.advance(phi,phi_new,time,dt);
+//        MultiFab::Copy(phi,phi_new,0,0,1,0);
 
         Real step_stop_time = ParallelDescriptor::second() - step_start_time;
         ParallelDescriptor::ReduceRealMax(step_stop_time);
