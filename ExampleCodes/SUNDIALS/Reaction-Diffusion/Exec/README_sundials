@@ -1,0 +1,85 @@
+SUNDIALS installation guide:
+https://computing.llnl.gov/projects/sundials/faq#inst
+
+Installation
+
+# Download sundials-x.y.z.tar.gz file for SUNDIALS and extract it at the same level as amrex.
+# Update 6/11/24 - v7.0.0. tested
+https://computing.llnl.gov/projects/sundials/sundials-software
+
+>> tar -xzvf sundials-x.y.z.tar.gz # where x.y.z is the version of sundials
+
+# at the same level that amrex is cloned, do:
+
+>> mkdir sundials
+>> cd sundials
+
+######################
+HOST BUILD 
+######################
+
+>> mkdir instdir
+>> mkdir builddir
+>> cd builddir
+
+>> cmake -DCMAKE_INSTALL_PREFIX=/pathto/sundials/instdir -DEXAMPLES_INSTALL_PATH=/pathto/sundials/instdir/examples -DENABLE_MPI=ON ../../sundials-x.y.z
+
+######################
+NVIDIA/CUDA BUILD
+######################
+
+# Navigate back to the 'sundials' directory and do:
+
+>> mkdir instdir_cuda
+>> mkdir builddir_cuda
+>> cd builddir_cuda
+
+>> cmake -DCMAKE_INSTALL_PREFIX=/pathto/sundials/instdir_cuda -DEXAMPLES_INSTALL_PATH=/pathto/sundials/instdir_cuda/examples -DENABLE_CUDA=ON -DENABLE_MPI=ON ../../sundials-x.y.z
+
+######################
+
+>> make -j4
+>> make install
+
+# in your .bashrc or preferred configuration file, add the following (and then "source ~/.bashrc")
+
+# If you have a CPU build:
+
+>> export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pathto/sundials/instdir/lib/
+
+# If you have a NVIDIA/CUDA build:
+
+>> export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pathto/sundials/instdir_cuda/lib/
+
+# now you are ready to compile amrex-tutorials/ExampleCodes/SUNDIALS/Exec with:
+
+>> make -j4 # optional to have 'USE_CUDA=TRUE' as well
+
+# in your inputs file, you will need to have:
+
+# INTEGRATION
+## integration.type can take on the following values:
+## 0 or "ForwardEuler" => Native AMReX Forward Euler integrator
+## 1 or "RungeKutta"   => Native AMReX Explicit Runge Kutta controlled by integration.rk.type
+## 2 or "SUNDIALS"     => SUNDIALS backend controlled by integration.sundials.strategy
+integration.type = <pick a value>
+
+## Native AMReX Explicit Runge-Kutta parameters
+#
+## integration.rk.type can take the following values:
+### 0 = User-specified Butcher Tableau
+### 1 = Forward Euler
+### 2 = Trapezoid Method
+### 3 = SSPRK3 Method
+### 4 = RK4 Method
+integration.rk.type = 3
+
+## If using the SUNDIALS Submodule, then
+## compile with USE_SUNDIALS=TRUE or AMReX_SUNDIALS=ON and
+## set strategy here:
+#
+## integration.sundials.strategy can take the following values:
+### ERK     = ERKStep from ARKode with SSPRK3 Method
+### MRI     = MRIStep from ARKode with Explict Trapezoid Method
+### MRITEST = MRIStep from ARKode modified to use no-op inner f0
+integration.sundials.strategy = ERK
