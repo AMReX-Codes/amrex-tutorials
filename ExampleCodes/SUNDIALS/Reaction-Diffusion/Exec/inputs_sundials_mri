@@ -1,3 +1,4 @@
+##
 n_cell = 32
 max_grid_size = 16
 
@@ -5,6 +6,10 @@ nsteps = 1000
 plot_int = 100
 
 dt = 1.e-5
+
+# To replicate heat equation
+diffusion_coef = 1.0
+reaction_coef = 1.0
 
 # Use adaptive time stepping and set integrator relative and absolute tolerances
 # adapt_dt = true
@@ -33,12 +38,9 @@ integration.type = SUNDIALS
 # documentation for the supported method names
 
 # Use the SUNDIALS default method for the chosen type (fixed or adaptive step sizes)
-integration.sundials.type = ERK
+integration.sundials.type = EX-MRI # all the types listed above work with respective default methods
 
-# Use forward Euler (fixed step sizes only)
+# The following combination of type and method works as well
 # integration.sundials.type = ERK
-# integration.sundials.method = ARKODE_FORWARD_EULER_1_1
+#integration.sundials.method = ARKODE_MRI_GARK_FORWARD_EULER #ARKODE_FORWARD_EULER_1_1
 
-# Use backward Euler (fixed step sizes only)
-# integration.sundials.type = DIRK
-# integration.sundials.method = ARKODE_BACKWARD_EULER_1_1

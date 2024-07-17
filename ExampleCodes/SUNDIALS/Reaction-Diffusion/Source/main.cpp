@@ -246,10 +246,6 @@ void main_main ()
         integrator.set_time_step(dt);
     }
 
-    // This sets the ratio of slow timestep size to fast timestep size as an integer,
-    // or equivalently, the number of fast timesteps per slow timestep.
-    integrator.set_slow_fast_timestep_ratio(10);
-
     for (int step = 1; step <= nsteps; ++step)
     {
         // Set time to evolve to
