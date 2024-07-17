@@ -41,6 +41,6 @@ integration.type = SUNDIALS
 integration.sundials.type = EX-MRI # all the types listed above work with respective default methods
 
 # The following combination of type and method works as well
-# integration.sundials.type = ERK
-#integration.sundials.method = ARKODE_MRI_GARK_FORWARD_EULER #ARKODE_FORWARD_EULER_1_1
+# integration.sundials.type = EX-MRI
+# integration.sundials.method = ARKODE_MRI_GARK_FORWARD_EULER
 
