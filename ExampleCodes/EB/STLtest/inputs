@@ -1,6 +1,13 @@
-prob_lo=  0   0  0
-prob_hi=  220 35 60
-ncells =  128 32 64
-stl_file=airfoil.stl
-max_grid_size=8
-outside_point=250.0 250.0 250.0
+eb2.geom_type             = stl
+eb2.stl_file              = airfoil.stl
+
+eb2.stl_scale             = 1                   # default is 1
+eb2.stl_center            = 0      0      0     # default is (0,0,0)
+eb2.stl_reverse_normal    = 0                   # default is 0.
+
+prob_lo               = 0      0      0
+prob_hi               = 220    35     60
+ncells                = 128    32     64
+
+max_grid_size         = 8
+
