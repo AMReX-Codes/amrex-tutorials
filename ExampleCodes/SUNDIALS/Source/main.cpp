@@ -38,7 +38,7 @@ void main_main ()
     Real dt;
 
     // use adaptive time step (dt used to set output times)
-    bool adapt_dt = false;
+    int adapt_dt = 0;
 
     // adaptive time step relative and absolute tolerances
     Real reltol = 1.0e-4;
@@ -123,9 +123,8 @@ void main_main ()
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
-    // we allocate two phi multifabs; one will store the old state, the other the new.
+    // allocate phi MultiFab
     MultiFab phi(ba, dm, Ncomp, Nghost);
-    MultiFab phi_new(ba, dm, Ncomp, Nghost);
 
     // time = starting time in the simulation
     Real time = 0.0;
@@ -185,7 +184,7 @@ void main_main ()
             // fill the right-hand-side for phi
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {
-                phi_rhs_array(i,j,k) = ( (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
+                phi_rhs_array(i,j,k) = (  (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
                                          +(phi_array(i,j+1,k) - 2.*phi_array(i,j,k) + phi_array(i,j-1,k)) / (dx[1]*dx[1])
 #if (AMREX_SPACEDIM == 3)
                                          +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2])
@@ -216,14 +215,11 @@ void main_main ()
         // Advance to output time
         integrator.evolve(phi, time);
 
-//        integrator.advance(phi,phi_new,time,dt);
-//        MultiFab::Copy(phi,phi_new,0,0,1,0);
-
         Real step_stop_time = ParallelDescriptor::second() - step_start_time;
         ParallelDescriptor::ReduceRealMax(step_stop_time);
 
         // Tell the I/O Processor to write out which step we're doing
-        amrex::Print() << "Advanced step " << step << " in " << step_stop_time << " seconds; time = " << time << "\n";
+        amrex::Print() << "Advanced step " << step << " in " << step_stop_time << " seconds; dt = " << dt << " time = " << time << "\n";
 
         // Write a plotfile of the current data (plot_int was defined in the inputs file)
         if (plot_int > 0 && step%plot_int == 0)
