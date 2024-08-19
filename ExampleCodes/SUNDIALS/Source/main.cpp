@@ -166,18 +166,11 @@ void main_main ()
         WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, 0);
     }
 
-    auto pre_rhs_function = [&](MultiFab& S_data, const Real /* time */) {
+    auto rhs_function = [&](MultiFab& S_rhs, MultiFab& S_data,
+                            const Real /* time */) {
+
         // fill periodic ghost cells
         S_data.FillBoundary(geom.periodicity());
-    };
-
-//    auto post_step_function = [&](MultiFab& S_data, const Real /* time */) {
-//        // fill periodic ghost cells
-//        S_data.FillBoundary(geom.periodicity());
-//    };
-
-    auto rhs_function = [&](MultiFab& S_rhs, const MultiFab& S_data,
-                            const Real /* time */) {
 
         // loop over boxes
         auto& phi_data = S_data;
@@ -203,8 +196,6 @@ void main_main ()
     };
 
     TimeIntegrator<MultiFab> integrator(phi, time);
-    integrator.set_pre_rhs_action(pre_rhs_function);
-//    integrator.set_post_step_action(post_step_function);
     integrator.set_rhs(rhs_function);
     if (adapt_dt) {
         integrator.set_adaptive_step();
