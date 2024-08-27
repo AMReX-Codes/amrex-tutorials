@@ -44,30 +44,6 @@ swfft_solver(MultiFab& rhs, MultiFab& soln, Geometry& geom, int verbose)
        amrex::Error("NBOXES NOT COMPUTED CORRECTLY");
     amrex::Print() << "Number of boxes:\t" << nboxes << std::endl;
 
-    Vector<int> rank_mapping;
-    rank_mapping.resize(nboxes);
-
-    DistributionMapping dmap = rhs.DistributionMap();
-
-    for (int ib = 0; ib < nboxes; ++ib)
-    {
-        int i = ba[ib].smallEnd(0) / nx;
-        int j = ba[ib].smallEnd(1) / ny;
-        int k = ba[ib].smallEnd(2) / nz;
-
-        // This would be the "correct" local index if the data wasn't being transformed
-        // int local_index = k*nbx*nby + j*nbx + i;
-
-        // This is what we pass to dfft to compensate for the Fortran ordering
-        //      of amrex data in MultiFabs.
-        int local_index = i*nby*nbz + j*nbz + k;
-
-        rank_mapping[local_index] = dmap[ib];
-        if (verbose)
-          amrex::Print() << "LOADING RANK NUMBER " << dmap[ib] << " FOR GRID NUMBER " << ib
-                         << " WHICH IS LOCAL NUMBER " << local_index << std::endl;
-    }
-
 
     Real h = geom.CellSize(0);
     Real hsq = h*h;
@@ -75,8 +51,10 @@ swfft_solver(MultiFab& rhs, MultiFab& soln, Geometry& geom, int verbose)
     Real start_time = amrex::second();
 
     // Assume for now that nx = ny = nz
+    
     int Ndims[3] = { nbz, nby, nbx };
     int     n[3] = {domain.length(2), domain.length(1), domain.length(0)};
+    Vector<int> rank_mapping = rhs.DistributionMap().ProcessorMap(); // copy the ranks' ordering
     hacc::Distribution d(MPI_COMM_WORLD,n,Ndims,&rank_mapping[0]);
     hacc::Dfft dfft(d);
 
