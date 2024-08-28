@@ -242,6 +242,8 @@ void main_main ()
         integrator.set_time_step(dt);
     }
 
+    integrator.set_fast_time_step(0.1*dt);
+
     for (int step = 1; step <= nsteps; ++step)
     {
         // Set time to evolve to
