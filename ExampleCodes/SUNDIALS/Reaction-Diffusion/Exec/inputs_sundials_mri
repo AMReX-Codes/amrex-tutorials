@@ -9,10 +9,16 @@
 n_cell = 32
 max_grid_size = 16
 
-nsteps = 12
-plot_int = 2
+nsteps = 12 # 60 # 600
+plot_int = 2 # 10 # 100
 
-dt = 8.5e-3
+dt = 8.5e-3 # 1.7e-3 #1.7e-4
+
+# With integration.sundials.type = ERK, dt = 1.6e4 is stable, dt = 1.7e-4 is unstable
+# With integration.sundials.type = EX-MRI, dt = 1.7e-4 with fast_dt_ratio = 0.1 is stable
+# With integration.sundials.type = EX-MRI, dt = 1.7e-3 with fast_dt_ratio = 0.1 is stable
+# With integration.sundials.type = EX-MRI, dt = 8.5e-3 with fast_dt_ratio = 0.1 FAILS
+# With integration.sundials.type = EX-MRI, dt = 8.5e-3 with fast_dt_ratio = 0.02 is stable
 
 # To replicate heat equation
 diffusion_coef = 1.0
@@ -21,6 +27,7 @@ reaction_coef = 1.e-4
 # MRI parameters
 use_MRI = true
 fast_dt_ratio = 0.02
+
 
 # Use adaptive time stepping and set integrator relative and absolute tolerances
 # adapt_dt = true
