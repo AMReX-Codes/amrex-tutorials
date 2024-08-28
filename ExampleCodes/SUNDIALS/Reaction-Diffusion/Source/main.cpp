@@ -40,6 +40,10 @@ void main_main ()
     // use adaptive time step (dt used to set output times)
     bool adapt_dt = false;
 
+    // use MRI
+    bool use_MRI = false;
+    Real fast_dt_ratio = 0.1;
+
     // adaptive time step relative and absolute tolerances
     Real reltol = 1.0e-4;
     Real abstol = 1.0e-9;
@@ -72,6 +76,10 @@ void main_main ()
 
         // use adaptive step sizes
         pp.query("adapt_dt",adapt_dt);
+
+        // use MRI
+        pp.query("use_MRI",use_MRI);
+        pp.query("fast_dt_ratio",fast_dt_ratio);
 
         // adaptive step tolerances
         pp.query("reltol",reltol);
@@ -177,7 +185,6 @@ void main_main ()
         Real reaction_coef = 0.0;
         Real diffusion_coef = 1.0;
         ParmParse pp;
-        pp.query("reaction_coef",reaction_coef);
         pp.query("diffusion_coef",diffusion_coef);
 
         for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
@@ -226,7 +233,16 @@ void main_main ()
             // fill the right-hand-side for phi
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {
-                phi_rhs_array(i,j,k) = -1.*reaction_coef*phi_array(i,j,k);
+                if (use_MRI) {
+                    phi_rhs_array(i,j,k) = -1.*reaction_coef*phi_array(i,j,k);
+                } else {
+                    phi_rhs_array(i,j,k) = diffusion_coef*( (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
+                                                           +(phi_array(i,j+1,k) - 2.*phi_array(i,j,k) + phi_array(i,j-1,k)) / (dx[1]*dx[1])
+#if (AMREX_SPACEDIM == 3)
+                                                           +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2]) )
+#endif
+                                         -1.*reaction_coef*phi_array(i,j,k);
+                }           
             });
         }
     };
@@ -234,7 +250,9 @@ void main_main ()
 
     TimeIntegrator<MultiFab> integrator(phi, time);
     integrator.set_rhs(rhs_function);
-    integrator.set_fast_rhs(rhs_fast_function);
+    if (use_MRI) {
+        integrator.set_fast_rhs(rhs_fast_function);
+    }
     if (adapt_dt) {
         integrator.set_adaptive_step();
         integrator.set_tolerances(reltol, abstol);
@@ -242,7 +260,9 @@ void main_main ()
         integrator.set_time_step(dt);
     }
 
-    integrator.set_fast_time_step(0.1*dt);
+    if (use_MRI) {
+        integrator.set_fast_time_step(fast_dt_ratio*dt);
+    }
 
     for (int step = 1; step <= nsteps; ++step)
     {

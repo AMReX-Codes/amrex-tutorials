@@ -2,14 +2,18 @@
 n_cell = 32
 max_grid_size = 16
 
-nsteps = 1000
-plot_int = 100
+nsteps = 12
+plot_int = 2
 
-dt = 1.e-5
+dt = 8.5e-3
 
 # To replicate heat equation
 diffusion_coef = 1.0
-reaction_coef = 1.0
+reaction_coef = 1.e-4
+
+# MRI parameters
+use_MRI = true
+fast_dt_ratio = 0.02
 
 # Use adaptive time stepping and set integrator relative and absolute tolerances
 # adapt_dt = true
@@ -36,11 +40,17 @@ integration.type = SUNDIALS
 #
 # Optionally select a specific SUNDIALS method by name, see the SUNDIALS
 # documentation for the supported method names
+integration.sundials.type = EX-MRI
+integration.sundials.fast_type = ERK
 
-# Use the SUNDIALS default method for the chosen type (fixed or adaptive step sizes)
-integration.sundials.type = EX-MRI # all the types listed above work with respective default methods
+## *** Select a specific SUNDIALS ERK method ***
+#integration.sundials.method = ARKODE_BOGACKI_SHAMPINE_4_2_3
+#
+## *** Select a specific SUNDIALS ImEx method ***
+#integration.sundials.method_i = ARKODE_ARK2_DIRK_3_1_2
+#integration.sundials.method_e = ARKODE_ARK2_ERK_3_1_2
 
-# The following combination of type and method works as well
-# integration.sundials.type = EX-MRI
-# integration.sundials.method = ARKODE_MRI_GARK_FORWARD_EULER
+# *** Select a specific SUNDIALS MRI method ***
+integration.sundials.method = ARKODE_MIS_KW3
+integration.sundials.fast_method = ARKODE_KNOTH_WOLKE_3_3
 
