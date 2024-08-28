@@ -163,47 +163,11 @@ void main_main ()
         WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, 0);
     }
 
-    auto pre_rhs_function = [&](MultiFab& S_data, const Real /* time */) {
+    auto rhs_fast_function = [&](MultiFab& S_rhs, MultiFab& S_data,
+                            const Real /* time */) {
+
         // fill periodic ghost cells
         S_data.FillBoundary(geom.periodicity());
-    };
-
-    auto rhs_function = [&](MultiFab& S_rhs, const MultiFab& S_data,
-                            const Real /* time */) {
-
-        // loop over boxes
-        auto& phi_data = S_data;
-        auto& phi_rhs  = S_rhs;
-
-        //Reaction and Diffusion Coefficients
-        Real reaction_coef = 0.0;
-        Real diffusion_coef = 1.0;
-        ParmParse pp;
-        pp.query("reaction_coef",reaction_coef);
-        pp.query("diffusion_coef",diffusion_coef);
-
-        for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
-        {
-            const Box& bx = mfi.validbox();
-
-            const Array4<const Real>& phi_array = phi_data.array(mfi);
-            const Array4<Real>& phi_rhs_array = phi_rhs.array(mfi);
-
-            // fill the right-hand-side for phi
-            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
-            {
-                phi_rhs_array(i,j,k) = diffusion_coef*( (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
-                                                       +(phi_array(i,j+1,k) - 2.*phi_array(i,j,k) + phi_array(i,j-1,k)) / (dx[1]*dx[1])
-#if (AMREX_SPACEDIM == 3)
-                                                       +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2]) )
-#endif
-                                     + reaction_coef*phi_array(i,j,k);
-            });
-        }
-    };
-
-    auto rhs_fast_function = [&](MultiFab& S_rhs, const MultiFab& S_data,
-                            const Real /* time */) {
 
         // loop over boxes
         auto& phi_data = S_data;
@@ -235,8 +199,40 @@ void main_main ()
         }
     };
 
+    auto rhs_function = [&](MultiFab& S_rhs, MultiFab& S_data,
+                            const Real /* time */) {
+
+        // fill periodic ghost cells
+        S_data.FillBoundary(geom.periodicity());
+
+        // loop over boxes
+        auto& phi_data = S_data;
+        auto& phi_rhs  = S_rhs;
+
+        //Reaction and Diffusion Coefficients
+        Real reaction_coef = 0.0;
+        Real diffusion_coef = 1.0;
+        ParmParse pp;
+        pp.query("reaction_coef",reaction_coef);
+        pp.query("diffusion_coef",diffusion_coef);
+
+        for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
+        {
+            const Box& bx = mfi.validbox();
+
+            const Array4<const Real>& phi_array = phi_data.array(mfi);
+            const Array4<Real>& phi_rhs_array = phi_rhs.array(mfi);
+
+            // fill the right-hand-side for phi
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+                phi_rhs_array(i,j,k) = -1.*reaction_coef*phi_array(i,j,k);
+            });
+        }
+    };
+
+
     TimeIntegrator<MultiFab> integrator(phi, time);
-    integrator.set_pre_rhs_action(pre_rhs_function);
     integrator.set_rhs(rhs_function);
     integrator.set_fast_rhs(rhs_fast_function);
     if (adapt_dt) {
