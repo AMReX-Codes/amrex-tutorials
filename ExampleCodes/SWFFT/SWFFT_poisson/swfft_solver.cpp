@@ -70,7 +70,6 @@ swfft_solver(MultiFab& rhs, MultiFab& soln, Geometry& geom, int verbose)
     Real start_time = amrex::second();
 
     // Assume for now that nx = ny = nz
-    
     int Ndims[3] = { nbz, nby, nbx };
     int     n[3] = {domain.length(2), domain.length(1), domain.length(0)};
     hacc::Distribution d(MPI_COMM_WORLD,n,Ndims,&rank_mapping[0]);
