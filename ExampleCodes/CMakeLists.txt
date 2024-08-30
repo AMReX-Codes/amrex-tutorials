@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.24)
 
 project( AMReX-Tutorials
    DESCRIPTION "Tutorials for the AMReX adaptive mesh refinement framework"
@@ -50,6 +50,14 @@ if( NOT DEFINED AMReX_DIR )
 
    set(AMReX_GIT_BRANCH "development" CACHE STRING "The AMReX branch to checkout")
    set(AMReX_INSTALL  "NO" CACHE INTERNAL "Disable install target for amrex")
+
+   if(AMReX_FORTRAN)
+      enable_language(Fortran)
+   endif ()
+
+   if(AMReX_GPU_BACKEND STREQUAL "CUDA")
+      enable_language(CUDA)
+   endif()
 
    include(FetchContent)
    set(FETCHCONTENT_QUIET OFF)  # Verbose ON
@@ -164,10 +172,6 @@ endif ()
 
        if(AMReX_GPU_BACKEND STREQUAL "CUDA")
           enable_language(CUDA)
-          # AMReX 21.06+ supports CUDA_ARCHITECTURES
-          if(CMAKE_VERSION VERSION_LESS 3.20)
-             include(AMReX_SetupCUDA)
-          endif()
        endif()
    endif()
 else()
@@ -178,10 +182,6 @@ else()
 
    if(AMReX_GPU_BACKEND STREQUAL "CUDA")
       enable_language(CUDA)
-      # AMReX 21.06+ supports CUDA_ARCHITECTURES
-      if(CMAKE_VERSION VERSION_LESS 3.20)
-         include(AMReX_SetupCUDA)
-      endif()
    endif()
 endif()
 
