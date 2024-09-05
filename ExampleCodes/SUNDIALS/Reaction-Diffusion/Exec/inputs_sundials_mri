@@ -12,13 +12,12 @@ max_grid_size = 16
 nsteps = 12 # 60 # 600
 plot_int = 2 # 10 # 100
 
-dt = 8.5e-3 # 1.7e-3 #1.7e-4
-
 # With integration.sundials.type = ERK, dt = 1.6e4 is stable, dt = 1.7e-4 is unstable
 # With integration.sundials.type = EX-MRI, dt = 1.7e-4 with fast_dt_ratio = 0.1 is stable
 # With integration.sundials.type = EX-MRI, dt = 1.7e-3 with fast_dt_ratio = 0.1 is stable
 # With integration.sundials.type = EX-MRI, dt = 8.5e-3 with fast_dt_ratio = 0.1 FAILS
 # With integration.sundials.type = EX-MRI, dt = 8.5e-3 with fast_dt_ratio = 0.02 is stable
+dt = 8.5e-3
 
 # To replicate heat equation
 diffusion_coef = 1.0
@@ -29,19 +28,18 @@ use_MRI = true
 fast_dt_ratio = 0.02
 
 
-# Use adaptive time stepping and set integrator relative and absolute tolerances
+# Use adaptive time stepping (multi-stage integrators only!) and set integrator relative and absolute tolerances
 # adapt_dt = true
 # reltol   = 1.0e-4
 # abstol   = 1.0e-9
 
 # INTEGRATION
-# integration.type can take on the following values:
-# 0 or "ForwardEuler" => Native AMReX Forward Euler integrator
-# 1 or "RungeKutta"   => Native AMReX Explicit Runge Kutta controlled by integration.rk.type
-# 2 or "SUNDIALS"     => SUNDIALS backend controlled by integration.sundials.type
-#
-# If using the SUNDIALS Submodule, then compile with USE_SUNDIALS=TRUE or
-# AMReX_SUNDIALS=ON
+## integration.type can take on the following values:
+## 0 or "ForwardEuler" => Native AMReX Forward Euler integrator
+## 1 or "RungeKutta"   => Native AMReX Explicit Runge Kutta controlled by integration.rk.type
+## 2 or "SUNDIALS"     => SUNDIALS backend controlled by integration.sundials.type
+#integration.type = ForwardEuler
+#integration.type = RungeKutta
 integration.type = SUNDIALS
 
 # Set the SUNDIALS method type:

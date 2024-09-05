@@ -123,7 +123,7 @@ void main_main ()
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
-    // we allocate two phi multifabs; one will store the old state, the other the new.
+    // allocate phi MultiFab
     MultiFab phi(ba, dm, Ncomp, Nghost);
 
     // time = starting time in the simulation
@@ -162,8 +162,7 @@ void main_main ()
         WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, 0);
     }
 
-    auto rhs_function = [&](MultiFab& S_rhs, MultiFab& S_data,
-                            const Real /* time */) {
+    auto rhs_function = [&](MultiFab& S_rhs, MultiFab& S_data, const Real /* time */) {
 
         // fill periodic ghost cells
         S_data.FillBoundary(geom.periodicity());
@@ -171,6 +170,7 @@ void main_main ()
         // loop over boxes
         auto& phi_data = S_data;
         auto& phi_rhs  = S_rhs;
+
         for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
         {
             const Box& bx = mfi.validbox();
@@ -181,7 +181,7 @@ void main_main ()
             // fill the right-hand-side for phi
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {
-                phi_rhs_array(i,j,k) = ( (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
+                phi_rhs_array(i,j,k) = (  (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
                                          +(phi_array(i,j+1,k) - 2.*phi_array(i,j,k) + phi_array(i,j-1,k)) / (dx[1]*dx[1])
 #if (AMREX_SPACEDIM == 3)
                                          +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2])
@@ -200,16 +200,23 @@ void main_main ()
         integrator.set_time_step(dt);
     }
 
+    Real evolution_start_time = ParallelDescriptor::second();
+
     for (int step = 1; step <= nsteps; ++step)
     {
         // Set time to evolve to
         time += dt;
 
+        Real step_start_time = ParallelDescriptor::second();
+
         // Advance to output time
         integrator.evolve(phi, time);
 
+        Real step_stop_time = ParallelDescriptor::second() - step_start_time;
+        ParallelDescriptor::ReduceRealMax(step_stop_time);
+
         // Tell the I/O Processor to write out which step we're doing
-        amrex::Print() << "Advanced step " << step << "\n";
+        amrex::Print() << "Advanced step " << step << " in " << step_stop_time << " seconds; dt = " << dt << " time = " << time << "\n";
 
         // Write a plotfile of the current data (plot_int was defined in the inputs file)
         if (plot_int > 0 && step%plot_int == 0)
@@ -218,4 +225,8 @@ void main_main ()
             WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, step);
         }
     }
+
+    Real evolution_stop_time = ParallelDescriptor::second() - evolution_start_time;
+    ParallelDescriptor::ReduceRealMax(evolution_stop_time);
+    amrex::Print() << "Total evolution time = " << evolution_stop_time << " seconds\n";
 }
