@@ -48,6 +48,10 @@ void main_main ()
     Real reltol = 1.0e-4;
     Real abstol = 1.0e-9;
 
+    // Reaction and Diffusion Coefficients
+    Real reaction_coef = 0.0;
+    Real diffusion_coef = 1.0;
+
     // inputs parameters
     {
         // ParmParse is way of reading inputs from the inputs file
@@ -85,6 +89,8 @@ void main_main ()
         pp.query("reltol",reltol);
         pp.query("abstol",abstol);
 
+        pp.query("reaction_coef",reaction_coef);
+        pp.query("diffusion_coef",diffusion_coef);
     }
 
     // **********************************
@@ -132,7 +138,7 @@ void main_main ()
     // How Boxes are distrubuted among MPI processes
     DistributionMapping dm(ba);
 
-    // we allocate two phi multifabs; one will store the old state, the other the new.
+    // allocate phi MultiFab
     MultiFab phi(ba, dm, Ncomp, Nghost);
 
     // time = starting time in the simulation
@@ -171,8 +177,7 @@ void main_main ()
         WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, 0);
     }
 
-    auto rhs_fast_function = [&](MultiFab& S_rhs, MultiFab& S_data,
-                            const Real /* time */) {
+    auto rhs_fast_function = [&](MultiFab& S_rhs, MultiFab& S_data, const Real /* time */) {
 
         // fill periodic ghost cells
         S_data.FillBoundary(geom.periodicity());
@@ -180,12 +185,6 @@ void main_main ()
         // loop over boxes
         auto& phi_data = S_data;
         auto& phi_rhs  = S_rhs;
-
-        //Reaction and Diffusion Coefficients
-        Real reaction_coef = 0.0;
-        Real diffusion_coef = 1.0;
-        ParmParse pp;
-        pp.query("diffusion_coef",diffusion_coef);
 
         for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
         {
@@ -200,14 +199,14 @@ void main_main ()
                 phi_rhs_array(i,j,k) = diffusion_coef*( (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
                                                        +(phi_array(i,j+1,k) - 2.*phi_array(i,j,k) + phi_array(i,j-1,k)) / (dx[1]*dx[1])
 #if (AMREX_SPACEDIM == 3)
-                                                       +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2]) );
+                                                       +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2])
 #endif
+                    );
             });
         }
     };
 
-    auto rhs_function = [&](MultiFab& S_rhs, MultiFab& S_data,
-                            const Real /* time */) {
+    auto rhs_function = [&](MultiFab& S_rhs, MultiFab& S_data, const Real /* time */) {
 
         // fill periodic ghost cells
         S_data.FillBoundary(geom.periodicity());
@@ -215,13 +214,6 @@ void main_main ()
         // loop over boxes
         auto& phi_data = S_data;
         auto& phi_rhs  = S_rhs;
-
-        //Reaction and Diffusion Coefficients
-        Real reaction_coef = 0.0;
-        Real diffusion_coef = 1.0;
-        ParmParse pp;
-        pp.query("reaction_coef",reaction_coef);
-        pp.query("diffusion_coef",diffusion_coef);
 
         for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
         {
@@ -239,14 +231,13 @@ void main_main ()
                     phi_rhs_array(i,j,k) = diffusion_coef*( (phi_array(i+1,j,k) - 2.*phi_array(i,j,k) + phi_array(i-1,j,k)) / (dx[0]*dx[0])
                                                            +(phi_array(i,j+1,k) - 2.*phi_array(i,j,k) + phi_array(i,j-1,k)) / (dx[1]*dx[1])
 #if (AMREX_SPACEDIM == 3)
-                                                           +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2]) )
+                                                           +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2])
 #endif
-                                         -1.*reaction_coef*phi_array(i,j,k);
+                        ) - 1.*reaction_coef*phi_array(i,j,k);
                 }
             });
         }
     };
-
 
     TimeIntegrator<MultiFab> integrator(phi, time);
     integrator.set_rhs(rhs_function);

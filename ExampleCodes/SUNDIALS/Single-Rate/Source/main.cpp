@@ -38,7 +38,7 @@ void main_main ()
     Real dt;
 
     // use adaptive time step (dt used to set output times)
-    int adapt_dt = 0;
+    bool adapt_dt = false;
 
     // adaptive time step relative and absolute tolerances
     Real reltol = 1.0e-4;
@@ -129,9 +129,6 @@ void main_main ()
     // time = starting time in the simulation
     Real time = 0.0;
 
-    Print() << "dt = " << dt << std::endl;
-    Print() << "Diffusive CFL time step = " << dx[0]*dx[0]/(2.*AMREX_SPACEDIM) << std::endl;
-
     // **********************************
     // INITIALIZE DATA
 
@@ -165,8 +162,7 @@ void main_main ()
         WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, 0);
     }
 
-    auto rhs_function = [&](MultiFab& S_rhs, MultiFab& S_data,
-                            const Real /* time */) {
+    auto rhs_function = [&](MultiFab& S_rhs, MultiFab& S_data, const Real /* time */) {
 
         // fill periodic ghost cells
         S_data.FillBoundary(geom.periodicity());
@@ -174,6 +170,7 @@ void main_main ()
         // loop over boxes
         auto& phi_data = S_data;
         auto& phi_rhs  = S_rhs;
+
         for ( MFIter mfi(phi_data); mfi.isValid(); ++mfi )
         {
             const Box& bx = mfi.validbox();

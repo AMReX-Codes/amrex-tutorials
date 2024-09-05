@@ -29,7 +29,7 @@ use_MRI = true
 fast_dt_ratio = 0.02
 
 
-# Use adaptive time stepping and set integrator relative and absolute tolerances
+# Use adaptive time stepping (multi-stage integrators only!) and set integrator relative and absolute tolerances
 # adapt_dt = true
 # reltol   = 1.0e-4
 # abstol   = 1.0e-9

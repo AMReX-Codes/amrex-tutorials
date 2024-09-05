@@ -1,5 +1,5 @@
 # AMREX_HOME defines the directory in which we will find all the AMReX code.
-AMREX_HOME ?= ../../../../amrex
+AMREX_HOME ?= ../../../../../amrex
 
 DEBUG        = FALSE
 USE_MPI      = TRUE
@@ -17,9 +17,9 @@ INCLUDE_LOCATIONS += ../Source
 
 ifeq ($(USE_SUNDIALS),TRUE)
   ifeq ($(USE_CUDA),TRUE)
-    SUNDIALS_ROOT ?= $(TOP)../../../../sundials/instdir_cuda
+    SUNDIALS_ROOT ?= $(TOP)../../../../../sundials/instdir_cuda
   else
-    SUNDIALS_ROOT ?= $(TOP)../../../../sundials/instdir
+    SUNDIALS_ROOT ?= $(TOP)../../../../../sundials/instdir
   endif
   ifeq ($(NERSC_HOST),perlmutter)
     SUNDIALS_LIB_DIR ?= $(SUNDIALS_ROOT)/lib64
