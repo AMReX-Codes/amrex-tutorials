@@ -22,7 +22,7 @@ dt = 1.e-4
 ## integration.type can take on the following values:
 ## 0 or "ForwardEuler" => Native AMReX Forward Euler integrator
 ## 1 or "RungeKutta"   => Native AMReX Explicit Runge Kutta controlled by integration.rk.type
-## 2 or "SUNDIALS"     => SUNDIALS backend controlled by integration.sundials.strategy
+## 2 or "SUNDIALS"     => SUNDIALS backend controlled by integration.sundials.type
 #integration.type = ForwardEuler
 #integration.type = RungeKutta
 integration.type = SUNDIALS
