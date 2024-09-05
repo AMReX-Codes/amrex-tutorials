@@ -242,7 +242,7 @@ void main_main ()
                                                            +(phi_array(i,j,k+1) - 2.*phi_array(i,j,k) + phi_array(i,j,k-1)) / (dx[2]*dx[2]) )
 #endif
                                          -1.*reaction_coef*phi_array(i,j,k);
-                }           
+                }
             });
         }
     };
