@@ -252,28 +252,33 @@ void main_main ()
     integrator.set_rhs(rhs_function);
     if (use_MRI) {
         integrator.set_fast_rhs(rhs_fast_function);
+        integrator.set_fast_time_step(fast_dt_ratio*dt);
     }
-    if (adapt_dt) {
+
+    if (adapt_dt && !use_MRI) {
         integrator.set_adaptive_step();
         integrator.set_tolerances(reltol, abstol);
     } else {
         integrator.set_time_step(dt);
     }
 
-    if (use_MRI) {
-        integrator.set_fast_time_step(fast_dt_ratio*dt);
-    }
+    Real evolution_start_time = ParallelDescriptor::second();
 
     for (int step = 1; step <= nsteps; ++step)
     {
         // Set time to evolve to
         time += dt;
 
+        Real step_start_time = ParallelDescriptor::second();
+
         // Advance to output time
         integrator.evolve(phi, time);
 
+        Real step_stop_time = ParallelDescriptor::second() - step_start_time;
+        ParallelDescriptor::ReduceRealMax(step_stop_time);
+
         // Tell the I/O Processor to write out which step we're doing
-        amrex::Print() << "Advanced step " << step << "\n";
+        amrex::Print() << "Advanced step " << step << " in " << step_stop_time << " seconds; dt = " << dt << " time = " << time << "\n";
 
         // Write a plotfile of the current data (plot_int was defined in the inputs file)
         if (plot_int > 0 && step%plot_int == 0)
@@ -282,4 +287,8 @@ void main_main ()
             WriteSingleLevelPlotfile(pltfile, phi, {"phi"}, geom, time, step);
         }
     }
+
+    Real evolution_stop_time = ParallelDescriptor::second() - evolution_start_time;
+    ParallelDescriptor::ReduceRealMax(evolution_stop_time);
+    amrex::Print() << "Total evolution time = " << evolution_stop_time << " seconds\n";
 }
