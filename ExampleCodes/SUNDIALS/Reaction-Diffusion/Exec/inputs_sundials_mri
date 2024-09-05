@@ -1,0 +1,70 @@
+##
+# Theoretical forward euler explicit time step constraint for each process is based 
+# on the diffusion and reaction coefficients.
+# For diffusion term
+# dt < dx^2 /(2*DIM*diffusion_coef) = (1/32)^2/(2*3*1) = 1.63e-4
+# For reaction term
+# dt <= 2/reaction_coef
+
+n_cell = 32
+max_grid_size = 16
+
+nsteps = 12 # 60 # 600
+plot_int = 2 # 10 # 100
+
+dt = 8.5e-3 # 1.7e-3 #1.7e-4
+
+# With integration.sundials.type = ERK, dt = 1.6e4 is stable, dt = 1.7e-4 is unstable
+# With integration.sundials.type = EX-MRI, dt = 1.7e-4 with fast_dt_ratio = 0.1 is stable
+# With integration.sundials.type = EX-MRI, dt = 1.7e-3 with fast_dt_ratio = 0.1 is stable
+# With integration.sundials.type = EX-MRI, dt = 8.5e-3 with fast_dt_ratio = 0.1 FAILS
+# With integration.sundials.type = EX-MRI, dt = 8.5e-3 with fast_dt_ratio = 0.02 is stable
+
+# To replicate heat equation
+diffusion_coef = 1.0
+reaction_coef = 1.e-4
+
+# MRI parameters
+use_MRI = true
+fast_dt_ratio = 0.02
+
+
+# Use adaptive time stepping and set integrator relative and absolute tolerances
+# adapt_dt = true
+# reltol   = 1.0e-4
+# abstol   = 1.0e-9
+
+# INTEGRATION
+# integration.type can take on the following values:
+# 0 or "ForwardEuler" => Native AMReX Forward Euler integrator
+# 1 or "RungeKutta"   => Native AMReX Explicit Runge Kutta controlled by integration.rk.type
+# 2 or "SUNDIALS"     => SUNDIALS backend controlled by integration.sundials.type
+#
+# If using the SUNDIALS Submodule, then compile with USE_SUNDIALS=TRUE or
+# AMReX_SUNDIALS=ON
+integration.type = SUNDIALS
+
+# Set the SUNDIALS method type:
+# ERK      = Explicit Runge-Kutta method
+# DIRK     = Diagonally Implicit Runge-Kutta method
+# IMEX-RK  = Implicit-Explicit Additive Runge-Kutta method
+# EX-MRI   = Explicit Multirate Infatesimal method
+# IM-MRI   = Implicit Multirate Infatesimal method
+# IMEX-MRI = Implicit-Explicit Multirate Infatesimal method
+#
+# Optionally select a specific SUNDIALS method by name, see the SUNDIALS
+# documentation for the supported method names
+integration.sundials.type = EX-MRI
+integration.sundials.fast_type = ERK
+
+## *** Select a specific SUNDIALS ERK method ***
+#integration.sundials.method = ARKODE_BOGACKI_SHAMPINE_4_2_3
+#
+## *** Select a specific SUNDIALS ImEx method ***
+#integration.sundials.method_i = ARKODE_ARK2_DIRK_3_1_2
+#integration.sundials.method_e = ARKODE_ARK2_ERK_3_1_2
+
+# *** Select a specific SUNDIALS MRI method ***
+integration.sundials.method = ARKODE_MIS_KW3
+integration.sundials.fast_method = ARKODE_KNOTH_WOLKE_3_3
+

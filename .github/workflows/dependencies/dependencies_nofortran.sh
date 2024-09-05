@@ -21,4 +21,5 @@ sudo apt-get install -y --no-install-recommends\
     python3         \
     python3-pip
 
-python3 -m pip install -U pip setuptools wheel
+python3 -m pip install -U pip
+python3 -m pip install -U build packaging setuptools wheel

@@ -55,12 +55,7 @@ swfft_solver(MultiFab& rhs, MultiFab& soln, Geometry& geom, int verbose)
         int j = ba[ib].smallEnd(1) / ny;
         int k = ba[ib].smallEnd(2) / nz;
 
-        // This would be the "correct" local index if the data wasn't being transformed
-        // int local_index = k*nbx*nby + j*nbx + i;
-
-        // This is what we pass to dfft to compensate for the Fortran ordering
-        //      of amrex data in MultiFabs.
-        int local_index = i*nby*nbz + j*nbz + k;
+        int local_index = k*nbx*nby + j*nbx + i;
 
         rank_mapping[local_index] = dmap[ib];
         if (verbose)
