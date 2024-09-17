@@ -30,7 +30,7 @@ NVIDIA/CUDA BUILD
 ######################
 
 # NOTE: -DCMAKE_INSTALL_PREFIX can be a different location /path/to/DCMAKE_INSTALL_PREFIX
-# NOTE: -DHeffte_DISABLE_GPU_AWARE_MPI=OFF is not working on perlmutter
+# NOTE: If you configure with -DHeffte_DISABLE_GPU_AWARE_MPI=OFF, you must use --gpu-bind=none in your slurm script
 
 >> cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=17 -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=. -DHeffte_ENABLE_FFTW=ON -DHeffte_ENABLE_CUDA=ON -DHeffte_DISABLE_GPU_AWARE_MPI=ON ..
 
