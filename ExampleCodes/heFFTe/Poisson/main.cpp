@@ -8,6 +8,10 @@
 
 using namespace amrex;
 
+enum struct LaplacianType {
+    Unknown, Exact, Discrete
+};
+
 int main (int argc, char* argv[])
 {
     amrex::Initialize(argc, argv); {
@@ -36,6 +40,9 @@ int main (int argc, char* argv[])
     Real prob_hi_y = 1.;
     Real prob_hi_z = 1.;
 
+    std::string laplacian_type_string;
+    LaplacianType laplacian_type = LaplacianType::Unknown;
+
     // **********************************
     // READ PARAMETER VALUES FROM INPUTS FILE
     // **********************************
@@ -61,7 +68,25 @@ int main (int argc, char* argv[])
         pp.query("prob_hi_x",prob_hi_x);
         pp.query("prob_hi_y",prob_hi_y);
         pp.query("prob_hi_z",prob_hi_z);
+
+        pp.query("laplacian_type",laplacian_type_string);
     }
+
+    if ( (laplacian_type_string == "Exact") ||
+         (laplacian_type_string == "exact") ) {
+        laplacian_type = LaplacianType::Exact;
+    }
+    else
+    if ( (laplacian_type_string == "Discrete") ||
+         (laplacian_type_string == "discrete") ) {
+        laplacian_type = LaplacianType::Discrete;
+    }
+
+
+    if (laplacian_type == LaplacianType::Unknown) {
+        amrex::Abort("Must specify exact or discrete Laplacian");
+    }
+
 
     // Determine the domain length in each direction
     Real L_x = std::abs(prob_hi_x - prob_lo_x);
@@ -77,7 +102,6 @@ int main (int argc, char* argv[])
 
     // number of points in the domain
     long npts = domain.numPts();
-    Real sqrtnpts = std::sqrt(npts);
 
     // Initialize the boxarray "ba" from the single box "domain"
     BoxArray ba(domain);
@@ -172,7 +196,6 @@ int main (int argc, char* argv[])
     // create real->complex fft objects with the appropriate backend and data about
     // the domain size and its local box size
 #if (AMREX_SPACEDIM==2)
-
 #ifdef AMREX_USE_CUDA
     heffte::fft2d_r2c<heffte::backend::cufft> fft
 #elif AMREX_USE_HIP
@@ -203,6 +226,7 @@ int main (int argc, char* argv[])
 
 #endif
 
+    Real start_step = static_cast<Real>(ParallelDescriptor::second());
     using heffte_complex = typename heffte::fft_output<Real>::type;
     heffte_complex* spectral_data = (heffte_complex*) spectral_field.dataPtr();
 
@@ -215,6 +239,11 @@ int main (int argc, char* argv[])
         // Now we take the standard FFT and scale it by 1/k^2
         Array4< GpuComplex<Real> > spectral = spectral_field.array();
 
+        int use_discrete = 0;
+        if (laplacian_type == LaplacianType::Discrete) {
+            use_discrete = 1;
+        }
+
         ParallelFor(c_local_box, [=] AMREX_GPU_DEVICE(int i, int j, int k)
         {
             Real a = 2.*M_PI*i / L_x;
@@ -225,13 +254,25 @@ int main (int argc, char* argv[])
             if (j >= n_cell_y/2) b = 2.*M_PI*(n_cell_y-j) / L_y;
             if (k >= n_cell_z/2) c = 2.*M_PI*(n_cell_z-k) / L_z;
 
+            Real k2;
+
+            if (use_discrete == 0) {
 #if (AMREX_SPACEDIM == 1)
-            Real k2 = -a*a;
+                k2 = -a*a;
 #elif (AMREX_SPACEDIM == 2)
-            Real k2 = -(a*a + b*b);
+                k2 = -(a*a + b*b);
 #elif (AMREX_SPACEDIM == 3)
-            Real k2 = -(a*a + b*b + c*c);
+                k2 = -(a*a + b*b + c*c);
 #endif
+            } else {
+#if (AMREX_SPACEDIM == 1)
+                k2 = 2*(std::cos(a*dx[0])-1.)/(dx[0]*dx[0]);
+#elif (AMREX_SPACEDIM == 2)
+                k2 =  2*(std::cos(a*dx[0])-1.)/(dx[0]*dx[0]) + 2*(std::cos(b*dx[1])-1.)/(dx[1]*dx[1]);
+#elif (AMREX_SPACEDIM == 3)
+                k2 =  2*(std::cos(a*dx[0])-1.)/(dx[0]*dx[0]) + 2*(std::cos(b*dx[1])-1.)/(dx[1]*dx[1]) + 2*(std::cos(c*dx[2])-1.)/(dx[2]*dx[2]);
+#endif
+            }
 
             if (k2 != 0.) {
                 spectral(i,j,k) /= k2;
@@ -248,8 +289,11 @@ int main (int argc, char* argv[])
         }
     }
 
-    // scale by 1/npts (both forward and inverse need 1/sqrtnpts scaling so I am doing it all here)
+    // scale by 1/npts (both forward and inverse need sqrt(npts) scaling so I am doing it all here)
     soln.mult(1./npts);
+
+    Real end_step = static_cast<Real>(ParallelDescriptor::second());
+    // amrex::Print() << "TIME IN SOLVE " << end_step - start_step << std::endl;
 
     // storage for variables to write to plotfile
     MultiFab plotfile(ba, dm, 2, 0);
