@@ -14,5 +14,5 @@ brew install open-mpi || true
 brew install ccache || true
 
 # verify installation
-gfortran --version
-otool -L $(which gfortran)
+gfortran-14 --version
+otool -L $(which gfortran-14)
