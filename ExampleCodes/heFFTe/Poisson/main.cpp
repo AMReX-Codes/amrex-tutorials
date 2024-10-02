@@ -8,9 +8,9 @@
 
 using namespace amrex;
 
-enum struct LaplacianType {
+AMREX_ENUM(LaplacianType,
     Unknown, Exact, Discrete
-};
+);
 
 int main (int argc, char* argv[])
 {
@@ -40,7 +40,6 @@ int main (int argc, char* argv[])
     Real prob_hi_y = 1.;
     Real prob_hi_z = 1.;
 
-    std::string laplacian_type_string;
     LaplacianType laplacian_type = LaplacianType::Unknown;
 
     // **********************************
@@ -69,19 +68,8 @@ int main (int argc, char* argv[])
         pp.query("prob_hi_y",prob_hi_y);
         pp.query("prob_hi_z",prob_hi_z);
 
-        pp.query("laplacian_type",laplacian_type_string);
+        pp.query_enum_case_insensitive("laplacian_type",laplacian_type);
     }
-
-    if ( (laplacian_type_string == "Exact") ||
-         (laplacian_type_string == "exact") ) {
-        laplacian_type = LaplacianType::Exact;
-    }
-    else
-    if ( (laplacian_type_string == "Discrete") ||
-         (laplacian_type_string == "discrete") ) {
-        laplacian_type = LaplacianType::Discrete;
-    }
-
 
     if (laplacian_type == LaplacianType::Unknown) {
         amrex::Abort("Must specify exact or discrete Laplacian");
