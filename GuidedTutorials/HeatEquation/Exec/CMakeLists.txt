@@ -28,7 +28,7 @@
 # For additional CMake compile options see
 # https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#building-with-cmake
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.24)
 
 ## Project name and source file languages
 project(HeatEquation_EX0
@@ -57,11 +57,7 @@ if(NOT DEFINED AMReX_ROOT)
     GIT_TAG        origin/development
     )
 
-  FetchContent_Populate(amrex_code)
-
-  # CMake will read the files in these directories and configure, build
-  # and install AMReX.
-  add_subdirectory(${amrex_code_SOURCE_DIR} ${amrex_code_BINARY_DIR})
+  FetchContent_MakeAvailable(amrex_code)
 
 else()
 
