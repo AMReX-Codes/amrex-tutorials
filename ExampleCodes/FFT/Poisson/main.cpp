@@ -103,7 +103,7 @@ int main (int argc, char* argv[])
     GpuArray<Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
 
     amrex::FFT::Poisson<MultiFab> my_poisson(geom);
-    
+
     MultiFab rhs(ba,dm,1,0);
     MultiFab soln(ba,dm,1,0);
 

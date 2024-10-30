@@ -139,7 +139,7 @@ int main (int argc, char* argv[])
                                 {AMREX_D_DECL(true,true,false)});
     DistributionMapping cdm = amrex::FFT::detail::make_iota_distromap(cba.size());
     FabArray<BaseFab<GpuComplex<amrex::Real> > > phi_fft(cba, cdm, 1, 0);
-    
+
     // we will copy the real and imaginary parts of the FFT to this MultiFab
     MultiFab phi_fft_realimag(cba,cdm,2,0);
 
