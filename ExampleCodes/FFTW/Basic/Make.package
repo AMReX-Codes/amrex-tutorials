@@ -1,3 +1,0 @@
-CEXE_sources += main.cpp myfunc.cpp
-CEXE_headers = myfunc.H
-
