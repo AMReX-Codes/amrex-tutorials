@@ -113,7 +113,7 @@ int main (int argc, char* argv[])
 
         const Box& bx = mfi.fabbox();
 
-        amrex::ParallelForRNG(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k, RandomEngine const& engine) noexcept
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
 
             // **********************************

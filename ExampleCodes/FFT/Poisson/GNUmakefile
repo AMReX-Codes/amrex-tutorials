@@ -15,15 +15,5 @@ include $(AMREX_HOME)/Src/Base/Make.package
 include $(AMREX_HOME)/Src/FFT/Make.package
 include Make.package
 
-ifeq ($(USE_CUDA),TRUE)
-  libraries += -lcufft
-else ifeq ($(USE_HIP),TRUE)
-  # Use rocFFT.  ROC_PATH is defined in amrex
-  INCLUDE_LOCATIONS += $(ROC_PATH)/rocfft/include
-  LIBRARY_LOCATIONS += $(ROC_PATH)/rocfft/lib
-  LIBRARIES += -L$(ROC_PATH)/rocfft/lib -lrocfft
-else
-  libraries += -lfftw3_mpi -lfftw3f -lfftw3
-endif
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
