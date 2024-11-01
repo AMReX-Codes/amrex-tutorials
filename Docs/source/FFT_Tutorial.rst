@@ -10,7 +10,7 @@ FFT
 ==========================
 
 These tutorials demonstrate how to use the amrex::FFT classes to solve for and manipulate Fourier transform data.
-For more information on the amrex::FFT class refer to the AMReX documentation 
+For more information on the amrex::FFT class refer to the AMReX documentation
 `here <https://amrex-codes.github.io/amrex/docs_html/FFT_Chapter.html>`_.
 
 There are two FFT tutorials, ``Basic`` and ``Poisson``.
