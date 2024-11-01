@@ -132,12 +132,7 @@ int main (int argc, char* argv[])
     }
 
     // create storage for the FFT
-    Box cdomain = geom.Domain();
-    cdomain.setBig(0,cdomain.length(0)/2);
-    Geometry cgeom(cdomain, real_box, CoordSys::cartesian, is_periodic);
-    auto cba = amrex::decompose(cdomain, ParallelContext::NProcsSub(),
-                                {AMREX_D_DECL(true,true,false)});
-    DistributionMapping cdm(cba);
+    auto const& [cba, cdm] = my_fft.getSpectralDataLayout();
     FabArray<BaseFab<GpuComplex<amrex::Real> > > phi_fft(cba, cdm, 1, 0);
 
     // we will copy the real and imaginary parts of the FFT to this MultiFab
@@ -174,6 +169,10 @@ int main (int argc, char* argv[])
     // time and step are dummy variables required to WriteSingleLevelPlotfile
     Real time = 0.;
     int step = 0;
+
+    Box cdomain = geom.Domain();
+    cdomain.setBig(0,cdomain.length(0)/2);
+    Geometry cgeom(cdomain, real_box, CoordSys::cartesian, is_periodic);
 
     // arguments
     // 1: name of plotfile
