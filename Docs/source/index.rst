@@ -96,6 +96,8 @@ sorted by the following categories:
 
 .. _`EB`:  EB_Tutorial.html
 
+.. _`FFT`:  FFT_Tutorial.html
+
 .. _`FFTW`:  FFTW_Tutorial.html
 
 .. _`ForkJoin`:  ForkJoin_Tutorial.html
