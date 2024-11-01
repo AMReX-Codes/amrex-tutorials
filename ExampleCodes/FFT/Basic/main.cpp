@@ -137,7 +137,7 @@ int main (int argc, char* argv[])
     Geometry cgeom(cdomain, real_box, CoordSys::cartesian, is_periodic);
     auto cba = amrex::decompose(cdomain, ParallelContext::NProcsSub(),
                                 {AMREX_D_DECL(true,true,false)});
-    DistributionMapping cdm(cba)
+    DistributionMapping cdm(cba);
     FabArray<BaseFab<GpuComplex<amrex::Real> > > phi_fft(cba, cdm, 1, 0);
 
     // we will copy the real and imaginary parts of the FFT to this MultiFab
