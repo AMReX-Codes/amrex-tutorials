@@ -46,10 +46,8 @@ sorted by the following categories:
   and analysis tool.
 - :ref:`EB<tutorials_eb>`  -- Examples of embedded boundaries.
 - :ref:`FFT<tutorials_fft>`  -- Demonstration on how to use the amrex::FFT class for forward/inverse FFT and data manipulation
-- :ref:`FFTW<tutorials_fftw>`  -- FFTW and cuFFT single-rank tutorials.
 - :ref:`ForkJoin<tutorials_forkjoin>` -- Parallel execution and subgrouping of MPI ranks.
 - :ref:`GPU<tutorials_gpu>`  -- Offload work to the GPUs using AMReX tools.
-- :ref:`heFFTe<tutorials_heffte>`  -- heFFTe distributed tutorials.
 - :ref:`Linear Solvers<tutorials_linearsolvers>`  -- Examples of several linear solvers.
 - :ref:`ML/PYTORCH<tutorials_ml>`  -- Use of pytorch models to replace point-wise computational kernels.
 - :ref:`MPMD<tutorials_mpmd>` -- Usage of AMReX-MPMD (Multiple Program Multiple Data) framework.
@@ -60,8 +58,6 @@ sorted by the following categories:
   to solve a scalar advection-diffusion-reaction equation.
 - :ref:`SENSEI<tutorials_sensei>`  -- In situ data analysis and visualization through a unified interface.
 - :ref:`SUNDIALS<tutorials_sundials>`  -- Time integration with SUNDIALS backend and native AMReX types.
-- :ref:`SWFFT<tutorials_swfft>`  -- Demonstrates how to call the SWFFT wrapper to the FFTW3 (A distributed memory
-  implementation of the discrete Fourier transform) solver.
 
 
 .. toctree::
@@ -72,10 +68,8 @@ sorted by the following categories:
    Blueprint_Tutorial
    EB_Tutorial
    FFT_Tutorial
-   FFTW_Tutorial
    ForkJoin_Tutorial
    GPU_Tutorial
-   heFFTe_Tutorial
    LinearSolvers_Tutorial
    ML_Tutorial
    MPMD_Tutorials
@@ -85,7 +79,6 @@ sorted by the following categories:
    SDC_Tutorial
    SENSEI_Tutorial
    SUNDIALS_Tutorial
-   SWFFT_Tutorial
 
 
 .. _`AMR`:  AMR_Tutorial.html
@@ -98,13 +91,9 @@ sorted by the following categories:
 
 .. _`FFT`:  FFT_Tutorial.html
 
-.. _`FFTW`:  FFTW_Tutorial.html
-
 .. _`ForkJoin`:  ForkJoin_Tutorial.html
 
 .. _`GPU`:  GPU_Tutorial.html
-
-.. _`heFFTe`:  heFFTe_Tutorial.html
 
 .. _`Linear Solvers`:  LinearSolvers_Tutorial.html
 
@@ -120,7 +109,6 @@ sorted by the following categories:
 
 .. _`SENSEI`: SENSEI_Tutorial.html
 
-.. _`SWFFT`: SWFFT_Tutorial.html
 
 
 

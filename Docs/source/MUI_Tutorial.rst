@@ -34,7 +34,7 @@ as I am aware, the code works for any AMReX grid structure. Details of how to bu
 
 The figure below shows one possible grid structure of the 2D (red grid) and 3D (multicolored blocks) setup.
 
-.. |a| image:: ./SWFFT/iface_rect.png
+.. |a| image:: ./figs/iface_rect.png
                :width: 60%
 
 .. table::
