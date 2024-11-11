@@ -45,6 +45,7 @@ sorted by the following categories:
   Conduit Mesh Blueprint for use with the ALPINE Ascent in situ visualization
   and analysis tool.
 - :ref:`EB<tutorials_eb>`  -- Examples of embedded boundaries.
+- :ref:`FFT<tutorials_fft>`  -- Demonstration on how to use the amrex::FFT class for forward/inverse FFT and data manipulation
 - :ref:`ForkJoin<tutorials_forkjoin>` -- Parallel execution and subgrouping of MPI ranks.
 - :ref:`GPU<tutorials_gpu>`  -- Offload work to the GPUs using AMReX tools.
 - :ref:`Linear Solvers<tutorials_linearsolvers>`  -- Examples of several linear solvers.
@@ -66,6 +67,7 @@ sorted by the following categories:
    Basic_Tutorial
    Blueprint_Tutorial
    EB_Tutorial
+   FFT_Tutorial
    ForkJoin_Tutorial
    GPU_Tutorial
    LinearSolvers_Tutorial
@@ -86,6 +88,8 @@ sorted by the following categories:
 .. _`Blueprint`:  Blueprint_Tutorial.html
 
 .. _`EB`:  EB_Tutorial.html
+
+.. _`FFT`:  FFT_Tutorial.html
 
 .. _`ForkJoin`:  ForkJoin_Tutorial.html
 
