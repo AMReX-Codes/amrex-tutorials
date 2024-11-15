@@ -95,7 +95,7 @@ auto GMRESPOISSONT<MF>::makeVecRHS () const -> MF
 template <typename MF>
 auto GMRESPOISSONT<MF>::makeVecLHS () const -> MF
 {
-    MF mf(m_ba, m_dm, 1, 0);
+    MF mf(m_ba, m_dm, 1, 1);
     mf.setVal(0.);
     return mf;
 }
@@ -105,7 +105,6 @@ auto GMRESPOISSONT<MF>::norm2 (MF const& mf) const -> RT
 {
     auto r = MultiFab::Dot(mf,0,1,0);
     return std::sqrt(r);
-    return 0.;
 }
 
 template <typename MF>

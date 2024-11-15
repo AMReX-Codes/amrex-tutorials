@@ -55,7 +55,7 @@ int main (int argc, char* argv[])
     amrex::Geometry geom;
 
     // define lower and upper indices
-    amrex::IntVect dom_lo(0,0,0);
+    amrex::IntVect dom_lo(       0,        0,        0);
     amrex::IntVect dom_hi(n_cell-1, n_cell-1, n_cell-1);
 
     // Make a single box that is the entire domain
