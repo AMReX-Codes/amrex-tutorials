@@ -21,7 +21,7 @@ public:
     using RT = amrex::Real; // typename MF::RT; // double or float
     using GM = GMRES<MF,GMRESPOISSONT<MF>>;
 
-    explicit GMRESPOISSONT (const BoxArray& ba, const DistributionMapping& dm);
+    explicit GMRESPOISSONT (const BoxArray& ba, const DistributionMapping& dm, const Geometry& geom);
 
     /**
      * \brief Solve the linear system
@@ -36,29 +36,8 @@ public:
     //! Sets verbosity.
     void setVerbose (int v) { m_gmres.setVerbose(v); }
 
-    //! Sets the max number of iterations
-    void setMaxIters (int niters) { m_gmres.setMaxIters(niters); }
-
-    //! Gets the number of iterations.
-    [[nodiscard]] int getNumIters () const { return m_gmres.getNumIters(); }
-
-    //! Gets the 2-norm of the residual.
-    [[nodiscard]] RT getResidualNorm () const { return m_gmres.getResidualNorm(); }
-
     //! Get the GMRES object.
     GM& getGMRES () { return m_gmres; }
-
-    /**
-     * \brief Set MLMG's multiplicative property of zero
-     *
-     * This should NOT be called unless MLMG has the multiplicative property
-     * of zero. MLMG is not a matrix, and usually does not have the
-     * properties of a matrix such as the multiplicative property of zero
-     * (i.e., M*0=0) because how domain boundary conditions are
-     * handled. However, if MLMG has the property of zero, calling this
-     * function with true can have a small performance benefit.
-     */
-    void setPropertyOfZero (bool b) { m_prop_zero = b; }
 
     //! Make MultiFab without ghost cells
     MF makeVecRHS () const;
@@ -85,28 +64,24 @@ public:
     static void linComb (MF& lhs, RT a, MF const& rhs_a, RT b, MF const& rhs_b);
 
     //! lhs = L(rhs)
-    void apply (MF& lhs, MF const& rhs) const;
+    void apply (MF& lhs, MF& rhs) const;
 
     void precond (MF& lhs, MF const& rhs) const;
 
     //! Control whether or not to use MLMG as preconditioner.
     bool usePrecond (bool new_flag) { return std::exchange(m_use_precond, new_flag); }
 
-    //! Set the number of MLMG preconditioner iterations per GMRES iteration.
-    void setPrecondNumIters (int precond_niters) { m_precond_niters = precond_niters; }
-
 private:
     GM m_gmres;
     BoxArray m_ba;
     DistributionMapping m_dm;
-    bool m_use_precond = true;
-    bool m_prop_zero = false;
-    int m_precond_niters = 1;
+    Geometry m_geom;
+    bool m_use_precond = false;
 };
 
 template <typename MF>
-GMRESPOISSONT<MF>::GMRESPOISSONT (const BoxArray& ba, const DistributionMapping& dm)
-    : m_ba(ba), m_dm(dm)
+GMRESPOISSONT<MF>::GMRESPOISSONT (const BoxArray& ba, const DistributionMapping& dm, const Geometry& geom)
+    : m_ba(ba), m_dm(dm), m_geom(geom)
 {
     m_gmres.define(*this);
 }
@@ -128,8 +103,8 @@ auto GMRESPOISSONT<MF>::makeVecLHS () const -> MF
 template <typename MF>
 auto GMRESPOISSONT<MF>::norm2 (MF const& mf) const -> RT
 {
-//    auto r = m_linop->xdoty(0, 0, mf, mf, false);
-//    return std::sqrt(r);
+    auto r = MultiFab::Dot(mf,0,1,0);
+    return std::sqrt(r);
     return 0.;
 }
 
@@ -142,8 +117,7 @@ void GMRESPOISSONT<MF>::scale (MF& mf, RT scale_factor)
 template <typename MF>
 auto GMRESPOISSONT<MF>::dotProduct (MF const& mf1, MF const& mf2) const -> RT
 {
-//    return m_linop->xdoty(0, 0, mf1, mf2, false);
-    return 0.;
+    return MultiFab::Dot(mf1,0,mf2,0,1,0);
 }
 
 template <typename MF>
@@ -171,18 +145,39 @@ void GMRESPOISSONT<MF>::linComb (MF& lhs, RT a, MF const& rhs_a, RT b, MF const&
 }
 
 template <typename MF>
-void GMRESPOISSONT<MF>::apply (MF& lhs, MF const& rhs) const
+void GMRESPOISSONT<MF>::apply (MF& lhs, MF& rhs) const
 {
-//    m_linop->apply(0, 0, lhs, const_cast<MF&>(rhs),
-//                   MLLinOpT<MF>::BCMode::Homogeneous,
-//                   MLLinOpT<MF>::StateMode::Correction);
+    // apply matrix to rhs for output lhs
+    rhs.FillBoundary(m_geom.periodicity());
+    
+    const GpuArray<Real, AMREX_SPACEDIM> dx = m_geom.CellSizeArray();
+
+    for ( MFIter mfi(rhs,TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        
+        const Box& bx = mfi.tilebox();
+
+        const Array4<const Real> & rhs_p = rhs.array(mfi);
+        const Array4<      Real> & lhs_p = lhs.array(mfi);
+
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+        {
+            lhs_p(i,j,k) = ( rhs_p(i+1,j,k) - 2.*rhs_p(i,j,k) + rhs_p(i-1,j,k) ) / (dx[0]*dx[0])
+                         + ( rhs_p(i,j+1,k) - 2.*rhs_p(i,j,k) + rhs_p(i,j-1,k) ) / (dx[1]*dx[1])
+#if (AMREX_SPACEDIM == 3)
+                         + ( rhs_p(i,j,k+1) - 2.*rhs_p(i,j,k) + rhs_p(i,j,k-1) ) / (dx[2]*dx[2])
+#endif
+                ;
+        });
+
+    }
+
+    
 }
 
 template <typename MF>
 void GMRESPOISSONT<MF>::precond (MF& lhs, MF const& rhs) const
 {
     if (m_use_precond) {
-
 
     } else {
         LocalCopy(lhs, rhs, 0, 0, nComp(lhs), IntVect(0));
@@ -201,6 +196,12 @@ void GMRESPOISSONT<MF>::solve (MF& a_sol, MF const& a_rhs, RT a_tol_rel, RT a_to
     m_gmres.solve(cor, res, a_tol_rel, a_tol_abs); // L(cor) = res
     increment(a_sol, cor, RT(-1)); // sol = sol - cor
     */
+    auto res = makeVecRHS();
+    apply(res,a_sol);
+    increment(res, a_rhs, RT(-1)); // res = L(sol) - rhs
+    auto cor = makeVecLHS();
+    m_gmres.solve(cor, res, a_tol_rel, a_tol_abs); // L(cor) = res
+    increment(a_sol, cor, RT(-1)); // sol = sol - cor
 }
 
 using GMRESPOISSON = GMRESPOISSONT<MultiFab>;

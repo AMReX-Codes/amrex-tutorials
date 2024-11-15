@@ -25,15 +25,6 @@ int main (int argc, char* argv[])
     // size of each box (or grid)
     int max_grid_size;
 
-    // total steps in simulation
-    int nsteps;
-
-    // how often to write a plotfile
-    int plot_int;
-
-    // time step
-    amrex::Real dt;
-
     // **********************************
     // READ PARAMETER VALUES FROM INPUT DATA
     // **********************************
@@ -78,7 +69,7 @@ int main (int argc, char* argv[])
 
     // This defines the physical box, [0,1] in each direction.
     amrex::RealBox real_box({ 0., 0., 0.},
-                     { 1., 1., 1.});
+                            { 1., 1., 1.});
 
     // periodic in all direction
     amrex::Array<int,3> is_periodic{1,1,1};
@@ -121,16 +112,14 @@ int main (int argc, char* argv[])
         });
     }
 
-    // **********************************
-    // WRITE INITIAL PLOT FILE
-    // **********************************
-
-    // Write a plotfile of the initial data if plot_int > 0
     WriteSingleLevelPlotfile("rhs", rhs, {"rhs"}, geom, 0., 0);
 
-    amrex::GMRESPOISSON gmres_poisson(ba,dm);
+    amrex::GMRESPOISSON gmres_poisson(ba,dm,geom);
 
+    gmres_poisson.setVerbose(2);
     gmres_poisson.solve(phi, rhs, 1.e-12, 0.);
+
+    WriteSingleLevelPlotfile("phi", phi, {"phi"}, geom, 0., 0);
     
     }
     amrex::Finalize();
