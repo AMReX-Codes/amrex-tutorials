@@ -199,6 +199,7 @@ void GMRESPOISSONT<MF>::solve (MF& a_sol, MF const& a_rhs, RT a_tol_rel, RT a_to
     apply(res,a_sol);
     increment(res, a_rhs, RT(-1)); // res = L(sol) - rhs
     auto cor = makeVecLHS();
+    res.FillBoundary(m_geom.periodicity()); // FIXME not sure this is needed
     m_gmres.solve(cor, res, a_tol_rel, a_tol_abs); // L(cor) = res
     increment(a_sol, cor, RT(-1)); // sol = sol - cor
 }

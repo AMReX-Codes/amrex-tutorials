@@ -116,6 +116,9 @@ int main (int argc, char* argv[])
 
     amrex::GMRESPOISSON gmres_poisson(ba,dm,geom);
 
+    // initial guess
+    phi.setVal(0.);
+
     gmres_poisson.setVerbose(2);
     gmres_poisson.solve(phi, rhs, 1.e-12, 0.);
 
