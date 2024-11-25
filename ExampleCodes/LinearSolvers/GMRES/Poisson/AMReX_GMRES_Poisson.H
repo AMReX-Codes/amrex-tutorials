@@ -95,9 +95,7 @@ auto GMRESPOISSONT<MF>::makeVecRHS () const -> MF
 template <typename MF>
 auto GMRESPOISSONT<MF>::makeVecLHS () const -> MF
 {
-    MF mf(m_ba, m_dm, 1, 1);
-    mf.setVal(0.);
-    return mf;
+    return MultiFab(m_ba, m_dm, 1, 1);
 }
 
 template <typename MF>
@@ -110,7 +108,7 @@ auto GMRESPOISSONT<MF>::norm2 (MF const& mf) const -> RT
 template <typename MF>
 void GMRESPOISSONT<MF>::scale (MF& mf, RT scale_factor)
 {
-    Scale(mf, scale_factor, 0, nComp(mf), 0);
+    mf.mult(scale_factor);
 }
 
 template <typename MF>
@@ -122,25 +120,25 @@ auto GMRESPOISSONT<MF>::dotProduct (MF const& mf1, MF const& mf2) const -> RT
 template <typename MF>
 void GMRESPOISSONT<MF>::setToZero (MF& lhs)
 {
-    setVal(lhs, RT(0.0));
+    lhs.setVal(0.);
 }
 
 template <typename MF>
 void GMRESPOISSONT<MF>::assign (MF& lhs, MF const& rhs)
 {
-    LocalCopy(lhs, rhs, 0, 0, nComp(lhs), IntVect(0));
+    MultiFab::Copy(lhs,rhs,0,0,1,0);
 }
 
 template <typename MF>
 void GMRESPOISSONT<MF>::increment (MF& lhs, MF const& rhs, RT a)
 {
-    Saxpy(lhs, a, rhs, 0, 0, nComp(lhs), IntVect(0));
+    MultiFab::Saxpy(lhs,a,rhs,0,0,1,0);
 }
 
 template <typename MF>
 void GMRESPOISSONT<MF>::linComb (MF& lhs, RT a, MF const& rhs_a, RT b, MF const& rhs_b)
 {
-    LinComb(lhs, a, rhs_a, 0, b, rhs_b, 0, 0, nComp(lhs), IntVect(0));
+    MultiFab::LinComb(lhs,a,rhs_a,0,b,rhs_b,0,0,1,0);
 }
 
 template <typename MF>
