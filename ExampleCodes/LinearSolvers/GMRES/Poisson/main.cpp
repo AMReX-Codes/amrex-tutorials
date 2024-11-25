@@ -122,7 +122,7 @@ int main (int argc, char* argv[])
     gmres_poisson.solve(phi, rhs, 1.e-12, 0.);
 
     WriteSingleLevelPlotfile("phi", phi, {"phi"}, geom, 0., 0);
-    
+
     }
     amrex::Finalize();
     return 0;

@@ -145,11 +145,11 @@ void GMRESPOISSONT<MF>::apply (MF& lhs, MF& rhs) const
 {
     // apply matrix to rhs for output lhs
     rhs.FillBoundary(m_geom.periodicity());
-    
+
     const GpuArray<Real, AMREX_SPACEDIM> dx = m_geom.CellSizeArray();
 
     for ( MFIter mfi(rhs,TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-        
+
         const Box& bx = mfi.tilebox();
 
         const Array4<const Real> & rhs_p = rhs.array(mfi);
@@ -167,7 +167,7 @@ void GMRESPOISSONT<MF>::apply (MF& lhs, MF& rhs) const
 
     }
 
-    
+
 }
 
 template <typename MF>
