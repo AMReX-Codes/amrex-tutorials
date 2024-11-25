@@ -1,5 +1,5 @@
-#ifndef AMREX_GMRES_MLMG_H_
-#define AMREX_GMRES_MLMG_H_
+#ifndef AMREX_GMRES_POISSON_H_
+#define AMREX_GMRES_POISSON_H_
 #include <AMReX_Config.H>
 
 #include <AMReX_GMRES.H>
