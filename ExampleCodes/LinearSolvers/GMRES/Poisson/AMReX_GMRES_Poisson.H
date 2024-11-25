@@ -101,8 +101,7 @@ auto GMRESPOISSONT<MF>::makeVecLHS () const -> MF
 template <typename MF>
 auto GMRESPOISSONT<MF>::norm2 (MF const& mf) const -> RT
 {
-    auto r = MultiFab::Dot(mf,0,1,0);
-    return std::sqrt(r);
+    return mf.norm2();
 }
 
 template <typename MF>
@@ -177,29 +176,14 @@ void GMRESPOISSONT<MF>::precond (MF& lhs, MF const& rhs) const
     if (m_use_precond) {
 
     } else {
-        LocalCopy(lhs, rhs, 0, 0, nComp(lhs), IntVect(0));
+        MultiFab::Copy(lhs,rhs,0,0,1,0);
     }
 }
 
 template <typename MF>
 void GMRESPOISSONT<MF>::solve (MF& a_sol, MF const& a_rhs, RT a_tol_rel, RT a_tol_abs)
 {
-    /*
-    auto res = makeVecRHS();
-    m_mlmg->apply({&res}, {&a_sol}); // res = L(sol)
-    increment(res, a_rhs, RT(-1)); // res = L(sol) - rhs
-    auto cor = makeVecLHS();
-    m_linop->setDirichletNodesToZero(0,0,res);
-    m_gmres.solve(cor, res, a_tol_rel, a_tol_abs); // L(cor) = res
-    increment(a_sol, cor, RT(-1)); // sol = sol - cor
-    */
-    auto res = makeVecRHS();
-    apply(res,a_sol);
-    increment(res, a_rhs, RT(-1)); // res = L(sol) - rhs
-    auto cor = makeVecLHS();
-    res.FillBoundary(m_geom.periodicity()); // FIXME not sure this is needed
-    m_gmres.solve(cor, res, a_tol_rel, a_tol_abs); // L(cor) = res
-    increment(a_sol, cor, RT(-1)); // sol = sol - cor
+    m_gmres.solve(a_sol, a_rhs, a_tol_rel, a_tol_abs);
 }
 
 using GMRESPOISSON = GMRESPOISSONT<MultiFab>;

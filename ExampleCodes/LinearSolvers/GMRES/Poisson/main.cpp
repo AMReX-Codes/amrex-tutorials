@@ -107,8 +107,7 @@ int main (int argc, char* argv[])
             amrex::Real x = (i+0.5) * dx[0];
             amrex::Real y = (j+0.5) * dx[1];
             amrex::Real z = (k+0.5) * dx[2];
-            amrex::Real rsquared = ((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))/0.01;
-            rhs_p(i,j,k) = 1. + std::exp(-rsquared);
+            rhs_p(i,j,k) = sin(2.*M_PI*x) * sin(4.*M_PI*y) * sin(8.*M_PI*z);
         });
     }
 
