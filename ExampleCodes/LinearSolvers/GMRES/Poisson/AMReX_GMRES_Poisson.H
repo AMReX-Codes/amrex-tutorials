@@ -8,11 +8,7 @@
 namespace amrex {
 
 /**
- * \brief Solve using GMRES with multigrid as preconditioner
- *
- * The linear system to solve is provided by MLMG, which is also being used
- * as the preconditioner.
- *
+ * \brief Solve Poisson's equation using unpreconditioned GMRES
  */
 template <typename MF>
 class GMRESPOISSONT
