@@ -5,6 +5,7 @@ To run this tutorial, one can generate the input data first with the incflo
 code (https://github.com/AMReX-Fluids/incflo).
 
     $ cd ../../../../
+    $ git clone https://github.com/AMReX-Fluids/AMReX-Hydro.git
     $ git clone https://github.com/AMReX-Fluids/incflo.git
     $ cd incflo/test_no_eb_3d
     $ make -j
