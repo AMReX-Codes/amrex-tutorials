@@ -169,8 +169,8 @@ void GMRESPOISSON::precond (MultiFab& lhs, MultiFab const& rhs) const
 
         const GpuArray<Real, AMREX_SPACEDIM> dx = m_geom.CellSizeArray();
 
-        amrex::Real fac = 1.;
-        for (int d=0; d<AMREX_SPACEDIM; ++d) fac += 2./(dx[d]*dx[d]);
+        amrex::Real fac = 0.;
+        for (int d=0; d<AMREX_SPACEDIM; ++d) fac -= 2./(dx[d]*dx[d]);
 
         for ( MFIter mfi(lhs,TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 
