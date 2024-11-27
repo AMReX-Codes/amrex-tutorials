@@ -1,9 +1,6 @@
 /*
- * A simplified single file version of the HeatEquation_EX0_C exmaple.
- * This code is designed to be used with Demo_Tutorial.rst.
- *
+ * A simplified usage of the AMReX GMRES class
  */
-
 
 #include <AMReX.H>
 #include <AMReX_PlotFileUtil.H>
@@ -77,9 +74,6 @@ int main (int argc, char* argv[])
     // This defines a Geometry object
     geom.define(domain, real_box, amrex::CoordSys::cartesian, is_periodic);
 
-    // extract dx from the geometry object
-    amrex::GpuArray<amrex::Real,3> dx = geom.CellSizeArray();
-
     // How Boxes are distrubuted among MPI processes
     amrex::DistributionMapping dm(ba);
 
@@ -98,18 +92,17 @@ int main (int argc, char* argv[])
 
         const amrex::Array4<amrex::Real>& rhs_p = rhs.array(mfi);
 
-        // set rhs = 1 + e^(-(r-0.5)^2)
-        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
+        // fill rhs with random numbers
+        amrex::ParallelForRNG(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
-            // **********************************
-            // SET VALUES FOR EACH CELL
-            // **********************************
-            amrex::Real x = (i+0.5) * dx[0];
-            amrex::Real y = (j+0.5) * dx[1];
-            amrex::Real z = (k+0.5) * dx[2];
-            rhs_p(i,j,k) = sin(2.*M_PI*x) * sin(4.*M_PI*y) * sin(8.*M_PI*z);
+            rhs_p(i,j,k) = amrex::RandomNormal(0.,1.,engine);
         });
     }
+
+    // offset data so the rhs sums to zero
+    amrex::Real sum = rhs.sum();
+    amrex::Long npts = rhs.boxArray().numPts();
+    rhs.plus(-sum/npts,0,1);
 
     WriteSingleLevelPlotfile("rhs", rhs, {"rhs"}, geom, 0., 0);
 

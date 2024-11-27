@@ -73,6 +73,9 @@ private:
     DistributionMapping m_dm;
     Geometry m_geom;
     bool m_use_precond = false;
+
+    // store the original RHS needed for Jacobi preconditioner
+    MultiFab orig_rhs;
 };
 
 template <typename MF>
@@ -144,7 +147,7 @@ void GMRESPOISSONT<MF>::apply (MF& lhs, MF& rhs) const
 
     const GpuArray<Real, AMREX_SPACEDIM> dx = m_geom.CellSizeArray();
 
-    for ( MFIter mfi(rhs,TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+    for ( MFIter mfi(lhs,TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 
         const Box& bx = mfi.tilebox();
 
@@ -166,11 +169,42 @@ void GMRESPOISSONT<MF>::apply (MF& lhs, MF& rhs) const
 
 }
 
+// applies preconditioner to rhs. If there is no preconditioner,
+// this function should do lhs = rhs.
 template <typename MF>
 void GMRESPOISSONT<MF>::precond (MF& lhs, MF const& rhs) const
 {
     if (m_use_precond) {
 
+        MultiFab rhs_tmp(m_ba,m_dm,1,1);
+        MultiFab::Copy(rhs_tmp,rhs,0,0,1,0);
+        rhs_tmp.FillBoundary(m_geom.periodicity());
+
+        const GpuArray<Real, AMREX_SPACEDIM> dx = m_geom.CellSizeArray();
+
+        amrex::Real fac = 1.;
+        for (int d=0; d<AMREX_SPACEDIM; ++d) fac += 2./(dx[d]*dx[d]);
+
+        for ( MFIter mfi(lhs,TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+
+            const Box& bx = mfi.tilebox();
+
+            const Array4<const Real> & orig_rhs_p = orig_rhs.array(mfi);
+            const Array4<const Real> & rhs_p = rhs_tmp.array(mfi);
+            const Array4<      Real> & lhs_p = lhs.array(mfi);
+
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+            {
+                lhs_p(i,j,k) = ( rhs_p(i+1,j,k) - 2.*rhs_p(i,j,k) + rhs_p(i-1,j,k) ) / (dx[0]*dx[0])
+                             + ( rhs_p(i,j+1,k) - 2.*rhs_p(i,j,k) + rhs_p(i,j-1,k) ) / (dx[1]*dx[1])
+#if (AMREX_SPACEDIM == 3)
+                             + ( rhs_p(i,j,k+1) - 2.*rhs_p(i,j,k) + rhs_p(i,j,k-1) ) / (dx[2]*dx[2])
+#endif
+                    ;
+
+                lhs_p(i,j,k) = rhs_p(i,j,k) + (orig_rhs_p(i,j,k) - lhs_p(i,j,k) ) / fac;
+            });
+        }
     } else {
         MultiFab::Copy(lhs,rhs,0,0,1,0);
     }
@@ -179,6 +213,9 @@ void GMRESPOISSONT<MF>::precond (MF& lhs, MF const& rhs) const
 template <typename MF>
 void GMRESPOISSONT<MF>::solve (MF& a_sol, MF const& a_rhs, RT a_tol_rel, RT a_tol_abs)
 {
+    orig_rhs.define(m_ba,m_dm,1,0);
+    MultiFab::Copy(orig_rhs,a_rhs,0,0,1,0);
+    
     m_gmres.solve(a_sol, a_rhs, a_tol_rel, a_tol_abs);
 }
 
