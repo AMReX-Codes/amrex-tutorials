@@ -22,6 +22,9 @@ int main (int argc, char* argv[])
     // size of each box (or grid)
     int max_grid_size;
 
+    // use preconditioner?
+    int use_precond;
+
     // **********************************
     // READ PARAMETER VALUES FROM INPUT DATA
     // **********************************
@@ -38,6 +41,9 @@ int main (int argc, char* argv[])
 
         // The domain is broken into boxes of size max_grid_size
         pp.get("max_grid_size",max_grid_size);
+
+        use_precond = 0;
+        pp.query("use_precond",use_precond);
     }
 
     // **********************************
@@ -111,6 +117,7 @@ int main (int argc, char* argv[])
     // initial guess
     phi.setVal(0.);
 
+    gmres_poisson.usePrecond(use_precond);
     gmres_poisson.setVerbose(2);
     gmres_poisson.solve(phi, rhs, 1.e-12, 0.);
 

@@ -8,7 +8,7 @@
 namespace amrex {
 
 /**
- * \brief Solve Poisson's equation using unpreconditioned GMRES
+ * \brief Solve Poisson's equation using amrex GMRES class
  */
 class GMRESPOISSON
 {
@@ -71,7 +71,7 @@ private:
     BoxArray m_ba;
     DistributionMapping m_dm;
     Geometry m_geom;
-    bool m_use_precond = false;
+    bool m_use_precond;
 
     // store the original RHS needed for Jacobi preconditioner
     MultiFab orig_rhs;
