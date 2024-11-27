@@ -10,14 +10,13 @@ namespace amrex {
 /**
  * \brief Solve Poisson's equation using unpreconditioned GMRES
  */
-template <typename MF>
-class GMRESPOISSONT
+class GMRESPOISSON
 {
 public:
-    using RT = amrex::Real; // typename MF::RT; // double or float
-    using GM = GMRES<MF,GMRESPOISSONT<MF>>;
+    using RT = amrex::Real; // typename MultiFab::RT; // double or float
+    using GM = GMRES<MultiFab,GMRESPOISSON>;
 
-    explicit GMRESPOISSONT (const BoxArray& ba, const DistributionMapping& dm, const Geometry& geom);
+    explicit GMRESPOISSON (const BoxArray& ba, const DistributionMapping& dm, const Geometry& geom);
 
     /**
      * \brief Solve the linear system
@@ -27,7 +26,7 @@ public:
      * \param a_tol_rel relative tolerance.
      * \param a_tol_abs absolute tolerance.
      */
-    void solve (MF& a_sol, MF const& a_rhs, RT a_tol_rel, RT a_tol_abs);
+    void solve (MultiFab& a_sol, MultiFab const& a_rhs, RT a_tol_rel, RT a_tol_abs);
 
     //! Sets verbosity.
     void setVerbose (int v) { m_gmres.setVerbose(v); }
@@ -36,33 +35,33 @@ public:
     GM& getGMRES () { return m_gmres; }
 
     //! Make MultiFab without ghost cells
-    MF makeVecRHS () const;
+    MultiFab makeVecRHS () const;
 
     //! Make MultiFab with ghost cells and set ghost cells to zero
-    MF makeVecLHS () const;
+    MultiFab makeVecLHS () const;
 
-    RT norm2 (MF const& mf) const;
+    RT norm2 (MultiFab const& mf) const;
 
-    static void scale (MF& mf, RT scale_factor);
+    static void scale (MultiFab& mf, RT scale_factor);
 
-    RT dotProduct (MF const& mf1, MF const& mf2) const;
+    RT dotProduct (MultiFab const& mf1, MultiFab const& mf2) const;
 
     //! lhs = 0
-    static void setToZero (MF& lhs);
+    static void setToZero (MultiFab& lhs);
 
     //! lhs = rhs
-    static void assign (MF& lhs, MF const& rhs);
+    static void assign (MultiFab& lhs, MultiFab const& rhs);
 
     //! lhs += a*rhs
-    static void increment (MF& lhs, MF const& rhs, RT a);
+    static void increment (MultiFab& lhs, MultiFab const& rhs, RT a);
 
     //! lhs = a*rhs_a + b*rhs_b
-    static void linComb (MF& lhs, RT a, MF const& rhs_a, RT b, MF const& rhs_b);
+    static void linComb (MultiFab& lhs, RT a, MultiFab const& rhs_a, RT b, MultiFab const& rhs_b);
 
     //! lhs = L(rhs)
-    void apply (MF& lhs, MF& rhs) const;
+    void apply (MultiFab& lhs, MultiFab& rhs) const;
 
-    void precond (MF& lhs, MF const& rhs) const;
+    void precond (MultiFab& lhs, MultiFab const& rhs) const;
 
     //! Control whether or not to use MLMG as preconditioner.
     bool usePrecond (bool new_flag) { return std::exchange(m_use_precond, new_flag); }
@@ -78,69 +77,58 @@ private:
     MultiFab orig_rhs;
 };
 
-template <typename MF>
-GMRESPOISSONT<MF>::GMRESPOISSONT (const BoxArray& ba, const DistributionMapping& dm, const Geometry& geom)
+GMRESPOISSON::GMRESPOISSON (const BoxArray& ba, const DistributionMapping& dm, const Geometry& geom)
     : m_ba(ba), m_dm(dm), m_geom(geom)
 {
     m_gmres.define(*this);
 }
 
-template <typename MF>
-auto GMRESPOISSONT<MF>::makeVecRHS () const -> MF
+auto GMRESPOISSON::makeVecRHS () const -> MultiFab
 {
     return MultiFab(m_ba, m_dm, 1, 0);
 }
 
-template <typename MF>
-auto GMRESPOISSONT<MF>::makeVecLHS () const -> MF
+auto GMRESPOISSON::makeVecLHS () const -> MultiFab
 {
     return MultiFab(m_ba, m_dm, 1, 1);
 }
 
-template <typename MF>
-auto GMRESPOISSONT<MF>::norm2 (MF const& mf) const -> RT
+auto GMRESPOISSON::norm2 (MultiFab const& mf) const -> RT
 {
     return mf.norm2();
 }
 
-template <typename MF>
-void GMRESPOISSONT<MF>::scale (MF& mf, RT scale_factor)
+void GMRESPOISSON::scale (MultiFab& mf, RT scale_factor)
 {
     mf.mult(scale_factor);
 }
 
-template <typename MF>
-auto GMRESPOISSONT<MF>::dotProduct (MF const& mf1, MF const& mf2) const -> RT
+auto GMRESPOISSON::dotProduct (MultiFab const& mf1, MultiFab const& mf2) const -> RT
 {
     return MultiFab::Dot(mf1,0,mf2,0,1,0);
 }
 
-template <typename MF>
-void GMRESPOISSONT<MF>::setToZero (MF& lhs)
+void GMRESPOISSON::setToZero (MultiFab& lhs)
 {
     lhs.setVal(0.);
 }
 
-template <typename MF>
-void GMRESPOISSONT<MF>::assign (MF& lhs, MF const& rhs)
+void GMRESPOISSON::assign (MultiFab& lhs, MultiFab const& rhs)
 {
     MultiFab::Copy(lhs,rhs,0,0,1,0);
 }
 
-template <typename MF>
-void GMRESPOISSONT<MF>::increment (MF& lhs, MF const& rhs, RT a)
+void GMRESPOISSON::increment (MultiFab& lhs, MultiFab const& rhs, RT a)
 {
     MultiFab::Saxpy(lhs,a,rhs,0,0,1,0);
 }
 
-template <typename MF>
-void GMRESPOISSONT<MF>::linComb (MF& lhs, RT a, MF const& rhs_a, RT b, MF const& rhs_b)
+void GMRESPOISSON::linComb (MultiFab& lhs, RT a, MultiFab const& rhs_a, RT b, MultiFab const& rhs_b)
 {
     MultiFab::LinComb(lhs,a,rhs_a,0,b,rhs_b,0,0,1,0);
 }
 
-template <typename MF>
-void GMRESPOISSONT<MF>::apply (MF& lhs, MF& rhs) const
+void GMRESPOISSON::apply (MultiFab& lhs, MultiFab& rhs) const
 {
     // apply matrix to rhs for output lhs
     rhs.FillBoundary(m_geom.periodicity());
@@ -171,8 +159,7 @@ void GMRESPOISSONT<MF>::apply (MF& lhs, MF& rhs) const
 
 // applies preconditioner to rhs. If there is no preconditioner,
 // this function should do lhs = rhs.
-template <typename MF>
-void GMRESPOISSONT<MF>::precond (MF& lhs, MF const& rhs) const
+void GMRESPOISSON::precond (MultiFab& lhs, MultiFab const& rhs) const
 {
     if (m_use_precond) {
 
@@ -210,16 +197,13 @@ void GMRESPOISSONT<MF>::precond (MF& lhs, MF const& rhs) const
     }
 }
 
-template <typename MF>
-void GMRESPOISSONT<MF>::solve (MF& a_sol, MF const& a_rhs, RT a_tol_rel, RT a_tol_abs)
+void GMRESPOISSON::solve (MultiFab& a_sol, MultiFab const& a_rhs, RT a_tol_rel, RT a_tol_abs)
 {
     orig_rhs.define(m_ba,m_dm,1,0);
     MultiFab::Copy(orig_rhs,a_rhs,0,0,1,0);
     
     m_gmres.solve(a_sol, a_rhs, a_tol_rel, a_tol_abs);
 }
-
-using GMRESPOISSON = GMRESPOISSONT<MultiFab>;
 
 }
 
