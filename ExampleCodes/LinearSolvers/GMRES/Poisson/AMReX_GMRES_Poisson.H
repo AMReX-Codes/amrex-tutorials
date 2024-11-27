@@ -13,7 +13,7 @@ namespace amrex {
 class GMRESPOISSON
 {
 public:
-    using RT = amrex::Real; // typename MultiFab::RT; // double or float
+    using RT = amrex::Real; // double or float
     using GM = GMRES<MultiFab,GMRESPOISSON>;
 
     explicit GMRESPOISSON (const BoxArray& ba, const DistributionMapping& dm, const Geometry& geom);
