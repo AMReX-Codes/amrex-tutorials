@@ -201,7 +201,7 @@ void GMRESPOISSON::solve (MultiFab& a_sol, MultiFab const& a_rhs, RT a_tol_rel, 
 {
     orig_rhs.define(m_ba,m_dm,1,0);
     MultiFab::Copy(orig_rhs,a_rhs,0,0,1,0);
-    
+
     m_gmres.solve(a_sol, a_rhs, a_tol_rel, a_tol_abs);
 }
 
