@@ -1,0 +1,16 @@
+This tutorial provides an example of computing the kinetic energy spectrum
+of velocity.
+
+To run this tutorial, one can generate the input data first with the incflo
+code (https://github.com/AMReX-Fluids/incflo).
+
+    $ cd ../../../../
+    $ git clone https://github.com/AMReX-Fluids/AMReX-Hydro.git
+    $ git clone https://github.com/AMReX-Fluids/incflo.git
+    $ cd incflo/test_no_eb_3d
+    $ make -j
+    $ mpiexec -n 4 ./incflo3d.gnu.MPI.ex benchmark.taylor_green_vortices stop_time=0.1 amr.max_level=0 amr.n_cell="64 64 64" geometry.prob_hi="1.0 1.0 1.0"
+    $ # Assuming plt00030 is the plotfile you want to use.
+    $ cp -r plt00030 ../../amrex-tutorials/ExampleCodes/FFT/EnergySpectrum/plot
+    $ cd ../../amrex-tutorials/ExampleCodes/FFT/EnergySpectrum
+
