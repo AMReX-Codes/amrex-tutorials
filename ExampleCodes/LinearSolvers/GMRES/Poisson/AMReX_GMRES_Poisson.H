@@ -162,35 +162,39 @@ void GMRESPOISSON::apply (MultiFab& lhs, MultiFab& rhs) const
 void GMRESPOISSON::precond (MultiFab& lhs, MultiFab const& rhs) const
 {
     if (m_use_precond) {
-
-        MultiFab rhs_tmp(m_ba,m_dm,1,1);
-        MultiFab::Copy(rhs_tmp,rhs,0,0,1,0);
-        rhs_tmp.FillBoundary(m_geom.periodicity());
-
         const GpuArray<Real, AMREX_SPACEDIM> dx = m_geom.CellSizeArray();
-
         amrex::Real fac = 0.;
-        for (int d=0; d<AMREX_SPACEDIM; ++d) fac -= 2./(dx[d]*dx[d]);
+        for (int d=0; d<AMREX_SPACEDIM; ++d) { fac -= 2./(dx[d]*dx[d]); }
 
-        for ( MFIter mfi(lhs,TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        MultiFab tmp(lhs.boxArray(), lhs.DistributionMap(), 1, 1);
+        auto const& tmp_ma = tmp.const_arrays();
+        auto const& rh_ma = rhs.const_arrays();
+        auto const& x_ma = lhs.arrays();
 
-            const Box& bx = mfi.tilebox();
-
-            const Array4<const Real> & orig_rhs_p = orig_rhs.array(mfi);
-            const Array4<const Real> & rhs_p = rhs_tmp.array(mfi);
-            const Array4<      Real> & lhs_p = lhs.array(mfi);
-
-            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-            {
-                lhs_p(i,j,k) = ( rhs_p(i+1,j,k) - 2.*rhs_p(i,j,k) + rhs_p(i-1,j,k) ) / (dx[0]*dx[0])
-                             + ( rhs_p(i,j+1,k) - 2.*rhs_p(i,j,k) + rhs_p(i,j-1,k) ) / (dx[1]*dx[1])
+        const int niters = 8;
+        for (int iter = 0; iter < niters; ++iter) {
+            if (iter == 0) {
+                ParallelFor(lhs, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+                {
+                    x_ma[b](i,j,k) = rh_ma[b](i,j,k) / fac;
+                });
+            } else {
+                MultiFab::Copy(tmp, lhs, 0, 0, 1, 0);
+                tmp.FillBoundary(m_geom.periodicity());
+                ParallelFor(lhs, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+                {
+                    auto const& phi = tmp_ma[b];
+                    auto ax = ( phi(i+1,j,k) - 2.*phi(i,j,k) + phi(i-1,j,k) ) / (dx[0]*dx[0])
+                            + ( phi(i,j+1,k) - 2.*phi(i,j,k) + phi(i,j-1,k) ) / (dx[1]*dx[1])
 #if (AMREX_SPACEDIM == 3)
-                             + ( rhs_p(i,j,k+1) - 2.*rhs_p(i,j,k) + rhs_p(i,j,k-1) ) / (dx[2]*dx[2])
+                            + ( phi(i,j,k+1) - 2.*phi(i,j,k) + phi(i,j,k-1) ) / (dx[2]*dx[2])
 #endif
-                    ;
-
-                lhs_p(i,j,k) = rhs_p(i,j,k) + (orig_rhs_p(i,j,k) - lhs_p(i,j,k) ) / fac;
-            });
+                        ;
+                    auto res = rh_ma[b](i,j,k) - ax;
+                    x_ma[b](i,j,k) += res / fac * Real(2./3.); // 2/3: weighted jacobi
+                });
+            }
+            Gpu::streamSynchronize();
         }
     } else {
         MultiFab::Copy(lhs,rhs,0,0,1,0);
