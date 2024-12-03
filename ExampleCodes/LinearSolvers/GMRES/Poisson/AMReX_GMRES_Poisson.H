@@ -9,6 +9,9 @@ namespace amrex {
 
 /**
  * \brief Solve Poisson's equation using amrex GMRES class
+ *
+ * Refer to comments in amrex/Src/LinearSolvers/AMReX_GMRES.H
+ * for details on function implementation requirements
  */
 class GMRESPOISSON
 {
@@ -72,9 +75,6 @@ private:
     DistributionMapping m_dm;
     Geometry m_geom;
     bool m_use_precond;
-
-    // store the original RHS needed for Jacobi preconditioner
-    MultiFab orig_rhs;
 };
 
 GMRESPOISSON::GMRESPOISSON (const BoxArray& ba, const DistributionMapping& dm, const Geometry& geom)
@@ -157,44 +157,48 @@ void GMRESPOISSON::apply (MultiFab& lhs, MultiFab& rhs) const
 
 }
 
-// applies preconditioner to rhs. If there is no preconditioner,
-// this function should do lhs = rhs.
 void GMRESPOISSON::precond (MultiFab& lhs, MultiFab const& rhs) const
 {
     if (m_use_precond) {
+
+        // in the preconditioner we use right-preconditioning to solve
+        // lhs = P^inv(rhs), where P^inv approximates A^inv
+        // Here we use Jacobi iterations to represent P^inv with an initial guess of lhs=0
+
         const GpuArray<Real, AMREX_SPACEDIM> dx = m_geom.CellSizeArray();
+
         amrex::Real fac = 0.;
         for (int d=0; d<AMREX_SPACEDIM; ++d) { fac -= 2./(dx[d]*dx[d]); }
 
-        MultiFab tmp(lhs.boxArray(), lhs.DistributionMap(), 1, 1);
+        MultiFab tmp(m_ba, m_dm, 1, 1);
         auto const& tmp_ma = tmp.const_arrays();
-        auto const& rh_ma = rhs.const_arrays();
-        auto const& x_ma = lhs.arrays();
+        auto const& rhs_ma = rhs.const_arrays();
+        auto const& lhs_ma = lhs.arrays();
+
+        lhs.setVal(0.);
 
         const int niters = 8;
         for (int iter = 0; iter < niters; ++iter) {
-            if (iter == 0) {
-                ParallelFor(lhs, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
-                {
-                    x_ma[b](i,j,k) = rh_ma[b](i,j,k) / fac;
-                });
-            } else {
-                MultiFab::Copy(tmp, lhs, 0, 0, 1, 0);
-                tmp.FillBoundary(m_geom.periodicity());
-                ParallelFor(lhs, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
-                {
-                    auto const& phi = tmp_ma[b];
-                    auto ax = ( phi(i+1,j,k) - 2.*phi(i,j,k) + phi(i-1,j,k) ) / (dx[0]*dx[0])
-                            + ( phi(i,j+1,k) - 2.*phi(i,j,k) + phi(i,j-1,k) ) / (dx[1]*dx[1])
+
+            MultiFab::Copy(tmp, lhs, 0, 0, 1, 0);
+            tmp.FillBoundary(m_geom.periodicity());
+
+            ParallelFor(lhs, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+            {
+                auto const& tmp_ptr = tmp_ma[b];
+                auto ax = ( tmp_ptr(i+1,j,k) - 2.*tmp_ptr(i,j,k) + tmp_ptr(i-1,j,k) ) / (dx[0]*dx[0])
+                        + ( tmp_ptr(i,j+1,k) - 2.*tmp_ptr(i,j,k) + tmp_ptr(i,j-1,k) ) / (dx[1]*dx[1])
 #if (AMREX_SPACEDIM == 3)
-                            + ( phi(i,j,k+1) - 2.*phi(i,j,k) + phi(i,j,k-1) ) / (dx[2]*dx[2])
+                        + ( tmp_ptr(i,j,k+1) - 2.*tmp_ptr(i,j,k) + tmp_ptr(i,j,k-1) ) / (dx[2]*dx[2])
 #endif
-                        ;
-                    auto res = rh_ma[b](i,j,k) - ax;
-                    x_ma[b](i,j,k) += res / fac * Real(2./3.); // 2/3: weighted jacobi
-                });
-            }
+                    ;
+                auto res = rhs_ma[b](i,j,k) - ax;
+
+                lhs_ma[b](i,j,k) += res / fac * Real(2./3.); // 2/3: weighted jacobi
+
+            });
             Gpu::streamSynchronize();
+
         }
     } else {
         MultiFab::Copy(lhs,rhs,0,0,1,0);
@@ -203,9 +207,6 @@ void GMRESPOISSON::precond (MultiFab& lhs, MultiFab const& rhs) const
 
 void GMRESPOISSON::solve (MultiFab& a_sol, MultiFab const& a_rhs, RT a_tol_rel, RT a_tol_abs)
 {
-    orig_rhs.define(m_ba,m_dm,1,0);
-    MultiFab::Copy(orig_rhs,a_rhs,0,0,1,0);
-
     m_gmres.solve(a_sol, a_rhs, a_tol_rel, a_tol_abs);
 }
 
