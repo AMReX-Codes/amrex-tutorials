@@ -26,6 +26,8 @@ Step-by-step instructions for configuring AMReX to use HYPRE for this example ar
 
 ``ABecLaplacian_F`` demonstrates how to solve with cell-centered data using the Fortran interfaces.
 
+``GMRES/Poisson`` demonstrates how to solve the Poisson equation using GMRES with Jacobi preconditioning.
+
 ``NodalPoisson`` demonstrates how to set up and solve a variable coefficient Poisson equation
 with the rhs and solution data on nodes.
 
