@@ -2,10 +2,11 @@
  * A simplified usage of the AMReX GMRES class
  */
 
+#include "GMRES_Poisson.H"
+
 #include <AMReX.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
-#include <AMReX_GMRES_Poisson.H>
 
 int main (int argc, char* argv[])
 {
@@ -112,7 +113,7 @@ int main (int argc, char* argv[])
 
     WriteSingleLevelPlotfile("rhs", rhs, {"rhs"}, geom, 0., 0);
 
-    amrex::GMRESPOISSON gmres_poisson(ba,dm,geom);
+    GMRESPOISSON gmres_poisson(ba,dm,geom);
 
     // initial guess
     phi.setVal(0.);
@@ -127,5 +128,3 @@ int main (int argc, char* argv[])
     amrex::Finalize();
     return 0;
 }
-
-
