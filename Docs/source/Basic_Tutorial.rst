@@ -72,7 +72,8 @@ that see the Building_libamrex chapter of the amrex docs here. `here <https://am
 
 The HeatEquation examples solve a 2D or 3D (determined by how you set DIM in the GNUmakefile)
 heat equation explicitly on a domain-decomposed mesh.  This example is described in detail in
-the Basics_ chapter of the amrex Documentation
+the Basics_ chapter of the amrex Documentation.
+There is also an example code, HeadEquation_Restart, that shows how to add restart capability to a time-advancement code.
 
 .. _Basics: https://amrex-codes.github.io/amrex/docs_html/Basics.html
 
