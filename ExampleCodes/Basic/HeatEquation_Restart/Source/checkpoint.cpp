@@ -32,7 +32,7 @@ void WriteCheckpoint(const int& step,
     // ---- after all directories are built
     // ---- ParallelDescriptor::IOProcessor() creates the directories
     PreBuildDirectorHierarchy(checkpointname, "Level_", nlevels, true);
-    
+
     VisMF::IO_Buffer io_buffer(VisMF::IO_Buffer_Size);
 
     // write Header file to store time and BoxArray
@@ -56,7 +56,7 @@ void WriteCheckpoint(const int& step,
 
         // write out time
         HeaderFile << time << "\n";
-        
+
         // write the BoxArray
         ba.writeOn(HeaderFile);
         HeaderFile << '\n';

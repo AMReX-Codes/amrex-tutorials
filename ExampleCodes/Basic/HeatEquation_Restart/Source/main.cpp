@@ -42,7 +42,7 @@ void main_main ()
     // restart = -1 --> start new simulation
     // restart >  0 --> restart from step=restart
     int restart;
-    
+
     // inputs parameters
     {
         // ParmParse is way of reading inputs from the inputs file
@@ -78,7 +78,7 @@ void main_main ()
         // restart >  0 --> restart from step=restart
         restart = -1;
         pp.query("restart",restart);
-        
+
     }
 
     // **********************************
@@ -108,7 +108,7 @@ void main_main ()
 
     // extract dx from the geometry object
     GpuArray<Real,AMREX_SPACEDIM> dx = geom.CellSizeArray();
-    
+
     // create a BoxArray and DistributionMapping
     // ba will contain a list of boxes that cover the domain
     // if restarting, BoxArray is read in from the checkpoint directory
@@ -132,7 +132,7 @@ void main_main ()
 
     // start a new simulation
     if (restart <= 0) {
-    
+
         // Initialize the boxarray "ba" from the single box "domain"
         ba.define(domain);
 
@@ -148,7 +148,7 @@ void main_main ()
 
         // time = starting time in the simulation
         time = 0.0;
-        
+
         start_step = 1;
 
         // **********************************
