@@ -63,7 +63,8 @@ else()
 
   # Add mpi
   find_package(MPI REQUIRED)
-  target_link_libraries(AMReX::amrex INTERFACE ${MPI_LIBRARIES})
+  get_target_property(AMReX_ALIASED AMReX::amrex ALIASED_TARGET)
+  target_link_libraries(${AMReX_ALIASED} INTERFACE ${MPI_LIBRARIES})
 
 endif()
 
