@@ -133,10 +133,10 @@ int main (int argc, char* argv[])
             Real x = prob_lo_x + (i+0.5) * dx[0];
             Real y = prob_lo_y + (j+0.5) * dx[1];
 #if (AMREX_SPACEDIM == 2)
-            phi_ptr(i,j,k) = std::exp(-10.*((x-cen_x)*(x-cen_x)+(y-cen_y)*(y-cen_y)));
+            phi_ptr(i,j,k) = std::exp(-500.*((x-cen_x)*(x-cen_x)+(y-cen_y)*(y-cen_y)));
 #elif (AMREX_SPACEDIM == 3)
             Real z = prob_lo_z + (k+0.5) * dx[2];
-            phi_ptr(i,j,k) = std::exp(-10.*((x-cen_x)*(x-cen_x)+(y-cen_y)*(y-cen_y)+(z-cen_z)*(z-cen_z)));
+            phi_ptr(i,j,k) = std::exp(-500.*((x-cen_x)*(x-cen_x)+(y-cen_y)*(y-cen_y)+(z-cen_z)*(z-cen_z)));
 #endif
 
         });
