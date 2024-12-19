@@ -179,8 +179,7 @@ int main (int argc, char* argv[])
     Real time = 0.;
     int step = 0;
 
-    Box cdomain = geom.Domain();
-    cdomain.setBig(0,cdomain.length(0)/2);
+    Box cdomain = cba.minimalBox();
     Geometry cgeom(cdomain, real_box, CoordSys::cartesian, is_periodic);
 
     // arguments
