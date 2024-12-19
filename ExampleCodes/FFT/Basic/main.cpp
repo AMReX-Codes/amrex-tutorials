@@ -29,10 +29,10 @@ int main (int argc, char* argv[])
 
     // physical dimensions of the domain
     Real prob_lo_x = 0.;
-    Real prob_lo_y = 0.;
-    Real prob_lo_z = 0.;
     Real prob_hi_x = 1.;
+    Real prob_lo_y = 0.;
     Real prob_hi_y = 1.;
+    Real prob_lo_z = 0.;
     Real prob_hi_z = 1.;
 
     // **********************************
@@ -47,25 +47,33 @@ int main (int argc, char* argv[])
 
         pp.get("n_cell_x",n_cell_x);
         pp.get("n_cell_y",n_cell_y);
+#if (AMREX_SPACEDIM == 3)
         pp.get("n_cell_z",n_cell_z);
+#endif
 
         pp.get("max_grid_size_x",max_grid_size_x);
         pp.get("max_grid_size_y",max_grid_size_y);
+#if (AMREX_SPACEDIM == 3)
         pp.get("max_grid_size_z",max_grid_size_z);
+#endif
 
         pp.query("prob_lo_x",prob_lo_x);
-        pp.query("prob_lo_y",prob_lo_y);
-        pp.query("prob_lo_z",prob_lo_z);
-
         pp.query("prob_hi_x",prob_hi_x);
+        pp.query("prob_lo_y",prob_lo_y);
         pp.query("prob_hi_y",prob_hi_y);
+#if (AMREX_SPACEDIM == 3)
+        pp.query("prob_lo_z",prob_lo_z);
         pp.query("prob_hi_z",prob_hi_z);
+#endif
+
     }
 
     // Determine the domain length in each direction
-    Real L_x = std::abs(prob_hi_x - prob_lo_x);
-    Real L_y = std::abs(prob_hi_y - prob_lo_y);
-    Real L_z = std::abs(prob_hi_z - prob_lo_z);
+    Real cen_x = (prob_hi_x - prob_lo_x) / 2.;
+    Real cen_y = (prob_hi_y - prob_lo_y) / 2.;
+#if (AMREX_SPACEDIM == 3)
+    Real cen_z = (prob_hi_z - prob_lo_z) / 2.;
+#endif
 
     // define lower and upper indices of domain
     IntVect dom_lo(AMREX_D_DECL(         0,          0,          0));
@@ -122,11 +130,14 @@ int main (int argc, char* argv[])
             // SET VALUES FOR EACH CELL
             // **********************************
 
-            Real x = (i+0.5) * dx[0];
-            Real y = (AMREX_SPACEDIM>=2) ? (j+0.5) * dx[1] : 0.;
-            Real z = (AMREX_SPACEDIM==3) ? (k+0.5) * dx[2] : 0.;
-
-            phi_ptr(i,j,k) = std::exp(-10.*((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5)));
+            Real x = prob_lo_x + (i+0.5) * dx[0];
+            Real y = prob_lo_y + (j+0.5) * dx[1];
+#if (AMREX_SPACEDIM == 2)
+            phi_ptr(i,j,k) = std::exp(-500.*((x-cen_x)*(x-cen_x)+(y-cen_y)*(y-cen_y)));
+#elif (AMREX_SPACEDIM == 3)
+            Real z = prob_lo_z + (k+0.5) * dx[2];
+            phi_ptr(i,j,k) = std::exp(-500.*((x-cen_x)*(x-cen_x)+(y-cen_y)*(y-cen_y)+(z-cen_z)*(z-cen_z)));
+#endif
 
         });
     }
@@ -161,17 +172,14 @@ int main (int argc, char* argv[])
     my_fft.backward(phi_after);
 
     // scale phi_after by 1/n_cells so it matches the original phi
-    long n_cells = n_cell_x;
-    if (AMREX_SPACEDIM >= 2) n_cells *= n_cell_y;
-    if (AMREX_SPACEDIM >= 3) n_cells *= n_cell_z;
+    long n_cells = (AMREX_SPACEDIM == 2) ? n_cell_x*n_cell_y : n_cell_x*n_cell_y*n_cell_z;
     phi_after.mult(1./n_cells);
 
     // time and step are dummy variables required to WriteSingleLevelPlotfile
     Real time = 0.;
     int step = 0;
 
-    Box cdomain = geom.Domain();
-    cdomain.setBig(0,cdomain.length(0)/2);
+    Box cdomain = cba.minimalBox();
     Geometry cgeom(cdomain, real_box, CoordSys::cartesian, is_periodic);
 
     // arguments
