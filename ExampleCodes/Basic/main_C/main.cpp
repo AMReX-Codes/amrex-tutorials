@@ -99,12 +99,21 @@ void test_parameters ()
         pp.getarr("an_int_array", ia);
         pp.get("a_real_scalar", r);
         pp.get("a_string", s);
-        amrex::Print() << "an_int_array = ";
+        amrex::Print() << "a_prefix.an_int_array = ";
         for (auto x : ia) {
             amrex::Print() << x << " ";
         }
         amrex::Print() << "\n";
         amrex::Print() << "a_prefix.a_real_scalar = " << r << "\n"
                        << "a_prefix.a_string = " << s << "\n";
+    }
+
+    {
+        amrex::ParmParse pp;
+        amrex::Print() << "Inputs that start with 'a_prefix':\n";
+        auto entr = pp.getEntries ("a_prefix");
+        for (auto && v : entr) {
+            amrex::Print() << " " << v << "\n";
+        }
     }
 }
