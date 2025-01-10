@@ -65,11 +65,6 @@ else()
   message("-- Searching for AMReX install directory at ${AMReX_ROOT}")
   find_package(AMReX PATHS ${AMReX_ROOT}/lib/cmake/AMReX/AMReXConfig.cmake)
 
-  # Add mpi
-  find_package(MPI REQUIRED)
-  get_target_property(AMReX_ALIASED AMReX::amrex ALIASED_TARGET)
-  target_link_libraries(${AMReX_ALIASED} INTERFACE ${MPI_LIBRARIES})
-
 endif()
 
 target_link_libraries(HelloWorld PRIVATE AMReX::amrex)
