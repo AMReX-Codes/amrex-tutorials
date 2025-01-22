@@ -149,7 +149,7 @@ def CreateCoProcessor():
 
       # get color legend/bar for phiLUT in view renderView1
       phiLUTColorBar = GetScalarBar(phiLUT, renderView1)
-      phiLUTColorBar.WindowLocation = 'AnyLocation'
+      phiLUTColorBar.WindowLocation = 'Any Location'
       phiLUTColorBar.Position = [0.7951562900333077, 0.0840151515151517]
       phiLUTColorBar.Title = 'phi'
       phiLUTColorBar.ComponentTitle = ''

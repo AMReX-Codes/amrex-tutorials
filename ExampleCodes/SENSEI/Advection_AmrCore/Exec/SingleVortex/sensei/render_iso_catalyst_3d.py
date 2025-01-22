@@ -138,7 +138,7 @@ slice1Display.OpacityTransferFunction.Points = [0.0, 0.0, 0.5, 0.0, 6.0, 1.0, 0.
 # get color legend/bar for phiLUT in view renderView1
 phiLUTColorBar = GetScalarBar(phiLUT, renderView1)
 phiLUTColorBar.Orientation = 'Horizontal'
-phiLUTColorBar.WindowLocation = 'AnyLocation'
+phiLUTColorBar.WindowLocation = 'Any Location'
 phiLUTColorBar.Position = [0.4079687499999999, 0.09624999999999999]
 phiLUTColorBar.Title = 'phi'
 phiLUTColorBar.ComponentTitle = ''
