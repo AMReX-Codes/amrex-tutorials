@@ -32,7 +32,7 @@ Source code tree for the HeatEquation_EX1_C example
         ``AmrCore``, ``LinearSolvers``, etc.  In this tutorial the only source
         code directory we need is ``Base``.
 
-    amrex-tutorials/GuidedTutorials/HeatEquation_EX1_C/Source
+    amrex-tutorials/ExampleCodes/Basic/HeatEquation_EX1_C/Source
         Contains the following source code specific to this tutorial:
 
         #. ``Make.package``: lists the source code files
@@ -43,7 +43,7 @@ Source code tree for the HeatEquation_EX1_C example
         #. ``myfunc.H``: header file for C++ functions
         #. ``mykernel.H``: kernels functions called by ``advance`` and ``init_phi``.
 
-    amrex-tutorials/GuidedTutorials/HeatEquation_EX1_C/Exec
+    amrex-tutorials/ExampleCodes/Basic/HeatEquation_EX1_C/Exec
         This is where you build the code with make.  There is a GNUmakefile
         and inputs file.
 
