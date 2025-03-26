@@ -22,6 +22,8 @@ int main (int argc, char* argv[])
 
         cMultiFab cx, cy, cz;
         {
+            // Note that the complex Hermitian output array Y has (nx/2+1,ny,nz) elements.
+	    // Y[nx-i,j,k] = Y[i,j,k]*
             FFT::R2C<Real,FFT::Direction::forward> fft(geom.Domain());
             auto const& [ba, dm] = fft.getSpectralDataLayout();
             cx.define(ba,dm,1,0);
@@ -44,14 +46,16 @@ int main (int argc, char* argv[])
         auto const& cxa = cx.const_arrays();
         auto const& cya = cy.const_arrays();
         auto const& cza = cz.const_arrays();
-        ParallelFor(cx, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+        ParallelFor(vx, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
         {
-            int ki = i;
+            int ki = (i <= nx/2) ? i : nx-i;
             int kj = (j <= ny/2) ? j : ny-j;
             int kk = (k <= nz/2) ? k : nz-k;
             Real d = std::sqrt(Real(ki*ki+kj*kj+kk*kk));
             int di = int(std::round(d));
             if (di < nk) {
+	        // Hermitian symmetry Y[nx-i,j,k] = Y[i,j,k]*
+	        i = (i <= nx/2) ? i : nx-i;
                 Real value = amrex::norm(cxa[b](i,j,k))
                     +        amrex::norm(cya[b](i,j,k))
                     +        amrex::norm(cza[b](i,j,k));
