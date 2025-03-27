@@ -46,19 +46,22 @@ int main (int argc, char* argv[])
         auto const& cxa = cx.const_arrays();
         auto const& cya = cy.const_arrays();
         auto const& cza = cz.const_arrays();
-        ParallelFor(vx, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+        ParallelFor(cx, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
         {
-            int ki = (i <= nx/2) ? i : nx-i;
+            int ki = i;
             int kj = (j <= ny/2) ? j : ny-j;
             int kk = (k <= nz/2) ? k : nz-k;
             Real d = std::sqrt(Real(ki*ki+kj*kj+kk*kk));
             int di = int(std::round(d));
             if (di < nk) {
-	        // Hermitian symmetry Y[nx-i,j,k] = Y[i,j,k]*
-	        i = (i <= nx/2) ? i : nx-i;
                 Real value = amrex::norm(cxa[b](i,j,k))
                     +        amrex::norm(cya[b](i,j,k))
                     +        amrex::norm(cza[b](i,j,k));
+		// Account for Hermitian symmetry in x-direction
+	        // Hermitian symmetry Y[nx-i,j,k] = Y[i,j,k]*
+                if (i > 0) { // Avoid double-counting at kx = 0
+                    value *= 2.0; // Multiply by 2 because we have kx and -kx
+                }
                 HostDevice::Atomic::Add(pke+di, value);
             }
         });
