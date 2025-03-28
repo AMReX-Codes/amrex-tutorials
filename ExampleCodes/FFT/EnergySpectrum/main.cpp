@@ -59,8 +59,9 @@ int main (int argc, char* argv[])
                     +        amrex::norm(cza[b](i,j,k));
 		// Account for Hermitian symmetry in x-direction
 	        // Hermitian symmetry Y[nx-i,j,k] = Y[i,j,k]*
-                if (i > 0) { // Avoid double-counting at kx = 0
-                    value *= 2.0; // Multiply by 2 because we have kx and -kx
+                if ((i > 0) && (2*i != nx)) {
+		    // Multiply by 2 because we have +ki and -ki
+                    value *= 2.0;
                 }
                 HostDevice::Atomic::Add(pke+di, value);
             }
