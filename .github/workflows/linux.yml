@@ -7,7 +7,7 @@ jobs:
   # Build all tutorials
   tutorials_build:
     name: GNU@7.5 C++14 [tutorials]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
   # Build all tutorials
   tutorials_cxx20:
     name: GNU@10.3 C++20 OMP [tutorials]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-Werror -Wno-error=deprecated-declarations -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v4
@@ -71,7 +71,7 @@ jobs:
 
   tutorials_clang:
     name: Clang@6.0 C++14 SP Particles DP Mesh Debug [tutorials]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v4
@@ -108,7 +108,7 @@ jobs:
   # Build all tutorials w/o MPI
   tutorials-nonmpi:
     name: GNU@7.5 C++14 NOMPI [tutorials]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v4
@@ -139,7 +139,7 @@ jobs:
   # Build all tutorials
   tutorials-nofortran:
     name: GNU@7.5 C++14 w/o Fortran [tutorials]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v4
@@ -168,12 +168,12 @@ jobs:
   # Build all tutorials with CUDA 11.0.2 (recent supported)
   tutorials-cuda11:
     name: CUDA@11.2 GNU@9.3.0 C++17 Release [tutorials]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-fno-operator-names"}
     steps:
     - uses: actions/checkout@v4
     - name: Dependencies
-      run: .github/workflows/dependencies/dependencies_nvcc11.sh
+      run: .github/workflows/dependencies/dependencies_nvcc.sh 12.6
     - name: Build & Install
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
@@ -202,7 +202,7 @@ jobs:
 
   tutorials-dpcpp:
     name: DPCPP GFortran@7.5 C++17 [tutorials]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-fno-operator-names"}
     steps:
     - uses: actions/checkout@v4
@@ -235,7 +235,7 @@ jobs:
 
   tutorials-hip:
     name: HIP ROCm GFortran@9.3 C++17 [tutorials]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     # Have to have -Wno-deprecated-declarations due to deprecated atomicAddNoRet
     # Have to have -Wno-gnu-zero-variadic-macro-arguments to avoid
     #    amrex/Src/Base/AMReX_GpuLaunchGlobal.H:15:5: error: must specify at least one argument for '...' parameter of variadic macro [-Werror,-Wgnu-zero-variadic-macro-arguments]
@@ -259,7 +259,7 @@ jobs:
         which clang++
         cmake --version
 
-        # "mpic++ --showme" forgets open-pal in Ubuntu 20.04 + OpenMPI 4.0.3
+        # "mpic++ --showme" forgets open-pal in Ubuntu 24.04 + OpenMPI 4.0.3
         #   https://bugs.launchpad.net/ubuntu/+source/openmpi/+bug/1941786
         #   https://github.com/open-mpi/ompi/issues/9317
         export LDFLAGS="-lopen-pal"
