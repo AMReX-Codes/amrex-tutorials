@@ -7,6 +7,7 @@ USE_OMP      = FALSE
 COMP         = gnu
 DIM          = 3
 USE_SUNDIALS = TRUE
+SUNDIALS_HOME ?= ../../../../../sundials/instdir
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
