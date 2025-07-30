@@ -4,20 +4,25 @@
 SUNDIALS and Time Integrators
 =============================
 
-This example code shows how to use the AMReX TimeIntegrator class
-with SUNDIALS backend for integration. It also include two example
-of AMReX native integrators, Forward Euler, and Explicit Runge Kutta.
-Each integration type can be chosen by selecting the corresponding
-inputs file:
+These example codes demonstrate how to use the AMReX TimeIntegrator class
+with SUNDIALS backend for integration.
 
-  - ``inputs_forward_euler`` -- Native AMReX Forward Euler integrator
+The first example code at ``amrex-tutorials/ExampleCodes/SUNDIALS/Single-Rate``
+solves the heat equation:
 
-  - ``inputs_rk3`` -- Native AMReX Explicit Runge Kutta
+.. math:: \frac{\partial\phi}{\partial t} = \nabla^2\phi.
 
-  - ``inputs_sundials_erk`` -- SUNDIALS backend
+The inputs file contains a template for single process time integration strategies.
+          
+The second example code at ``amrex-tutorials/ExampleCodes/SUNDIALS/Reaction-Diffusion``
+solves the reaction-diffusion equation, where :math:`R` and :math:`D` are
+user-supplied reaction and diffusion coefficients:
 
-Both Runge Kutta and SUNDIALS have additional options which can
-be set by modifying the inputs file. Please see each respective inputs
-file or `AMReX User Guide:Time Integration`_ for more details.
+.. math:: \frac{\partial\phi}{\partial t} = D \nabla^2\phi - R \phi.
+
+The inputs file contains a template for MRI approaches, where the diffusion process
+can be treated as a "fast" partition relative to the reaction process.
+Please see each respective inputs file or
+`AMReX User Guide:Time Integration`_ for more details.
 
 .. _`AMReX User Guide:Time Integration`: https://amrex-codes.github.io/amrex/docs_html/TimeIntegration_Chapter.html#
