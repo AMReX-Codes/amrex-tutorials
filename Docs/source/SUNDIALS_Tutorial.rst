@@ -13,7 +13,7 @@ solves the heat equation:
 .. math:: \frac{\partial\phi}{\partial t} = \nabla^2\phi.
 
 The inputs file contains a template for single process time integration strategies.
-          
+
 The second example code at ``amrex-tutorials/ExampleCodes/SUNDIALS/Reaction-Diffusion``
 solves the reaction-diffusion equation, where :math:`R` and :math:`D` are
 user-supplied reaction and diffusion coefficients:
