@@ -33,7 +33,9 @@ MyTest::solvePoisson ()
     LPInfo info;
     info.setAgglomeration(agglomeration);
     info.setConsolidation(consolidation);
+    info.setSemicoarsening(semicoarsening);
     info.setMaxCoarseningLevel(max_coarsening_level);
+    info.setMaxSemicoarseningLevel(max_semicoarsening_level);
 
     const Real tol_rel = 1.e-10;
     const Real tol_abs = 0.0;
@@ -273,7 +275,9 @@ MyTest::solveABecLaplacianInhomNeumann ()
     LPInfo info;
     info.setAgglomeration(agglomeration);
     info.setConsolidation(consolidation);
+    info.setSemicoarsening(semicoarsening);
     info.setMaxCoarseningLevel(max_coarsening_level);
+    info.setMaxSemicoarseningLevel(max_semicoarsening_level);
 
     const Real tol_rel = 1.e-10;
     const Real tol_abs = 0.0;
