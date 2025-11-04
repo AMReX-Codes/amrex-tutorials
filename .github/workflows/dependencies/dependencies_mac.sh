@@ -8,11 +8,8 @@
 set -eu -o pipefail
 
 brew update
-brew install gfortran || true
+brew install gcc@15 || true
 brew install libomp || true
-brew install open-mpi || true
+brew install --cc=gcc-15 open-mpi --build-from-source || true
 brew install ccache || true
 
-# verify installation
-gfortran-14 --version
-otool -L $(which gfortran-14)
