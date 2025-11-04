@@ -20,5 +20,5 @@ export F77=$FC
 export F90=$FC
 
 brew install libomp || true
-brew install open-mpi || true
+brew install open-mpi --build-from-source || true
 brew install ccache || true
