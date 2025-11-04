@@ -10,6 +10,6 @@ set -eu -o pipefail
 brew update
 brew install gcc@15 || true
 brew install libomp || true
-brew install --cc=gcc-15 open-mpi || true
+brew install --cc=gcc-15 open-mpi --build-from-source || true
 brew install ccache || true
 
