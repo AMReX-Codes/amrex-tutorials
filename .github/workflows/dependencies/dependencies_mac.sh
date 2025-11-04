@@ -8,17 +8,8 @@
 set -eu -o pipefail
 
 brew update
-brew install gfortran || true
-
-# verify installation
-gfortran-14 --version
-otool -L $(which gfortran-14)
-
-# make sure to install Open MPI with the correct Fortran compiler
-export FC=$(which gfortran-14)
-export F77=$FC
-export F90=$FC
-
+brew install gcc@15 || true
 brew install libomp || true
-brew install open-mpi --build-from-source || true
+brew install --cc=gcc-15 open-mpi || true
 brew install ccache || true
+
