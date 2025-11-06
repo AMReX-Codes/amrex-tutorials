@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.24)
 
 project( AMReX-Tutorials
    DESCRIPTION "Tutorials for the AMReX adaptive mesh refinement framework"
@@ -51,6 +51,14 @@ if( NOT DEFINED AMReX_DIR )
    set(AMReX_GIT_BRANCH "development" CACHE STRING "The AMReX branch to checkout")
    set(AMReX_INSTALL  "NO" CACHE INTERNAL "Disable install target for amrex")
 
+   if(AMReX_FORTRAN)
+      enable_language(Fortran)
+   endif ()
+
+   if(AMReX_GPU_BACKEND STREQUAL "CUDA")
+      enable_language(CUDA)
+   endif()
+
    include(FetchContent)
    set(FETCHCONTENT_QUIET OFF)  # Verbose ON
 
@@ -59,14 +67,14 @@ if( NOT DEFINED AMReX_DIR )
        GIT_TAG        ${AMReX_GIT_BRANCH}
        )
 
-   if(NOT ${amrex}_POPULATED)
-       FetchContent_Populate(amrex)
+if(NOT ${amrex}_POPULATED)
+   FetchContent_MakeAvailable(amrex)
 
-       list(APPEND CMAKE_MODULE_PATH ${amrex_SOURCE_DIR}/Tools/CMake)
+   list(APPEND CMAKE_MODULE_PATH ${amrex_SOURCE_DIR}/Tools/CMake)
 
-       # Load amrex options here so that they are
-       # available to the entire project
-       include(AMReXOptions)
+   # Load amrex options here so that they are
+   # available to the entire project
+   include(AMReXOptions)
 
 if( AMReX_SUNDIALS )
 if( NOT DEFINED SUNDIALS_DIR )
@@ -86,7 +94,7 @@ if( NOT DEFINED SUNDIALS_DIR )
        )
 
    if(NOT ${sundials}_POPULATED)
-       FetchContent_Populate(sundials)
+       FetchContent_MakeAvailable(sundials)
 #       set(SUNDIALS_DIR ${sundials_SOURCE_DIR})
    # Set build options for subproject
    set(EXAMPLES_ENABLE_C            OFF                        CACHE INTERNAL "" )
@@ -121,9 +129,6 @@ if( NOT DEFINED SUNDIALS_DIR )
    set(BUILD_CVODES                 OFF                        CACHE INTERNAL "" )
 endif ()
    list(APPEND CMAKE_MODULE_PATH ${sundials_SOURCE_DIR})
-
-#  Add  SUNDIALS sources to the build
-   add_subdirectory(${sundials_SOURCE_DIR})
 
    # This is to use the same target name uses by the sundials exported targets
    add_library(SUNDIALS::cvode      ALIAS sundials_cvode_static)
@@ -167,14 +172,7 @@ endif ()
 
        if(AMReX_GPU_BACKEND STREQUAL "CUDA")
           enable_language(CUDA)
-          # AMReX 21.06+ supports CUDA_ARCHITECTURES
-          if(CMAKE_VERSION VERSION_LESS 3.20)
-             include(AMReX_SetupCUDA)
-          endif()
        endif()
-
-       # Bring the populated content into the build
-       add_subdirectory(${amrex_SOURCE_DIR} ${amrex_BINARY_DIR})
    endif()
 else()
    message(STATUS "Using existing AMReX library")
@@ -184,10 +182,6 @@ else()
 
    if(AMReX_GPU_BACKEND STREQUAL "CUDA")
       enable_language(CUDA)
-      # AMReX 21.06+ supports CUDA_ARCHITECTURES
-      if(CMAKE_VERSION VERSION_LESS 3.20)
-         include(AMReX_SetupCUDA)
-      endif()
    endif()
 endif()
 
@@ -210,10 +204,8 @@ if(TUTORIAL_PYTHON)
            GIT_REPOSITORY ${pyAMReX_GIT_REPO}
            GIT_TAG        ${pyAMReX_GIT_BRANCH}
            )
-
        if(NOT fetchedpyamrex_POPULATED)
-           FetchContent_Populate(fetchedpyamrex)
-           add_subdirectory(${fetchedpyamrex_SOURCE_DIR} ${fetchedpyamrex_BINARY_DIR})
+           FetchContent_MakeAvailable(fetchedpyamrex)
        endif()
     endif()
 endif()
