@@ -96,7 +96,7 @@ InitParticles(const IntVect& a_num_particles_per_cell,
             }
         });
 
-        int num_to_add = Scan::ExclusiveSum(counts.size(), counts.data(), offsets.data()) // ;
+        int num_to_add = Scan::ExclusiveSum(counts.size(), counts.data(), offsets.data());
 
         auto& particle_tile = DefineAndReturnParticleTile(lev, mfi.index(), mfi.LocalTileIndex());
 
