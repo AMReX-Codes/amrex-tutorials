@@ -106,7 +106,7 @@ InitParticles(const IntVect& a_num_particles_per_cell,
 
         if (num_to_add == 0) continue;
 
-        auto ptd = particle_tile.getParticleTileData()
+        auto ptd = particle_tile.getParticleTileData();
 
         int procID = ParallelDescriptor::MyProc();
 
