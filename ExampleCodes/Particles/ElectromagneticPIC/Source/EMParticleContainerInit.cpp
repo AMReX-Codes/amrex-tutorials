@@ -67,14 +67,13 @@ InitParticles(const IntVect& a_num_particles_per_cell,
     {
         const Box& tile_box  = mfi.tilebox();
 
-        const auto lo = amrex::lbound(tile_box);
-        const auto hi = amrex::ubound(tile_box);
-
         Gpu::DeviceVector<unsigned int> counts(tile_box.numPts(), 0);
-        unsigned int* pcount = counts.dataPtr();
+        Array4<unsigned int> counts_arr {counts.dataPtr(), amrex::begin(tile_box),
+                                         amrex::end(tile_box), 1};
 
         Gpu::DeviceVector<unsigned int> offsets(tile_box.numPts());
-        unsigned int* poffset = offsets.dataPtr();
+        Array4<unsigned int> offsets_arr {offsets.dataPtr(), amrex::begin(tile_box),
+                                          amrex::end(tile_box), 1};
 
         amrex::ParallelFor(tile_box,
         [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
@@ -93,35 +92,13 @@ InitParticles(const IntVect& a_num_particles_per_cell,
                     y >= a_bounds.hi(1) || y < a_bounds.lo(1) ||
                     z >= a_bounds.hi(2) || z < a_bounds.lo(2) ) continue;
 
-                int ix = i - lo.x;
-                int iy = j - lo.y;
-                int iz = k - lo.z;
-                int nx = hi.x-lo.x+1;
-                int ny = hi.y-lo.y+1;
-                int nz = hi.z-lo.z+1;
-                unsigned int uix = amrex::min(nx-1,amrex::max(0,ix));
-                unsigned int uiy = amrex::min(ny-1,amrex::max(0,iy));
-                unsigned int uiz = amrex::min(nz-1,amrex::max(0,iz));
-                unsigned int cellid = (uix * ny + uiy) * nz + uiz;
-                pcount[cellid] += 1;
+                counts_arr(i, j, k) += 1;
             }
         });
 
-        Gpu::exclusive_scan(counts.begin(), counts.end(), offsets.begin());
+        int num_to_add = Scan::ExclusiveSum(counts.size(), counts.data(), offsets.data());
 
-        unsigned int last_offset;
-        unsigned int last_count;
-#ifdef AMREX_USE_GPU
-        Gpu::dtoh_memcpy(&last_offset,offsets.dataPtr()+tile_box.numPts()-1,sizeof(unsigned int));
-        Gpu::dtoh_memcpy(&last_count,counts.dataPtr()+tile_box.numPts()-1,sizeof(unsigned int));
-#else
-        std::memcpy(&last_offset,offsets.dataPtr()+tile_box.numPts()-1,sizeof(unsigned int)
-        std::memcpy(&last_count,counts.dataPtr()+tile_box.numPts()-1,sizeof(unsigned int)
-#endif
-        int num_to_add = last_offset + last_count;
-
-        auto& particles = GetParticles(lev);
-        auto& particle_tile = particles[std::make_pair(mfi.index(), mfi.LocalTileIndex())];
+        auto& particle_tile = DefineAndReturnParticleTile(lev, mfi.index(), mfi.LocalTileIndex());
 
         auto old_size = particle_tile.GetArrayOfStructs().size();
         auto new_size = old_size + num_to_add;
@@ -129,27 +106,14 @@ InitParticles(const IntVect& a_num_particles_per_cell,
 
         if (num_to_add == 0) continue;
 
-        ParticleType* pstruct = particle_tile.GetArrayOfStructs()().data();
-
-        auto arrdata = particle_tile.GetStructOfArrays().realarray();
+        auto ptd = particle_tile.getParticleTileData();
 
         int procID = ParallelDescriptor::MyProc();
 
         amrex::ParallelForRNG(tile_box,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
-            int ix = i - lo.x;
-            int iy = j - lo.y;
-            int iz = k - lo.z;
-            int nx = hi.x-lo.x+1;
-            int ny = hi.y-lo.y+1;
-            int nz = hi.z-lo.z+1;
-            unsigned int uix = amrex::min(nx-1,amrex::max(0,ix));
-            unsigned int uiy = amrex::min(ny-1,amrex::max(0,iy));
-            unsigned int uiz = amrex::min(nz-1,amrex::max(0,iz));
-            unsigned int cellid = (uix * ny + uiy) * nz + uiz;
-
-            int pidx = poffset[cellid] + old_size;
+            int pidx = offsets_arr(i, j, k) + old_size;
 
             for (int i_part=0; i_part<num_ppc;i_part++)
             {
@@ -179,24 +143,23 @@ InitParticles(const IntVect& a_num_particles_per_cell,
                     y >= a_bounds.hi(1) || y < a_bounds.lo(1) ||
                     z >= a_bounds.hi(2) || z < a_bounds.lo(2) ) continue;
 
-                ParticleType& p = pstruct[pidx];
-                p.id()   = pidx + 1;
-                p.cpu()  = procID;
-                p.pos(0) = x;
-                p.pos(1) = y;
-                p.pos(2) = z;
+                ptd.id(pidx) = pidx + 1;
+                ptd.cpu(pidx) = procID;
+                ptd.pos(0, pidx) = x;
+                ptd.pos(1, pidx) = y;
+                ptd.pos(2, pidx) = z;
 
-                arrdata[PIdx::ux  ][pidx] = u[0] * PhysConst::c;
-                arrdata[PIdx::uy  ][pidx] = u[1] * PhysConst::c;
-                arrdata[PIdx::uz  ][pidx] = u[2] * PhysConst::c;
-                arrdata[PIdx::w   ][pidx] = a_density * scale_fac;
-                arrdata[PIdx::Ex  ][pidx] = 0.0;
-                arrdata[PIdx::Ey  ][pidx] = 0.0;
-                arrdata[PIdx::Ez  ][pidx] = 0.0;
-                arrdata[PIdx::Bx  ][pidx] = 0.0;
-                arrdata[PIdx::By  ][pidx] = 0.0;
-                arrdata[PIdx::Bz  ][pidx] = 0.0;
-                arrdata[PIdx::ginv][pidx] = 0.0;
+                ptd.rdata(PIdx::ux  )[pidx] = u[0] * PhysConst::c;
+                ptd.rdata(PIdx::uy  )[pidx] = u[1] * PhysConst::c;
+                ptd.rdata(PIdx::uz  )[pidx] = u[2] * PhysConst::c;
+                ptd.rdata(PIdx::w   )[pidx] = a_density * scale_fac;
+                ptd.rdata(PIdx::Ex  )[pidx] = 0.0;
+                ptd.rdata(PIdx::Ey  )[pidx] = 0.0;
+                ptd.rdata(PIdx::Ez  )[pidx] = 0.0;
+                ptd.rdata(PIdx::Bx  )[pidx] = 0.0;
+                ptd.rdata(PIdx::By  )[pidx] = 0.0;
+                ptd.rdata(PIdx::Bz  )[pidx] = 0.0;
+                ptd.rdata(PIdx::ginv)[pidx] = 0.0;
 
                 ++pidx;
             }
