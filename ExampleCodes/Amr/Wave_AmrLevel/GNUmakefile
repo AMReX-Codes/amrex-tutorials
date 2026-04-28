@@ -16,8 +16,6 @@ BL_NO_FORT = TRUE
 # No Fortran probin file
 AMREX_NO_PROBINIT = TRUE
 
-CXXSTD=c++17
-
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
 include ./Make.package

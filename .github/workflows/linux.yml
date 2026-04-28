@@ -6,7 +6,7 @@ jobs:
 
   # Build all tutorials
   tutorials_build:
-    name: GNU@7.5 C++14 [tutorials]
+    name: GNU [tutorials]
     runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
@@ -35,14 +35,14 @@ jobs:
         python main.py
 
   # Build all tutorials
-  tutorials_cxx20:
-    name: GNU@10.3 C++20 OMP [tutorials]
+  tutorials_omp:
+    name: GNU OMP [tutorials]
     runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-Werror -Wno-error=deprecated-declarations -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v4
     - name: Dependencies
-      run: .github/workflows/dependencies/dependencies_gcc10.sh
+      run: .github/workflows/dependencies/dependencies.sh
     - name: Build & Install
       run: |
         cd ExampleCodes
@@ -55,11 +55,7 @@ jobs:
             -DAMReX_FORTRAN=ON          \
             -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON               \
-            -DTUTORIAL_PYTHON=ON        \
-            -DCMAKE_CXX_STANDARD=20     \
-            -DCMAKE_C_COMPILER=$(which gcc-10)              \
-            -DCMAKE_CXX_COMPILER=$(which g++-10)            \
-            -DCMAKE_Fortran_COMPILER=$(which mpif90)
+            -DTUTORIAL_PYTHON=ON
         cmake --build build -j 2
         cmake --build build -j 2 --target pyamrex_pip_install
     - name: Run Python
@@ -70,13 +66,13 @@ jobs:
         python main.py
 
   tutorials_clang:
-    name: Clang@6.0 C++14 SP Particles DP Mesh Debug [tutorials]
+    name: Clang SP Particles DP Mesh Debug [tutorials]
     runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v4
     - name: Dependencies
-      run: .github/workflows/dependencies/dependencies_clang6.sh
+      run: .github/workflows/dependencies/dependencies_clang.sh
     - name: Build & Install
       run: |
         cd ExampleCodes
@@ -92,7 +88,6 @@ jobs:
             -DAMReX_PRECISION=DOUBLE                  \
             -DAMReX_PARTICLES_PRECISION=SINGLE        \
             -DTUTORIAL_PYTHON=ON          \
-            -DCMAKE_CXX_STANDARD=14                   \
             -DCMAKE_C_COMPILER=$(which clang)         \
             -DCMAKE_CXX_COMPILER=$(which clang++)     \
             -DCMAKE_Fortran_COMPILER=$(which gfortran)
@@ -107,7 +102,7 @@ jobs:
 
   # Build all tutorials w/o MPI
   tutorials-nonmpi:
-    name: GNU@7.5 C++14 NOMPI [tutorials]
+    name: GNU NOMPI [tutorials]
     runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
@@ -138,13 +133,13 @@ jobs:
 
   # Build all tutorials
   tutorials-nofortran:
-    name: GNU@7.5 C++14 w/o Fortran [tutorials]
+    name: GNU w/o Fortran [tutorials]
     runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v4
     - name: Dependencies
-      run: .github/workflows/dependencies/dependencies_nofortran.sh
+      run: .github/workflows/dependencies/dependencies.sh
     - name: Build & Install
       run: |
         cd ExampleCodes
@@ -165,9 +160,9 @@ jobs:
         cd ../HeatEquation/Source/
         python main.py
 
-  # Build all tutorials with CUDA 11.0.2 (recent supported)
-  tutorials-cuda11:
-    name: CUDA@11.2 GNU@9.3.0 C++17 Release [tutorials]
+  # Build all tutorials with CUDA
+  tutorials-cuda:
+    name: CUDA Release [tutorials]
     runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-fno-operator-names"}
     steps:
@@ -192,8 +187,6 @@ jobs:
             -DCMAKE_CXX_COMPILER=$(which g++)            \
             -DCMAKE_CUDA_HOST_COMPILER=$(which g++)      \
             -DCMAKE_Fortran_COMPILER=$(which gfortran)   \
-            -DCMAKE_CUDA_STANDARD=17                     \
-            -DCMAKE_CXX_STANDARD=17                      \
             -DAMReX_CUDA_ARCH=8.0                        \
             -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
             -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
@@ -201,7 +194,7 @@ jobs:
         cmake --build build -j 2
 
   tutorials-dpcpp:
-    name: DPCPP GFortran@7.5 C++17 [tutorials]
+    name: DPCPP GFortran [tutorials]
     runs-on: ubuntu-24.04
     env: {CXXFLAGS: "-fno-operator-names"}
     steps:
@@ -216,8 +209,6 @@ jobs:
         cd ExampleCodes
         cmake -S . -B build                                \
             -DCMAKE_CXX_COMPILER_ID="Clang"                \
-            -DCMAKE_CXX_COMPILER_VERSION=12.0              \
-            -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
             -DCMAKE_VERBOSE_MAKEFILE=ON                    \
             -DAMReX_LINEAR_SOLVERS=ON     \
             -DAMReX_FORTRAN=ON          \
@@ -229,12 +220,9 @@ jobs:
             -DCMAKE_CXX_COMPILER=$(which icpx)            \
             -DCMAKE_Fortran_COMPILER=$(which gfortran)
         cmake --build build --parallel 2
-    # note: setting the CXX compiler ID is a work-around for
-    # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
-    # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
 
   tutorials-hip:
-    name: HIP ROCm GFortran@9.3 C++17 [tutorials]
+    name: HIP ROCm GFortran [tutorials]
     runs-on: ubuntu-24.04
     # Have to have -Wno-deprecated-declarations due to deprecated atomicAddNoRet
     # Have to have -Wno-gnu-zero-variadic-macro-arguments to avoid
@@ -275,7 +263,6 @@ jobs:
             -DAMReX_GPU_BACKEND=HIP                       \
             -DAMReX_AMD_ARCH=gfx908                       \
             -DCMAKE_C_COMPILER=$(which clang)             \
-            -DCMAKE_CXX_COMPILER=$(which clang++)         \
-            -DCMAKE_CXX_STANDARD=17
+            -DCMAKE_CXX_COMPILER=$(which clang++)
         cmake --build build_nofortran -j 2
 
