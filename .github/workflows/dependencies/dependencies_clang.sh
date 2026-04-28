@@ -14,9 +14,8 @@ echo 'Acquire::Retries "3";' | sudo tee /etc/apt/apt.conf.d/80-retries
 
 sudo apt-get update
 
-sudo apt-get install -y --no-install-recommends\
-    build-essential \
-    libfftw3-dev    \
-    g++ gfortran    \
-    libopenmpi-dev  \
-    openmpi-bin
+sudo apt-get install -y --no-install-recommends \
+    build-essential      \
+    libfftw3-dev         \
+    gfortran             \
+    clang-$1

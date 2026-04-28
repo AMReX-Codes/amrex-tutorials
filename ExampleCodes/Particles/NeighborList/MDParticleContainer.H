@@ -23,7 +23,7 @@ public:
                          const amrex::DistributionMapping & a_dmap,
                          const amrex::BoxArray            & a_ba,
                          int                                a_numcells)
-        : NeighborParticleContainer<PIdx::ncomps, 0>(a_geom, a_dmap, a_ba, a_numcells)
+        : amrex::NeighborParticleContainer<PIdx::ncomps, 0>(a_geom, a_dmap, a_ba, a_numcells)
     {}
 
     void InitParticles (const amrex::IntVect& a_num_particles_per_cell,
