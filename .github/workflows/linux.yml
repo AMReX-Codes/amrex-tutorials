@@ -210,8 +210,6 @@ jobs:
         cmake -S . -B build                                \
             -DCMAKE_VERBOSE_MAKEFILE=ON                    \
             -DAMReX_LINEAR_SOLVERS=ON     \
-            -DAMReX_FORTRAN=ON          \
-            -DAMReX_FORTRAN_INTERFACES=ON \
             -DAMReX_EB=ON                 \
             -DAMReX_PARTICLES=ON                           \
             -DAMReX_GPU_BACKEND=SYCL                       \
