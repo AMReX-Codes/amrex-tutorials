@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   # Build all tutorials
   tests_msvc:
-    name: MSVC C++17 w/o Fortran w/o MPI
+    name: MSVC w/o Fortran w/o MPI
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
 
   # Build all tutorials
   tutorials_clang:
-    name: Clang C++17 w/o Fortran w/o MPI
+    name: Clang w/o Fortran w/o MPI
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4

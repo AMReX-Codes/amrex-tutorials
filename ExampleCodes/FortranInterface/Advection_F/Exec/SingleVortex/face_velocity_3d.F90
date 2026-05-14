@@ -28,7 +28,7 @@ use amrex_base_module
   double precision, intent(in) :: dx(3), prob_lo(3)
 
   integer :: i, j, k, plo(2), phi(2)
-  double precision :: x, y, z
+  double precision :: x, y
   double precision, pointer, contiguous :: psi(:,:)
   double precision, parameter :: M_PI = 3.141592653589793238462643383279502884197d0
   integer :: vx_l1,vx_l2,vx_l3,vy_l1,vy_l2,vy_l3,vz_l1,vz_l2,vz_l3

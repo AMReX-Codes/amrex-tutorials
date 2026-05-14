@@ -7,6 +7,11 @@
 
 set -eu -o pipefail
 
+# `man apt.conf`:
+#   Number of retries to perform. If this is non-zero APT will retry
+#   failed files the given number of times.
+echo 'Acquire::Retries "3";' | sudo tee /etc/apt/apt.conf.d/80-retries
+
 # Ref.: https://github.com/rscohn2/oneapi-ci
 # intel-basekit intel-hpckit are too large in size
 
@@ -19,9 +24,31 @@ echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt
 
 sudo apt-get update
 
-sudo apt-get install -y --no-install-recommends \
-    build-essential \
-    intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl-devel \
-    g++ gfortran    \
-    libopenmpi-dev  \
-    openmpi-bin
+# try apt install up to five times, to avoid connection splits
+status=1
+for itry in {1..5}
+do
+    sudo apt-get install -y --no-install-recommends \
+        build-essential \
+        intel-oneapi-compiler-dpcpp-cpp \
+        intel-oneapi-compiler-fortran \
+        intel-oneapi-mkl-devel \
+        intel-oneapi-mpi-devel \
+        && { sudo apt-get clean; status=0; break; }  \
+        || { sleep 10; }
+done
+if [[ ${status} -ne 0 ]]; then exit 1; fi
+
+source /etc/os-release
+ver="${VERSION_ID//\"/}"
+if [ "$ver" == "22.04" ]; then exit 0; fi
+
+status=1
+for itry in {1..5}
+do
+    sudo apt-get install -y --no-install-recommends \
+        intel-ocloc \
+        libigc-dev  \
+        && { sudo apt-get clean; status=0; break; }  \
+        || { sleep 10; }
+done
