@@ -66,7 +66,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'amrex'
+project = u'amrex-tutorials'
 copyright = u'2017-2018, AMReX Team'
 author = u'AMReX Team'
 
@@ -193,6 +193,3 @@ texinfo_documents = [
      author, 'amrex', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
