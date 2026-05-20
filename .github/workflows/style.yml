@@ -1,6 +1,14 @@
 name: Style
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      - 'dependabot/**'
+  pull_request:
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.head_ref }}-style
+  cancel-in-progress: true
 
 jobs:
   tabs:

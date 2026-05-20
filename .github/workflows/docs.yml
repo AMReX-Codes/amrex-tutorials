@@ -1,5 +1,9 @@
 name: Build and Deploy
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      - 'dependabot/**'
+  pull_request:
 
 concurrency:
   group: ${{ github.ref }}-${{ github.head_ref }}-docs
@@ -13,6 +17,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: ${{ github.event_name != 'push' && 1 || 0 }}
 
       - name: Dependencies
         run: |
@@ -28,6 +33,20 @@ jobs:
           make latexpdf
           mv build/latex/amrex.pdf source/
           make html
+
+      - name: Prepare deployment
+        if: github.event_name == 'push'
+        run: |
+          LAST_DEPLOYED=$(curl -sSf "https://raw.githubusercontent.com/AMReX-Codes/AMReX-Codes.github.io/main/amrex/tutorials_html/.deploy-sha" 2>/dev/null || echo "")
+          if [ -n "$LAST_DEPLOYED" ] && git cat-file -e "${LAST_DEPLOYED}^{commit}" 2>/dev/null; then
+            if ! git diff --name-only ${LAST_DEPLOYED}..HEAD \
+                   | grep -q "^Docs/source/"; then
+              echo "No sphinx doc changes since ${LAST_DEPLOYED} — removing PDF to keep published version"
+              rm -f Docs/build/html/_downloads/*/amrex.pdf
+            fi
+          else
+            echo "No previous deploy SHA reachable — keeping PDF"
+          fi
 
       - name: Deploy
         if: github.event_name == 'push' && github.repository == 'AMReX-Codes/amrex-tutorials' && github.ref == 'refs/heads/main'
@@ -57,6 +76,7 @@ jobs:
           git clone --quiet --depth=1 -b main git@github.com:AMReX-Codes/AMReX-Codes.github.io
           cd AMReX-Codes.github.io/amrex/tutorials_html/
           rsync -q -av --checksum --progress ${DEPLOY_SOURCE}/. .
+          echo "${DEPLOY_SOURCE_HEAD}" > .deploy-sha
           git add --all .
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Deploying from amrex-tutorials ${DEPLOY_SOURCE_HEAD}" --no-verify

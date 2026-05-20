@@ -1,6 +1,14 @@
 name: macos
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      - 'dependabot/**'
+  pull_request:
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.head_ref }}-macos
+  cancel-in-progress: true
 
 env:
   CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names -Wno-pass-failed"
