@@ -36,10 +36,15 @@ jobs:
       - name: Prepare deployment
         if: github.event_name == 'push'
         run: |
-          if ! git diff --name-only ${{ github.event.before }}..HEAD 2>/dev/null \
-                 | grep -q "^Docs/source/"; then
-            echo "No sphinx doc changes — removing PDF to keep published version"
-            rm -f Docs/build/html/_downloads/*/amrex.pdf
+          LAST_DEPLOYED=$(curl -sSf "https://raw.githubusercontent.com/AMReX-Codes/AMReX-Codes.github.io/main/amrex/tutorials_html/.deploy-sha" 2>/dev/null || echo "")
+          if [ -n "$LAST_DEPLOYED" ] && git cat-file -e "${LAST_DEPLOYED}^{commit}" 2>/dev/null; then
+            if ! git diff --name-only ${LAST_DEPLOYED}..HEAD \
+                   | grep -q "^Docs/source/"; then
+              echo "No sphinx doc changes since ${LAST_DEPLOYED} — removing PDF to keep published version"
+              rm -f Docs/build/html/_downloads/*/amrex.pdf
+            fi
+          else
+            echo "No previous deploy SHA in repo history — keeping PDF"
           fi
 
       - name: Deploy
@@ -70,6 +75,7 @@ jobs:
           git clone --quiet --depth=1 -b main git@github.com:AMReX-Codes/AMReX-Codes.github.io
           cd AMReX-Codes.github.io/amrex/tutorials_html/
           rsync -q -av --checksum --progress ${DEPLOY_SOURCE}/. .
+          echo "${DEPLOY_SOURCE_HEAD}" > .deploy-sha
           git add --all .
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Deploying from amrex-tutorials ${DEPLOY_SOURCE_HEAD}" --no-verify
