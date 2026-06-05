@@ -8,6 +8,8 @@
 # License: BSD-3-Clause-LBNL
 # Authors: Revathi Jambunathan, Edoardo Zoni, Olga Shapoval, David Grote, Axel Huebl
 
+import sys
+
 import amrex.space3d as amr
 
 
@@ -34,7 +36,8 @@ def load_cupy():
 
 
 # Initialize AMReX
-amr.initialize([])
+# Command line arguments after the script name are forwarded to AMReX
+amr.initialize(sys.argv[1:])
 
 # CPU/GPU logic
 xp = load_cupy()
@@ -91,20 +94,22 @@ dx = geom.data().CellSize() # dx[0]=dx dx[1]=dy dx[2]=dz
 for mfi in mf:
     bx = mfi.validbox()
     # Preferred way to fill array using fast ranged operations:
-    # - xp.array is indexed in reversed order (n,z,y,x),
-    #   .T creates a view into the AMReX (x,y,z,n) order
+    # - .to_xp() provides a NumPy (CPU) or CuPy (GPU) view into the
+    #   data, indexed in the AMReX (x,y,z,n) order ("F" order, default)
     # - indices are local (range from 0 to box size)
-    mf_array = xp.array(mf.array(mfi), copy=False).T
+    mf_array = mf.array(mfi).to_xp(copy=False)
     x = (xp.arange(bx.small_end[0], bx.big_end[0]+1)+0.5)*dx[0]
     y = (xp.arange(bx.small_end[1], bx.big_end[1]+1)+0.5)*dx[1]
     z = (xp.arange(bx.small_end[2], bx.big_end[2]+1)+0.5)*dx[2]
-    v = (x[xp.newaxis,xp.newaxis,:]
-       + y[xp.newaxis,:,xp.newaxis]*0.1
-       + z[:,xp.newaxis,xp.newaxis]*0.01)
     rsquared = ((z[xp.newaxis, xp.newaxis,          :] - 0.5)**2
               + (y[xp.newaxis,          :, xp.newaxis] - 0.5)**2
               + (x[         :, xp.newaxis, xp.newaxis] - 0.5)**2) / 0.01
     mf_array[:, :, :, 0] = 1. + xp.exp(-rsquared)
+
+# Inspect the data: reductions over all boxes (and MPI ranks)
+amr.Print(f"min(phi) = {mf.min(comp=0)}")
+amr.Print(f"max(phi) = {mf.max(comp=0)}")
+amr.Print(f"sum(phi) = {mf.sum(comp=0)}")
 
 # Plot MultiFab data
 plotfile = amr.concatenate(root="plt", num=1, mindigits=3)
