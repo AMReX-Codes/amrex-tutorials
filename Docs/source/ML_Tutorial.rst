@@ -44,8 +44,8 @@ Below is a step-by-step guide to successfully run an AMReX program that uses a P
 
       .. code-block:: console
 
-         wget https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip
-         unzip libtorch-cxx11-abi-shared-with-deps-2.0.1+cu118.zip
+         wget https://download.pytorch.org/libtorch/cu124/libtorch-cxx11-abi-shared-with-deps-2.5.1%2Bcu124.zip
+         unzip libtorch-cxx11-abi-shared-with-deps-2.5.1+cu124.zip
          mv libtorch libtorch_cuda
 
       You can also check the website, `PyTorch <https://pytorch.org/get-started/locally/>`_ to download the latest version of LibTorch.
