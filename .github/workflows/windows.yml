@@ -16,7 +16,7 @@ jobs:
     name: MSVC w/o Fortran w/o MPI
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Build & Install
       run: |
         cd ExampleCodes
@@ -36,7 +36,7 @@ jobs:
     name: Clang w/o Fortran w/o MPI
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Set Up MSVC
       uses: ilammy/msvc-dev-cmd@v1
