@@ -2,4 +2,5 @@ Refer to https://amrex-codes.github.io/amrex/docs_html/TimeIntegration_Chapter.h
 for SUNDIALS installation, build, and usage instructions.
 
 Make sure that SUNDIALS_HOME in the GNUmakefile points to the installation directory.
-This tutorial also requires AMReX to be built with HYPRE support.
+This tutorial also requires AMReX to be built with MLMG linear solver support.
+Set USE_HYPRE=TRUE and mlmg.use_hypre=1 to use MLMG's HYPRE bottom solver interface.

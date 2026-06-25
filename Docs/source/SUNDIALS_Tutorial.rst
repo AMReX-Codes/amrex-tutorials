@@ -22,6 +22,15 @@ user-supplied reaction and diffusion coefficients:
 
 The inputs file contains a template for MRI approaches, where the diffusion process
 can be treated as a "fast" partition relative to the reaction process.
+
+The advection-diffusion examples at
+``amrex-tutorials/ExampleCodes/SUNDIALS/AdvDiff-HyprePrecon`` and
+``amrex-tutorials/ExampleCodes/SUNDIALS/AdvDiff-MLMGPrecon`` demonstrate
+SUNDIALS with preconditioning for an implicit diffusion solve using HYPRE and
+AMReX MLMG, respectively. The MLMG example can also use MLMG's HYPRE bottom
+solver interface when AMReX is built with HYPRE support. Their inputs also
+show how to select the SUNDIALS SPGMR
+preconditioning side with ``integration.sundials.linear_solver_preconditioning``.
 Please see each respective inputs file or
 `AMReX User Guide:Time Integration`_ for more details.
 

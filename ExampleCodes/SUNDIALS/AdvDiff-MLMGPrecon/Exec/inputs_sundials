@@ -42,5 +42,16 @@ integration.sundials.linear_solver = GMRES
 integration.sundials.linear_solver_preconditioning = LEFT
 integration.sundials.max_linear_iters = 20
 
-# HYPRE settings for the SUNDIALS preconditioner solve
+# MLMG settings for the SUNDIALS preconditioner solve
+mlmg.max_iter = 100
+mlmg.max_fmg_iter = 0
+mlmg.verbose = 0
+mlmg.bottom_verbose = 0
+mlmg.use_hypre = 0
+mlmg.hypre_interface = 3  # 1 = structed, 2 = semi_structed, 3 = ij
+mlmg.hypre_options_namespace = hypre
+mlmg.reltol = 1.e-10
+mlmg.abstol = 0.0
+
+# HYPRE settings used when mlmg.use_hypre = 1 and mlmg.hypre_interface = 3
 hypre.hypre_solver = BoomerAMG

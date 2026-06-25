@@ -1,11 +1,17 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_TimeIntegrator.H>
-#include <AMReX_HypreSolver.H>
+#include <AMReX_MLABecLaplacian.H>
+#include <AMReX_MLMG.H>
+#include <AMReX_MultiFabUtil.H>
+#ifdef AMREX_USE_HYPRE
+#include <AMReX_Hypre.H>
+#endif
 
 #include "myfunc.H"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -60,6 +66,17 @@ void main_main ()
     Real diffCoeffx = 1.0;
     Real diffCoeffy = 1.0;
 
+    // MLMG settings for the SUNDIALS preconditioner solve
+    int mlmg_max_iter = 100;
+    int mlmg_max_fmg_iter = 0;
+    int mlmg_verbose = 0;
+    int mlmg_bottom_verbose = 0;
+    bool mlmg_use_hypre = false;
+    int mlmg_hypre_interface = 3;
+    std::string mlmg_hypre_options_namespace = "hypre";
+    Real mlmg_reltol = 1.e-10;
+    Real mlmg_abstol = 0.0;
+
     // inputs parameters
     {
         // ParmParse is way of reading inputs from the inputs file
@@ -97,6 +114,23 @@ void main_main ()
         pp.query("advCoeffy",advCoeffy);
         pp.query("diffCoeffx",diffCoeffx);
         pp.query("diffCoeffy",diffCoeffy);
+
+        ParmParse pp_mlmg("mlmg");
+        pp_mlmg.query("max_iter",mlmg_max_iter);
+        pp_mlmg.query("max_fmg_iter",mlmg_max_fmg_iter);
+        pp_mlmg.query("verbose",mlmg_verbose);
+        pp_mlmg.query("bottom_verbose",mlmg_bottom_verbose);
+        pp_mlmg.query("use_hypre",mlmg_use_hypre);
+        pp_mlmg.query("hypre_interface",mlmg_hypre_interface);
+        pp_mlmg.query("hypre_options_namespace",mlmg_hypre_options_namespace);
+        pp_mlmg.query("reltol",mlmg_reltol);
+        pp_mlmg.query("abstol",mlmg_abstol);
+
+#ifndef AMREX_USE_HYPRE
+        if (mlmg_use_hypre) {
+            amrex::Abort("mlmg.use_hypre requires AMReX to be built with HYPRE support");
+        }
+#endif
     }
 
     // **********************************
@@ -192,80 +226,75 @@ void main_main ()
         ComputeAdvection(S_rhs, S_data, advCoeffx, advCoeffy, dx);
     };
 
-    constexpr int hypre_stencil_size = 2 * AMREX_SPACEDIM + 1;
-    using HyprePreconditioner = HypreSolver<hypre_stencil_size>;
+    struct MLMGPreconditioner {
+        std::unique_ptr<MLABecLaplacian> linop;
+        std::unique_ptr<MLMG> solver;
+    };
 
-    std::unique_ptr<HyprePreconditioner> hypre_preconditioner;
-    Real hypre_gamma = std::numeric_limits<Real>::quiet_NaN();
+    std::unique_ptr<MLMGPreconditioner> mlmg_preconditioner;
+    Real mlmg_gamma = std::numeric_limits<Real>::quiet_NaN();
 
-    auto build_hypre_preconditioner = [&](Real gamma)
+    auto build_mlmg_preconditioner = [&](Real gamma)
     {
-        const IntVect domain_lo = geom.Domain().smallEnd();
-        const IntVect domain_hi = geom.Domain().bigEnd();
-        const HYPRE_Real hx = static_cast<HYPRE_Real>(gamma * diffCoeffx / (dx[0] * dx[0]));
-        const HYPRE_Real hy = static_cast<HYPRE_Real>(gamma * diffCoeffy / (dx[1] * dx[1]));
-        const HYPRE_Real diag = static_cast<HYPRE_Real>(1.0) + 2.0 * (hx + hy);
+        auto preconditioner = std::make_unique<MLMGPreconditioner>();
 
-        auto marker = [=] AMREX_GPU_DEVICE (int /* boxno */, int /* i */, int /* j */,
-                                            int /* k */, int /* n */) -> bool
-        {
-            return true;
-        };
+        LPInfo info;
+        preconditioner->linop = std::make_unique<MLABecLaplacian>(
+            Vector<Geometry>{geom}, Vector<BoxArray>{ba}, Vector<DistributionMapping>{dm}, info);
+        preconditioner->linop->setMaxOrder(2);
+        preconditioner->linop->setDomainBC(
+            {AMREX_D_DECL(LinOpBCType::Periodic, LinOpBCType::Periodic, LinOpBCType::Periodic)},
+            {AMREX_D_DECL(LinOpBCType::Periodic, LinOpBCType::Periodic, LinOpBCType::Periodic)});
+        preconditioner->linop->setLevelBC(0, nullptr);
+        preconditioner->linop->setScalars(1.0, 1.0);
+        preconditioner->linop->setACoeffs(0, 1.0);
 
-        auto filler = [=] AMREX_GPU_DEVICE (int /* boxno */, int i, int j, int k, int n,
-                                            Array4<HYPRE_Int const> const* gid,
-                                            HYPRE_Int& ncols, HYPRE_Int* cols,
-                                            HYPRE_Real* mat)
-        {
-            const int ilo = domain_lo[0];
-            const int ihi = domain_hi[0];
-            const int jlo = domain_lo[1];
-            const int jhi = domain_hi[1];
+        std::array<MultiFab,AMREX_SPACEDIM> face_bcoef;
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            const BoxArray& face_ba = amrex::convert(ba, IntVect::TheDimensionVector(idim));
+            face_bcoef[idim].define(face_ba, dm, 1, 0);
+            const Real diff_coeff = (idim == 0) ? diffCoeffx : ((idim == 1) ? diffCoeffy : 0.0);
+            face_bcoef[idim].setVal(gamma * diff_coeff);
+        }
+        preconditioner->linop->setBCoeffs(0, amrex::GetArrOfConstPtrs(face_bcoef));
 
-            const int im = (i == ilo) ? ihi : i - 1;
-            const int ip = (i == ihi) ? ilo : i + 1;
-            const int jm = (j == jlo) ? jhi : j - 1;
-            const int jp = (j == jhi) ? jlo : j + 1;
+        preconditioner->solver = std::make_unique<MLMG>(*preconditioner->linop);
+        preconditioner->solver->setMaxIter(mlmg_max_iter);
+        preconditioner->solver->setMaxFmgIter(mlmg_max_fmg_iter);
+        preconditioner->solver->setVerbose(mlmg_verbose);
+        preconditioner->solver->setBottomVerbose(mlmg_bottom_verbose);
+#ifdef AMREX_USE_HYPRE
+        if (mlmg_use_hypre) {
+            Hypre::Interface hypre_interface = Hypre::Interface::ij;
+            if (mlmg_hypre_interface == 1) {
+                hypre_interface = Hypre::Interface::structed;
+            } else if (mlmg_hypre_interface == 2) {
+                hypre_interface = Hypre::Interface::semi_structed;
+            } else if (mlmg_hypre_interface == 3) {
+                hypre_interface = Hypre::Interface::ij;
+            } else {
+                amrex::Abort("mlmg.hypre_interface must be 1 (structed), 2 (semi_structed), or 3 (ij)");
+            }
+            preconditioner->solver->setBottomSolver(MLMG::BottomSolver::hypre);
+            preconditioner->solver->setHypreInterface(hypre_interface);
+            preconditioner->solver->setHypreOptionsNamespace(mlmg_hypre_options_namespace);
+        }
+#endif
 
-            ncols = 0;
-
-            cols[ncols] = gid[n](im,j,k);
-            mat [ncols] = -hx;
-            ++ncols;
-
-            cols[ncols] = gid[n](ip,j,k);
-            mat [ncols] = -hx;
-            ++ncols;
-
-            cols[ncols] = gid[n](i,jm,k);
-            mat [ncols] = -hy;
-            ++ncols;
-
-            cols[ncols] = gid[n](i,jp,k);
-            mat [ncols] = -hy;
-            ++ncols;
-
-            cols[ncols] = gid[n](i,j,k);
-            mat [ncols] = diag;
-            ++ncols;
-        };
-
-        hypre_preconditioner = std::make_unique<HyprePreconditioner>(
-            Vector<IndexType>{IndexType::TheCellType()},
-            IntVect(1), geom, ba, dm, marker, filler);
-        hypre_gamma = gamma;
+        mlmg_preconditioner = std::move(preconditioner);
+        mlmg_gamma = gamma;
     };
 
     auto precond_setup = [&](MultiFab& /* S_data */, MultiFab& /* S_rhs */, const Real /* time */,
                              bool jok, bool& jcur, const Real gamma)
     {
-        const bool same_gamma = hypre_preconditioner &&
-            std::abs(gamma - hypre_gamma) <=
+        const bool same_gamma = mlmg_preconditioner &&
+            std::abs(gamma - mlmg_gamma) <=
             (10.0 * std::numeric_limits<Real>::epsilon() *
-             std::max(Real(1.0), std::max(std::abs(gamma), std::abs(hypre_gamma))));
+             std::max(Real(1.0), std::max(std::abs(gamma), std::abs(mlmg_gamma))));
 
         if (!(jok && same_gamma)) {
-            build_hypre_preconditioner(gamma);
+            build_mlmg_preconditioner(gamma);
             jcur = true;
         } else {
             jcur = false;
@@ -277,11 +306,9 @@ void main_main ()
                              const Real /* gamma */, const Real /* delta */,
                              int /* lr */)
     {
-        AMREX_ALWAYS_ASSERT(hypre_preconditioner != nullptr);
+        AMREX_ALWAYS_ASSERT(mlmg_preconditioner != nullptr);
         S_soln.setVal(0.0);
-        hypre_preconditioner->solve(Vector<MultiFab*>{&S_soln},
-                                    Vector<MultiFab const*>{&S_rhs},
-                                    0.0_rt, 0.0_rt, 1);
+        mlmg_preconditioner->solver->solve({&S_soln}, {&S_rhs}, mlmg_reltol, mlmg_abstol);
     };
 
     TimeIntegrator<MultiFab> integrator(phi, time);
