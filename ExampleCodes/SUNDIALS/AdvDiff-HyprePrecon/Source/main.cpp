@@ -264,11 +264,9 @@ void main_main ()
             (10.0 * std::numeric_limits<Real>::epsilon() *
              std::max(Real(1.0), std::max(std::abs(gamma), std::abs(hypre_gamma))));
 
-        if (!(jok && same_gamma)) {
+        if (!jok) {
             build_hypre_preconditioner(gamma);
             jcur = true;
-        } else {
-            jcur = false;
         }
     };
 
