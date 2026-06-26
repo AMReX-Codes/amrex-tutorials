@@ -229,10 +229,31 @@ void main_main ()
     struct MLMGPreconditioner {
         std::unique_ptr<MLABecLaplacian> linop;
         std::unique_ptr<MLMG> solver;
+        std::array<MultiFab,AMREX_SPACEDIM> face_bcoef;
     };
 
     std::unique_ptr<MLMGPreconditioner> mlmg_preconditioner;
     Real mlmg_gamma = std::numeric_limits<Real>::quiet_NaN();
+
+    auto gamma_has_changed = [&] (Real gamma)
+    {
+        if (!std::isfinite(mlmg_gamma)) {
+            return true;
+        }
+        const Real scale = std::max({Real(1.0), std::abs(gamma), std::abs(mlmg_gamma)});
+        return std::abs(gamma - mlmg_gamma) >
+               Real(10.0) * std::numeric_limits<Real>::epsilon() * scale;
+    };
+
+    auto update_mlmg_gamma = [&](MLMGPreconditioner& preconditioner, Real gamma)
+    {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            const Real diff_coeff = (idim == 0) ? diffCoeffx : ((idim == 1) ? diffCoeffy : 0.0);
+            preconditioner.face_bcoef[idim].setVal(gamma * diff_coeff);
+        }
+        preconditioner.linop->setBCoeffs(0, amrex::GetArrOfConstPtrs(preconditioner.face_bcoef));
+        mlmg_gamma = gamma;
+    };
 
     auto build_mlmg_preconditioner = [&](Real gamma)
     {
@@ -249,14 +270,11 @@ void main_main ()
         preconditioner->linop->setScalars(1.0, 1.0);
         preconditioner->linop->setACoeffs(0, 1.0);
 
-        std::array<MultiFab,AMREX_SPACEDIM> face_bcoef;
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             const BoxArray& face_ba = amrex::convert(ba, IntVect::TheDimensionVector(idim));
-            face_bcoef[idim].define(face_ba, dm, 1, 0);
-            const Real diff_coeff = (idim == 0) ? diffCoeffx : ((idim == 1) ? diffCoeffy : 0.0);
-            face_bcoef[idim].setVal(gamma * diff_coeff);
+            preconditioner->face_bcoef[idim].define(face_ba, dm, 1, 0);
         }
-        preconditioner->linop->setBCoeffs(0, amrex::GetArrOfConstPtrs(face_bcoef));
+        update_mlmg_gamma(*preconditioner, gamma);
 
         preconditioner->solver = std::make_unique<MLMG>(*preconditioner->linop);
         preconditioner->solver->setMaxIter(mlmg_max_iter);
@@ -288,14 +306,21 @@ void main_main ()
     auto precond_setup = [&](MultiFab& /* S_data */, MultiFab& /* S_rhs */, const Real /* time */,
                              bool jok, bool& jcur, const Real gamma)
     {
-        const bool same_gamma = mlmg_preconditioner &&
-            std::abs(gamma - mlmg_gamma) <=
-            (10.0 * std::numeric_limits<Real>::epsilon() *
-             std::max(Real(1.0), std::max(std::abs(gamma), std::abs(mlmg_gamma))));
-
-        if (!jok) {
+        // The implicit diffusion Jacobian is constant for this problem, so a
+        // SUNDIALS refresh only needs to update the gamma-scaled operator.
+        if (mlmg_preconditioner == nullptr) {
             build_mlmg_preconditioner(gamma);
             jcur = true;
+            return;
+        }
+
+        if (!jok) {
+            if (gamma_has_changed(gamma)) {
+                update_mlmg_gamma(*mlmg_preconditioner, gamma);
+            }
+            jcur = true;
+        } else if (gamma_has_changed(gamma)) {
+            update_mlmg_gamma(*mlmg_preconditioner, gamma);
         }
     };
 
