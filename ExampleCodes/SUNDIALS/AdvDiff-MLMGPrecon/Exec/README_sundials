@@ -3,4 +3,9 @@ for SUNDIALS installation, build, and usage instructions.
 
 Make sure that SUNDIALS_HOME in the GNUmakefile points to the installation directory.
 This tutorial also requires AMReX to be built with MLMG linear solver support.
-Set USE_HYPRE=TRUE and mlmg.use_hypre=1 to use MLMG's HYPRE bottom solver interface.
+The default inputs use a SUNDIALS IMEX-RK method with GMRES and an AMReX MLMG
+preconditioner for the implicit diffusion solve.
+
+Set USE_HYPRE=TRUE when building and mlmg.use_hypre=1 in inputs_sundials to use
+MLMG's HYPRE bottom solver interface. The HYPRE interface and options namespace
+are controlled by mlmg.hypre_interface and mlmg.hypre_options_namespace.
