@@ -1,5 +1,0 @@
-Refer to https://amrex-codes.github.io/amrex/docs_html/TimeIntegration_Chapter.html
-for SUNDIALS installation, build, and usage instructions.
-
-Make sure that SUNDIALS_HOME in the GNUmakefile points to the installation directory.
-This tutorial also requires AMReX to be built with HYPRE support.
