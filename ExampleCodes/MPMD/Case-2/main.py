@@ -1,3 +1,5 @@
+import sys
+
 from mpi4py import MPI
 
 import amrex.space3d as amr
@@ -5,11 +7,11 @@ import amrex.space3d as amr
 # Initialize amrex::MPMD to establish communication across the two apps
 # However, leverage MPMD_Initialize_without_split
 # so that communication split can be performed using mpi4py.MPI
-amr.MPMD_Initialize_without_split([])
+amr.MPMD_Initialize_without_split(sys.argv[1:])
 # Leverage MPI from mpi4py to perform communication split
 app_comm_py = MPI.COMM_WORLD.Split(amr.MPMD_AppNum(), amr.MPMD_MyProc())
 # Initialize AMReX
-amr.initialize_when_MPMD([], app_comm_py)
+amr.initialize_when_MPMD(sys.argv[1:], app_comm_py)
 
 amr.Print(f"Hello world from pyAMReX version {amr.__version__}\n")
 # Create a MPMD Copier that gets the BoxArray information from the other (C++) app

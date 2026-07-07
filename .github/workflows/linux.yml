@@ -38,9 +38,10 @@ jobs:
     - name: Run Python
       run: |
         cd GuidedTutorials/MultiFab/
-        python main.py
+        python3 main.py
         cd ../HeatEquation/Source/
-        python main.py
+        python3 main.py ../Exec/inputs
+        mpiexec -n 2 python3 main.py ../Exec/inputs
 
   # Build all tutorials
   tutorials_omp:
@@ -69,9 +70,9 @@ jobs:
     - name: Run Python
       run: |
         cd GuidedTutorials/MultiFab/
-        python main.py
+        python3 main.py
         cd ../HeatEquation/Source/
-        python main.py
+        python3 main.py ../Exec/inputs
 
   tutorials_clang:
     name: Clang SP Particles DP Mesh Debug [tutorials]
@@ -104,9 +105,9 @@ jobs:
     - name: Run Python
       run: |
         cd GuidedTutorials/MultiFab/
-        python main.py
+        python3 main.py
         cd ../HeatEquation/Source/
-        python main.py
+        python3 main.py ../Exec/inputs
 
   # Build all tutorials w/o MPI
   tutorials-nonmpi:
@@ -135,9 +136,9 @@ jobs:
     - name: Run Python
       run: |
         cd GuidedTutorials/MultiFab/
-        python main.py
+        python3 main.py
         cd ../HeatEquation/Source/
-        python main.py
+        python3 main.py ../Exec/inputs
 
   # Build all tutorials
   tutorials-nofortran:
@@ -164,9 +165,9 @@ jobs:
     - name: Run Python
       run: |
         cd GuidedTutorials/MultiFab/
-        python main.py
+        python3 main.py
         cd ../HeatEquation/Source/
-        python main.py
+        python3 main.py ../Exec/inputs
 
   # Build all tutorials with CUDA
   tutorials-cuda:
