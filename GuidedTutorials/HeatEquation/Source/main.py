@@ -8,6 +8,8 @@
 # License: BSD-3-Clause-LBNL
 # Authors: Revathi Jambunathan, Edoardo Zoni, Olga Shapoval, David Grote, Axel Huebl
 
+import sys
+
 import amrex.space3d as amr
 
 
@@ -96,8 +98,8 @@ def main(n_cell, max_grid_size, nsteps, plot_int, dt):
     # Loop over boxes
     for mfi in phi_old:
         bx = mfi.validbox()
-        # phiOld is indexed in reversed order (z,y,x) and indices are local
-        phiOld = xp.array(phi_old.array(mfi), copy=False)
+        # phiOld is indexed in reversed order (n,z,y,x) and indices are local
+        phiOld = phi_old.array(mfi).to_xp(copy=False, order="C")
         # set phi = 1 + e^(-(r-0.5)^2)
         x = (xp.arange(bx.small_end[0],bx.big_end[0]+1,1) + 0.5) * dx[0]
         y = (xp.arange(bx.small_end[1],bx.big_end[1]+1,1) + 0.5) * dx[1]
@@ -121,8 +123,8 @@ def main(n_cell, max_grid_size, nsteps, plot_int, dt):
         # new_phi = old_phi + dt * Laplacian(old_phi)
         # Loop over boxes
         for mfi in phi_old:
-            phiOld = xp.array(phi_old.array(mfi), copy=False)
-            phiNew = xp.array(phi_new.array(mfi), copy=False)
+            phiOld = phi_old.array(mfi).to_xp(copy=False, order="C")
+            phiNew = phi_new.array(mfi).to_xp(copy=False, order="C")
             hix = phiOld.shape[3]
             hiy = phiOld.shape[2]
             hiz = phiOld.shape[1]
@@ -157,20 +159,38 @@ def main(n_cell, max_grid_size, nsteps, plot_int, dt):
 
 if __name__ == '__main__':
     # Initialize AMReX
-    amr.initialize([])
+    # Command line arguments are forwarded, e.g., an inputs file:
+    #   python3 main.py ../Exec/inputs
+    amr.initialize(sys.argv[1:])
 
-    # TODO Implement parser
-    # Simulation parameters
-    # number of cells on each side of the domain
-    n_cell = 32
-    # size of each box (or grid)
-    max_grid_size = 16
-    # total steps in simulation
-    nsteps = 1000
-    # how often to write a plotfile
-    plot_int = 100
+    # **********************************
+    # SIMULATION PARAMETERS
+
+    # ParmParse is a way of reading inputs from the inputs file
+    # pp.get means we require the inputs file to have it
+    # pp.query means we optionally need the inputs file to have it - but we must supply a default here
+    pp = amr.ParmParse()
+
+    # We need to get n_cell from the inputs file - this is the number of cells on each side of
+    #   a square (or cubic) domain.
+    n_cell = pp.get_int("n_cell")
+
+    # The domain is broken into boxes of size max_grid_size
+    max_grid_size = pp.get_int("max_grid_size")
+
+    # Default nsteps to 10, allow us to set it to something else in the inputs file
+    exists, nsteps = pp.query_int("nsteps")
+    if not exists:
+        nsteps = 10
+
+    # Default plot_int to -1, allow us to set it to something else in the inputs file
+    #  If plot_int < 0 then no plot files will be written
+    exists, plot_int = pp.query_int("plot_int")
+    if not exists:
+        plot_int = -1
+
     # time step
-    dt = 1e-5
+    dt = pp.get_real("dt")
 
     main(n_cell, max_grid_size, nsteps, plot_int, dt)
 
