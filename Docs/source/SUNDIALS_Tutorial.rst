@@ -22,7 +22,19 @@ user-supplied reaction and diffusion coefficients:
 
 The inputs file contains a template for MRI approaches, where the diffusion process
 can be treated as a "fast" partition relative to the reaction process.
-Please see each respective inputs file or
+
+The third example code at ``amrex-tutorials/ExampleCodes/SUNDIALS/AdvDiff-MLMGPrecon``
+solves the advection-diffusion equation, where :math:`A` and :math:`D` are
+user-supplied advection and diffusion coefficients:
+
+.. math:: \frac{\partial\phi}{\partial t} = D \nabla^2\phi - A \nabla\phi.
+
+The inputs file contains a template for IMEX approaches, where diffusion is
+treated implicitly with a SUNDIALS preconditioner that uses AMReX MLMG. The
+example can also use MLMG's HYPRE bottom solver interface when AMReX is built
+with HYPRE support.
+
+Please see the inputs file or
 `AMReX User Guide:Time Integration`_ for more details.
 
 .. _`AMReX User Guide:Time Integration`: https://amrex-codes.github.io/amrex/docs_html/TimeIntegration_Chapter.html#
