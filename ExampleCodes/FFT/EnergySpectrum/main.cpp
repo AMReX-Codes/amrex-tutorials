@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     ParallelDescriptor::ReduceRealSum(pke_h, nk);
 
     if (ParallelDescriptor::IOProcessor()) {
-      std::ofstream ofs(outfile.c_str());
+      std::ofstream ofs(outfile);
       for (int i = 0; i < nk; ++i) {
         ofs << i << " " << pke_h[i] << "\n";
       }
