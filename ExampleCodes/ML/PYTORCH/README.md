@@ -6,5 +6,5 @@ Please refer to the [documentation](https://amrex-codes.github.io/amrex/tutorial
 
 
 <!---
-Torchscript code based on https://pytorch.org/tutorials/advanced/cpp_export.html 
+Torchscript code based on https://pytorch.org/tutorials/advanced/cpp_export.html
 -->
