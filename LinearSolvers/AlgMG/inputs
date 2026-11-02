@@ -1,0 +1,16 @@
+n_cell = 32           # cells in each direction
+max_grid_size = 16    # largest box size for MLMG
+
+# beta: checkerboard of blocks of `block` cells alternating between 1 and `jump`
+block = 4
+jump = 1.e4
+
+max_iter = 100        # MLMG iterations before giving up
+
+algmg.verbose = 1
+algmg.krylov = pcg    # none, bicgstab, gmres or pcg
+algmg.smoother = chebyshev  # chebyshev, l1_jacobi, jacobi or l1_gauss_seidel (CPU)
+
+mlmg.verbose = 1
+# mlmg.tol_rel is the relative tolerance of both solvers: 1e-10 by default
+# (1e-4 in single precision).

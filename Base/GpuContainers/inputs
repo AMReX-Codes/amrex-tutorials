@@ -1,0 +1,2 @@
+n = 100000            # number of random values
+threshold = 0.75      # keep the values above this

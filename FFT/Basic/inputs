@@ -1,0 +1,6 @@
+# Number of cells in each direction and the maximum box size
+n_cell = 32
+max_grid_size = 16
+
+# Low-pass filter cutoff wavenumber
+kcut = 4

@@ -1,0 +1,16 @@
+# Cells in each direction; one plasma wavelength fits in x
+n_cell = 32 8 8
+max_grid_size = 16
+
+# Particles per cell in each direction
+nppc = 4 1 1
+
+# Time step in units of 1/omega_p; 100 steps cover about 1.6 plasma periods
+dt = 0.1
+nsteps = 100
+
+# Relative amplitude of the initial density perturbation
+perturbation = 0.01
+
+print_int = 10
+plot_int = 50

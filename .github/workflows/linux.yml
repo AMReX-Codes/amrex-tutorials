@@ -10,265 +10,283 @@ concurrency:
   group: ${{ github.ref }}-${{ github.head_ref }}-linux
   cancel-in-progress: true
 
+env:
+  # GCC -Wmaybe-uninitialized gives false positives at -O3, including from AMReX headers.
+  CXXFLAGS_STRICT: "-Werror -Wall -Wextra -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names -Wno-maybe-uninitialized"
+  OMP_NUM_THREADS: 2
+
 jobs:
 
-  # Build all tutorials
-  tutorials_build:
-    name: GNU [tutorials]
+  gcc_debug:
+    name: GCC Debug MPI OpenMP 3D
     runs-on: ubuntu-24.04
-    env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v7
     - name: Dependencies
       run: .github/workflows/dependencies/dependencies.sh
-    - name: Build & Install
+    - name: Build
       run: |
-        cd ExampleCodes
-        cmake -S . -B build             \
-            -DCMAKE_BUILD_TYPE=Debug    \
-            -DCMAKE_VERBOSE_MAKEFILE=ON \
-            -DAMReX_LINEAR_SOLVERS=ON   \
-            -DAMReX_FORTRAN=ON          \
-            -DAMReX_FORTRAN_INTERFACES=ON \
-            -DAMReX_EB=ON                \
-            -DAMReX_PARTICLES=ON        \
-            -DTUTORIAL_PYTHON=ON
-        cmake --build build -j 2
-        cmake --build build -j 2 --target pyamrex_pip_install
-    - name: Run Python
-      run: |
-        cd GuidedTutorials/MultiFab/
-        python3 main.py
-        cd ../HeatEquation/Source/
-        python3 main.py ../Exec/inputs
-        mpiexec -n 2 python3 main.py ../Exec/inputs
+        cmake -S . -B build                 \
+            -DAMReX_TESTING=ON              \
+            -DCMAKE_BUILD_TYPE=Debug        \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT}" \
+            -DAMReX_OMP=ON                  \
+            -DAMReX_TINY_PROFILE=ON         \
+            -DAMReX_FORTRAN_INTERFACES=ON   \
+            -DMPIEXEC_PREFLAGS=--oversubscribe
+        cmake --build build -j 4
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
 
-  # Build all tutorials
-  tutorials_omp:
-    name: GNU OMP [tutorials]
+  gcc_2d:
+    name: GCC 2D
     runs-on: ubuntu-24.04
-    env: {CXXFLAGS: "-Werror -Wno-error=deprecated-declarations -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
     steps:
     - uses: actions/checkout@v7
     - name: Dependencies
       run: .github/workflows/dependencies/dependencies.sh
-    - name: Build & Install
+    - name: Build
       run: |
-        cd ExampleCodes
-        cmake -S . -B build             \
-            -DCMAKE_BUILD_TYPE=Debug    \
-            -DCMAKE_VERBOSE_MAKEFILE=ON \
-            -DAMReX_OMP=ON              \
-            -DAMReX_PARTICLES=ON        \
-            -DAMReX_LINEAR_SOLVERS=ON   \
-            -DAMReX_FORTRAN=ON          \
-            -DAMReX_FORTRAN_INTERFACES=ON \
-            -DAMReX_EB=ON               \
-            -DTUTORIAL_PYTHON=ON
-        cmake --build build -j 2
-        cmake --build build -j 2 --target pyamrex_pip_install
-    - name: Run Python
-      run: |
-        cd GuidedTutorials/MultiFab/
-        python3 main.py
-        cd ../HeatEquation/Source/
-        python3 main.py ../Exec/inputs
+        cmake -S . -B build                 \
+            -DAMReX_TESTING=ON                     \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT}" \
+            -DAMReX_SPACEDIM=2              \
+            -DAMReX_FORTRAN_INTERFACES=ON   \
+            -DMPIEXEC_PREFLAGS=--oversubscribe
+        cmake --build build -j 4
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
 
-  tutorials_clang:
-    name: Clang SP Particles DP Mesh Debug [tutorials]
+  gcc_1d:
+    name: GCC 1D
     runs-on: ubuntu-24.04
-    env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v7
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: Build
+      run: |
+        cmake -S . -B build                 \
+            -DAMReX_TESTING=ON                     \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT}" \
+            -DAMReX_SPACEDIM=1              \
+            -DAMReX_EB=OFF                  \
+            -DAMReX_FFT=OFF                 \
+            -DMPIEXEC_PREFLAGS=--oversubscribe
+        cmake --build build -j 4
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
+  clang_single:
+    name: Clang single precision, no MPI
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
     - name: Dependencies
       run: .github/workflows/dependencies/dependencies_clang.sh 18
-    - name: Build & Install
+    - name: Build
       run: |
-        cd ExampleCodes
-        cmake -S . -B build             \
-            -DCMAKE_BUILD_TYPE=Debug                  \
-            -DCMAKE_VERBOSE_MAKEFILE=ON               \
-            -DAMReX_MPI=OFF                           \
-            -DAMReX_PARTICLES=ON                      \
-            -DAMReX_LINEAR_SOLVERS=ON     \
-            -DAMReX_FORTRAN=ON          \
-            -DAMReX_FORTRAN_INTERFACES=ON \
-            -DAMReX_EB=ON                 \
-            -DAMReX_PRECISION=DOUBLE                  \
-            -DAMReX_PARTICLES_PRECISION=SINGLE        \
-            -DTUTORIAL_PYTHON=ON          \
-            -DCMAKE_C_COMPILER=$(which clang)         \
-            -DCMAKE_CXX_COMPILER=$(which clang++)     \
-            -DCMAKE_Fortran_COMPILER=$(which gfortran)
-        cmake --build build -j 2
-        cmake --build build -j 2 --target pyamrex_pip_install
-    - name: Run Python
-      run: |
-        cd GuidedTutorials/MultiFab/
-        python3 main.py
-        cd ../HeatEquation/Source/
-        python3 main.py ../Exec/inputs
+        cmake -S . -B build                 \
+            -DCMAKE_C_COMPILER=$(which clang)       \
+            -DCMAKE_CXX_COMPILER=$(which clang++)   \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT}"  \
+            -DAMReX_MPI=OFF                 \
+            -DAMReX_PRECISION=SINGLE        \
+            -DAMReX_PARTICLES_PRECISION=SINGLE
+        cmake --build build -j 4
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
 
-  # Build all tutorials w/o MPI
-  tutorials-nonmpi:
-    name: GNU NOMPI [tutorials]
+  cuda:
+    name: CUDA (compile only)
     runs-on: ubuntu-24.04
-    env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
-    steps:
-    - uses: actions/checkout@v7
-    - name: Dependencies
-      run: .github/workflows/dependencies/dependencies.sh
-    - name: Build & Install
-      run: |
-        cd ExampleCodes
-        cmake -S . -B build             \
-            -DCMAKE_BUILD_TYPE=Debug    \
-            -DCMAKE_VERBOSE_MAKEFILE=ON \
-            -DAMReX_MPI=OFF             \
-            -DAMReX_LINEAR_SOLVERS=ON     \
-            -DAMReX_FORTRAN=ON          \
-            -DAMReX_FORTRAN_INTERFACES=ON \
-            -DAMReX_EB=ON                 \
-            -DAMReX_PARTICLES=ON         \
-            -DTUTORIAL_PYTHON=ON
-        cmake --build build -j 2
-        cmake --build build -j 2 --target pyamrex_pip_install
-    - name: Run Python
-      run: |
-        cd GuidedTutorials/MultiFab/
-        python3 main.py
-        cd ../HeatEquation/Source/
-        python3 main.py ../Exec/inputs
-
-  # Build all tutorials
-  tutorials-nofortran:
-    name: GNU w/o Fortran [tutorials]
-    runs-on: ubuntu-24.04
-    env: {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -fno-operator-names"}
-    steps:
-    - uses: actions/checkout@v7
-    - name: Dependencies
-      run: .github/workflows/dependencies/dependencies.sh
-    - name: Build & Install
-      run: |
-        cd ExampleCodes
-        cmake -S . -B build             \
-            -DCMAKE_BUILD_TYPE=Debug    \
-            -DCMAKE_VERBOSE_MAKEFILE=ON \
-            -DAMReX_LINEAR_SOLVERS=ON     \
-            -DAMReX_EB=ON                 \
-            -DAMReX_PARTICLES=ON       \
-            -DAMReX_FORTRAN=OFF        \
-            -DTUTORIAL_PYTHON=ON
-        cmake --build build -j 2
-        cmake --build build -j 2 --target pyamrex_pip_install
-    - name: Run Python
-      run: |
-        cd GuidedTutorials/MultiFab/
-        python3 main.py
-        cd ../HeatEquation/Source/
-        python3 main.py ../Exec/inputs
-
-  # Build all tutorials with CUDA
-  tutorials-cuda:
-    name: CUDA Release [tutorials]
-    runs-on: ubuntu-24.04
-    env: {CXXFLAGS: "-fno-operator-names"}
     steps:
     - uses: actions/checkout@v7
     - name: Dependencies
       run: .github/workflows/dependencies/dependencies_nvcc.sh 12.6
-    - name: Build & Install
+    - name: Build
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
-        which nvcc || echo "nvcc not in PATH!"
-        cd ExampleCodes
-        cmake -S . -B build                              \
-            -DCMAKE_VERBOSE_MAKEFILE=ON                  \
-            -DAMReX_PARTICLES=ON                         \
-            -DAMReX_LINEAR_SOLVERS=ON     \
-            -DAMReX_FORTRAN=ON          \
-            -DAMReX_FORTRAN_INTERFACES=ON \
-            -DAMReX_EB=ON                 \
-            -DAMReX_GPU_BACKEND=CUDA                     \
-            -DCMAKE_C_COMPILER=$(which gcc)              \
-            -DCMAKE_CXX_COMPILER=$(which g++)            \
-            -DCMAKE_CUDA_HOST_COMPILER=$(which g++)      \
-            -DCMAKE_Fortran_COMPILER=$(which gfortran)   \
-            -DAMReX_CUDA_ARCH=8.0                        \
+        export PATH=/usr/local/cuda/bin:${PATH}
+        cmake -S . -B build                         \
+            -DCMAKE_CXX_FLAGS="-fno-operator-names" \
+            -DAMReX_GPU_BACKEND=CUDA                \
+            -DCMAKE_CUDA_ARCHITECTURES=80           \
+            -DAMReX_TINY_PROFILE=ON                 \
             -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
             -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
+        cmake --build build -j 4
 
-        cmake --build build -j 2
-
-  tutorials-dpcpp:
-    name: DPCPP [tutorials]
+  hip:
+    name: HIP (compile only)
     runs-on: ubuntu-24.04
-    env: {CXXFLAGS: "-fno-operator-names"}
-    steps:
-    - uses: actions/checkout@v7
-    - name: Dependencies
-      run: .github/workflows/dependencies/dependencies_dpcpp.sh
-    - name: Build & Install
-      run: |
-        set +e
-        source /opt/intel/oneapi/setvars.sh
-        set -e
-        cd ExampleCodes
-        cmake -S . -B build                                \
-            -DCMAKE_VERBOSE_MAKEFILE=ON                    \
-            -DAMReX_LINEAR_SOLVERS=ON     \
-            -DAMReX_EB=ON                 \
-            -DAMReX_PARTICLES=ON                           \
-            -DAMReX_GPU_BACKEND=SYCL                       \
-            -DCMAKE_C_COMPILER=$(which icx)              \
-            -DCMAKE_CXX_COMPILER=$(which icpx)            \
-            -DCMAKE_Fortran_COMPILER=$(which ifx)
-        cmake --build build --parallel 2
-
-  tutorials-hip:
-    name: HIP ROCm GFortran [tutorials]
-    runs-on: ubuntu-24.04
-    # Have to have -Wno-deprecated-declarations due to deprecated atomicAddNoRet
-    # Have to have -Wno-gnu-zero-variadic-macro-arguments to avoid
-    #    amrex/Src/Base/AMReX_GpuLaunchGlobal.H:15:5: error: must specify at least one argument for '...' parameter of variadic macro [-Werror,-Wgnu-zero-variadic-macro-arguments]
-    #        __launch_bounds__(amrex_launch_bounds_max_threads)
-    #        ^
-    #    /opt/rocm-4.1.1/hip/include/hip/hcc_detail/hip_runtime.h:178:71: note: expanded from macro '__launch_bounds__'
-    #        select_impl_(__VA_ARGS__, launch_bounds_impl1, launch_bounds_impl0)(__VA_ARGS__)
-    #                                                                          ^
-    #    /opt/rocm-4.1.1/hip/include/hip/hcc_detail/hip_runtime.h:176:9: note: macro 'select_impl_' defined here
-    #    #define select_impl_(_1, _2, impl_, ...) impl_
-    env: {CXXFLAGS: "-Werror -Wall -Wextra -Wpedantic -Wnull-dereference -Wfloat-conversion -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -Wno-deprecated-declarations -Wno-gnu-zero-variadic-macro-arguments -Wno-pass-failed"}
     steps:
     - uses: actions/checkout@v7
     - name: Dependencies
       run: .github/workflows/dependencies/dependencies_hip.sh
-    - name: Build & Install
+    - name: Build
       run: |
         source /etc/profile.d/rocm.sh
-        hipcc --version
-        which clang
-        which clang++
-        cmake --version
-
-        # "mpic++ --showme" forgets open-pal in Ubuntu 24.04 + OpenMPI 4.0.3
-        #   https://bugs.launchpad.net/ubuntu/+source/openmpi/+bug/1941786
-        #   https://github.com/open-mpi/ompi/issues/9317
+        # "mpic++ --showme" forgets open-pal in Ubuntu 24.04 + OpenMPI
         export LDFLAGS="-lopen-pal"
+        cmake -S . -B build                         \
+            -DCMAKE_C_COMPILER=$(which clang)       \
+            -DCMAKE_CXX_COMPILER=$(which clang++)   \
+            -DCMAKE_CXX_FLAGS="-fno-operator-names -Wno-deprecated-declarations" \
+            -DAMReX_GPU_BACKEND=HIP                 \
+            -DAMReX_AMD_ARCH=gfx90a
+        cmake --build build -j 4
 
-        cd ExampleCodes
-        cmake -S . -B build_nofortran                     \
-            -DCMAKE_VERBOSE_MAKEFILE=ON                   \
-            -DAMReX_EB=ON                                 \
-            -DAMReX_ENABLE_TESTS=ON                       \
-            -DAMReX_PARTICLES=ON                          \
-            -DAMReX_FORTRAN=OFF                           \
-            -DAMReX_LINEAR_SOLVERS=ON                     \
-            -DAMReX_GPU_BACKEND=HIP                       \
-            -DAMReX_AMD_ARCH=gfx908                       \
-            -DCMAKE_C_COMPILER=$(which clang)             \
-            -DCMAKE_CXX_COMPILER=$(which clang++)
-        cmake --build build_nofortran -j 2
+  sycl:
+    name: SYCL (compile only)
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v7
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies_dpcpp.sh
+    - name: Build
+      run: |
+        set +e
+        source /opt/intel/oneapi/setvars.sh
+        set -e
+        cmake -S . -B build                         \
+            -DCMAKE_C_COMPILER=$(which icx)         \
+            -DCMAKE_CXX_COMPILER=$(which icpx)      \
+            -DCMAKE_CXX_FLAGS="-fno-operator-names" \
+            -DAMReX_GPU_BACKEND=SYCL                \
+            -DAMReX_FFT=OFF
+        cmake --build build -j 4
 
+  gnumake:
+    name: GNU Make
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v7
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: Get AMReX
+      run: git clone --depth 1 https://github.com/AMReX-Codes/amrex.git ../amrex
+    - name: Build and run
+      run: .github/workflows/scripts/gnumake.sh
+
+  build_systems:
+    name: Standalone projects
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v7
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: Superbuild
+      run: |
+        cp -r BuildSystems/CMakeSuperbuild ${RUNNER_TEMP}/superbuild
+        cmake -S ${RUNNER_TEMP}/superbuild -B ${RUNNER_TEMP}/superbuild/build
+        cmake --build ${RUNNER_TEMP}/superbuild/build -j 4
+        mpiexec -n 2 ${RUNNER_TEMP}/superbuild/build/MyApp
+    - name: Installed AMReX
+      run: |
+        git clone --depth 1 https://github.com/AMReX-Codes/amrex.git ${RUNNER_TEMP}/amrex
+        cmake -S ${RUNNER_TEMP}/amrex -B ${RUNNER_TEMP}/amrex/build \
+            -DAMReX_TESTING=ON                                      \
+            -DAMReX_SPACEDIM="2;3" -DAMReX_EB=ON -DAMReX_FFT=ON     \
+            -DCMAKE_INSTALL_PREFIX=${RUNNER_TEMP}/amrex-install
+        cmake --build ${RUNNER_TEMP}/amrex/build -j 4 --target install
+        cmake -S BuildSystems/CMakeInstalledAMReX -B build-installed \
+            -DAMReX_ROOT=${RUNNER_TEMP}/amrex-install
+        cmake --build build-installed -j 4
+        mpiexec -n 2 build-installed/MyApp
+    - name: Tutorials with installed AMReX (2D)
+      run: |
+        cmake -S . -B build-tutorials                 \
+            -DAMReX_TESTING=ON                        \
+            -DAMReX_ROOT=${RUNNER_TEMP}/amrex-install \
+            -DAMReXTutorials_DIM=2                    \
+            -DAMReXTutorials_TOPICS="Base;FFT;EB"     \
+            -DMPIEXEC_PREFLAGS=--oversubscribe
+        cmake --build build-tutorials -j 4
+        ctest --test-dir build-tutorials --output-on-failure
+    - name: Standalone applications
+      run: |
+        for app in CNS IncFlow; do
+          cp -r Applications/${app} ${RUNNER_TEMP}/${app}
+          cmake -S ${RUNNER_TEMP}/${app} -B ${RUNNER_TEMP}/${app}/build \
+              -DFETCHCONTENT_SOURCE_DIR_AMREX=${RUNNER_TEMP}/amrex
+          cmake --build ${RUNNER_TEMP}/${app}/build -j 4
+        done
+
+  sundials:
+    name: SUNDIALS
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v7
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: Build
+      run: |
+        cmake -S . -B build                 \
+            -DAMReX_TESTING=ON                     \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT}" \
+            -DAMReX_SUNDIALS=ON             \
+            -DAMReX_EB=OFF                  \
+            -DAMReX_FFT=OFF                 \
+            -DAMReXTutorials_TOPICS=TimeIntegration \
+            -DMPIEXEC_PREFLAGS=--oversubscribe
+        cmake --build build -j 4
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
+  python:
+    name: pyAMReX
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v7
+    - name: Dependencies
+      run: |
+        .github/workflows/dependencies/dependencies.sh
+        python3 -m venv --system-site-packages ${RUNNER_TEMP}/venv
+        ${RUNNER_TEMP}/venv/bin/python -m pip install --upgrade pip numpy mpi4py
+    - name: Build pyAMReX
+      run: |
+        git clone --depth 1 https://github.com/AMReX-Codes/amrex.git ${RUNNER_TEMP}/amrex
+        git clone --depth 1 https://github.com/AMReX-Codes/pyamrex.git ${RUNNER_TEMP}/pyamrex
+        cmake -S ${RUNNER_TEMP}/pyamrex -B ${RUNNER_TEMP}/pyamrex-build \
+            -DpyAMReX_amrex_src=${RUNNER_TEMP}/amrex                    \
+            -DAMReX_SPACEDIM="2;3"                                      \
+            -DpyAMReX_BUILD_TESTING=OFF                                 \
+            -DPython_EXECUTABLE=${RUNNER_TEMP}/venv/bin/python
+        cmake --build ${RUNNER_TEMP}/pyamrex-build -j 4 --target pip_install
+    - name: Build
+      run: |
+        cmake -S . -B build                                       \
+            -DAMReX_TESTING=ON                                    \
+            -DFETCHCONTENT_SOURCE_DIR_AMREX=${RUNNER_TEMP}/amrex  \
+            -DAMReXTutorials_PYTHON=ON                            \
+            -DAMReXTutorials_TOPICS="Python;Coupling"             \
+            -DPython3_EXECUTABLE=${RUNNER_TEMP}/venv/bin/python   \
+            -DAMReX_EB=OFF                                        \
+            -DAMReX_FFT=OFF                                       \
+            -DMPIEXEC_PREFLAGS=--oversubscribe
+        cmake --build build -j 4
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
+  torch:
+    name: PyTorch
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v7
+    - name: Dependencies
+      run: |
+        .github/workflows/dependencies/dependencies.sh
+        python3 -m pip install --break-system-packages torch --index-url https://download.pytorch.org/whl/cpu
+    - name: Build
+      run: |
+        cmake -S . -B build                 \
+            -DAMReX_TESTING=ON              \
+            -DAMReXTutorials_TORCH=ON       \
+            -DAMReXTutorials_TOPICS=ML      \
+            -DAMReX_EB=OFF                  \
+            -DAMReX_FFT=OFF                 \
+            -DCMAKE_PREFIX_PATH=$(python3 -c "import torch; print(torch.utils.cmake_prefix_path)") \
+            -DMPIEXEC_PREFLAGS=--oversubscribe
+        cmake --build build -j 4
+    - name: Test
+      run: ctest --test-dir build --output-on-failure

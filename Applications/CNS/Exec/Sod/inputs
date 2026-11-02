@@ -1,0 +1,50 @@
+# Sod shock tube.  Parameters not given here use the defaults in
+# cns_prob.cpp (cns_prob_defaults) and the AMReX defaults.
+
+max_step  = 20      # remove to run to stop_time
+stop_time = 0.2
+
+geometry.is_periodic = 0  1  1
+geometry.prob_lo     = 0. 0. 0.
+geometry.prob_hi     = 1. 1. 1.
+amr.n_cell           = 64  8  8
+
+# Physical boundaries:
+# 0 Interior (periodic), 1 Inflow (not implemented), 2 Outflow, 3 Symmetry,
+# 4 SlipWall, 5 NoSlipWall
+cns.lo_bc = 4  0  0
+cns.hi_bc = 4  0  0
+
+cns.cfl = 0.3
+cns.rk_order = 2       # 2 or 3
+cns.v = 1              # 2: print conserved totals every coarse step
+amr.v = 1
+
+# Refinement
+amr.max_level       = 1
+amr.ref_ratio       = 2
+amr.regrid_int      = 2
+amr.blocking_factor = 8
+amr.max_grid_size   = 32
+amr.n_error_buf     = 2
+cns.refine_max_dengrad_lev = 10
+cns.refine_dengrad         = 0.05
+
+# Checkpoint files
+amr.checkpoint_files_output = 1
+amr.check_file              = chk
+amr.check_int               = 10
+
+# Plotfiles
+amr.plot_files_output = 1
+amr.plot_file         = plt
+amr.plot_int          = 10
+amr.derive_plot_vars  = pressure velocity
+
+# Problem parameters
+prob.p_l   = 1.0
+prob.p_r   = 0.1
+prob.rho_l = 1.0
+prob.rho_r = 0.125
+prob.u_l   = 0.0
+prob.u_r   = 0.0

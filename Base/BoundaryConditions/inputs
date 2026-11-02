@@ -1,0 +1,11 @@
+n_cell = 32           # cells in each direction
+max_grid_size = 16    # largest box size in each direction
+
+diffusion_coef = 1.0
+cfl = 0.9             # dt = cfl * dx^2 / (2 * dim * D)
+stop_time = 0.05
+
+phi_lo = 1.0          # Dirichlet value at x = 0
+phi_hi = 0.0          # Dirichlet value at x = 1
+
+plot_int = -1         # write a plotfile every plot_int steps if > 0

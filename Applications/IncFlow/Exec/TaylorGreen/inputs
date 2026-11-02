@@ -1,0 +1,32 @@
+# Stop at max_step steps or at stop_time, whichever comes first.
+max_step  = 10
+stop_time = 1.0
+
+# Periodic domain [0,1] x [0,1] (x [0,0.25] in 3D)
+geometry.prob_lo     = 0.0 0.0 0.0
+geometry.prob_hi     = 1.0 1.0 0.25
+geometry.is_periodic = 1   1   1
+
+# A single level by default, to compare with the exact solution. With
+# amr.max_level = 1, the vortex cores are refined. (The nodal projection
+# needs ref_ratio 2.)
+amr.n_cell          = 32 32 8
+amr.max_level       = 0
+amr.ref_ratio       = 2
+amr.blocking_factor = 8
+amr.max_grid_size   = 16
+amr.n_error_buf     = 2
+amr.regrid_int      = 2
+amr.v               = 0
+
+# Viscosity, CFL number, and refinement where |vorticity| > vort_tag
+incflow.nu       = 0.01
+incflow.cfl      = 0.5
+incflow.vort_tag = 11.0
+
+# Output (negative interval: none)
+amr.plot_file = plt
+amr.plot_int  = 5
+amr.chk_file  = chk
+amr.chk_int   = 5
+# amr.restart = chk00005

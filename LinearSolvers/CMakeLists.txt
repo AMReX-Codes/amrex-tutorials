@@ -1,0 +1,8 @@
+add_subdirectory(CellPoisson)
+add_subdirectory(ABecLaplacian)
+add_subdirectory(ImplicitHeat)
+add_subdirectory(NodalProjection)
+add_subdirectory(GMRES)
+add_subdirectory(AlgMG)
+add_subdirectory(CurlCurl)
+add_subdirectory(CustomLinOp)

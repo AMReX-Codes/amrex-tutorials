@@ -24,3 +24,10 @@ jobs:
       - uses: actions/checkout@v7
       - name: Trailing Whitespaces
         run: .github/workflows/style/check_trailing_whitespaces.sh
+
+  tutorials:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Tutorial layout and legacy patterns
+        run: .github/workflows/style/check_tutorials.sh

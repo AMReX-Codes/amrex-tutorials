@@ -1,0 +1,5 @@
+# Unit square/cube with n_cell^D cells, periodic in x, walls elsewhere
+n_cell = 32
+max_grid_size = 16
+
+mlmg.verbose = 1

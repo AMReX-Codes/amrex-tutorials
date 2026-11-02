@@ -1,0 +1,12 @@
+# Periodic unit domain with n_cell cells in each direction
+n_cell = 32
+max_grid_size = 16
+
+# Particles per cell
+nppc = 4
+
+# Cells per bin in each direction for SortParticlesByBin
+bin_size = 4
+
+# Particles with speed above vcut are "fast"
+vcut = 1.5

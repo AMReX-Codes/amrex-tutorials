@@ -1,0 +1,2 @@
+CEXE_sources += main.cpp AmrCoreAdv.cpp Advance.cpp IO.cpp
+CEXE_headers += AmrCoreAdv.H Kernels.H

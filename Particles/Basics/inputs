@@ -1,0 +1,12 @@
+# Number of cells in each direction of the periodic unit domain
+n_cell = 32
+max_grid_size = 16
+
+# Particles per cell, number of steps, maximum velocity component
+nppc = 2
+nsteps = 20
+vmax = 1.0
+cfl = 0.5
+
+# Write a plotfile and a checkpoint at the end, then restart from it
+write_output = 1

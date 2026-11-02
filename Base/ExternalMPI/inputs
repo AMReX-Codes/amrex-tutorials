@@ -1,0 +1,2 @@
+# Read by the application itself through ParmParse::addfile.
+n_cell = 16           # cells in each direction

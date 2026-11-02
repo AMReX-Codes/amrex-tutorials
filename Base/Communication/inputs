@@ -1,0 +1,3 @@
+n_cell = 32             # cells in each direction
+max_grid_size = 16      # largest box size of the source BoxArray
+dst_max_grid_size = 12  # largest box size of the ParallelCopy destination

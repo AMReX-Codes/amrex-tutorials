@@ -1,0 +1,9 @@
+n_cell = 32           # cells in each direction
+max_grid_size = 16    # largest box size in each direction
+nsteps = 20           # run until this step
+
+chk_int = 10          # write a checkpoint every chk_int steps if > 0
+chk_file = chk        # checkpoint name prefix, e.g., chk00010
+
+# restart = chk00010  # restart from this checkpoint
+# test_restart = 1    # restart from the first checkpoint and compare

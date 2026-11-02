@@ -1,0 +1,9 @@
+# Unit square/cube with n_cell^D cells; the unknowns live on the nodes.
+n_cell = 32
+max_grid_size = 16
+
+# Row-major N x N matrix C in sum_m C_nm lap(phi_m) = f_n (N <= 4)
+coeff = 2.0 1.0 \
+        0.5 1.0
+
+mlmg.verbose = 1

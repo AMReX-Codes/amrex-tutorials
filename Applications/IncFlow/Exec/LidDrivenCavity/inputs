@@ -1,0 +1,30 @@
+# Stop at max_step steps or at stop_time, whichever comes first.
+max_step  = 10
+stop_time = 10.0
+
+# Unit square (cube) with no-slip walls. The lid at y = 1 moves in x.
+geometry.prob_lo     = 0.0 0.0 0.0
+geometry.prob_hi     = 1.0 1.0 1.0
+geometry.is_periodic = 0   0   0
+yhi.velocity         = 1.0 0.0 0.0
+
+# Level 0 grid and refinement (the nodal projection needs ref_ratio 2)
+amr.max_level       = 1
+amr.ref_ratio       = 2
+amr.blocking_factor = 8
+amr.max_grid_size   = 16
+amr.n_error_buf     = 2
+amr.regrid_int      = 2
+amr.v               = 0
+
+# Reynolds number 100, and refinement where |vorticity| > vort_tag
+incflow.nu       = 0.01
+incflow.cfl      = 0.5
+incflow.vort_tag = 5.0
+
+# Output (negative interval: none)
+amr.plot_file = plt
+amr.plot_int  = 5
+amr.chk_file  = chk
+amr.chk_int   = 5
+# amr.restart = chk00005

@@ -1,0 +1,32 @@
+# Stop at max_step coarse steps or at stop_time, whichever comes first.
+# The flow reverses at t = 1 and phi returns to its initial state at t = 2.
+max_step  = 10
+stop_time = 2.0
+
+# Domain [0,1] x [0,1] x [0,0.25], periodic (non-periodic gives walls)
+geometry.prob_lo     = 0.0 0.0 0.0
+geometry.prob_hi     = 1.0 1.0 0.25
+geometry.is_periodic = 1   1   1
+
+# Level 0 grid and refinement
+amr.n_cell          = 32 32 8
+amr.max_level       = 2
+amr.ref_ratio       = 2
+amr.blocking_factor = 8
+amr.max_grid_size   = 16
+amr.n_error_buf     = 2
+amr.regrid_int      = 2
+amr.v               = 1
+
+# Refine where phi > phierr (one value per level)
+adv.phierr      = 0.01 0.1 0.5
+adv.cfl         = 0.5
+adv.do_subcycle = 1
+adv.do_reflux   = 1
+
+# Output (negative interval: none)
+amr.plot_file = plt
+amr.plot_int  = 5
+amr.chk_file  = chk
+amr.chk_int   = 5
+# amr.restart = chk00005

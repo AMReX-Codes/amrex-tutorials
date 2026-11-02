@@ -27,6 +27,12 @@ If you have conda, you can install the necessary packages as follows:
 
        4. Type "conda install -c conda-forge sphinx-copybutton"
 
+       5. Type "conda install -c conda-forge sphinx-reredirects"
+
+or, with pip:
+
+       python3 -m pip install sphinx sphinx_rtd_theme sphinx-copybutton sphinx-design sphinx-reredirects
+
 If you don't have a conda Python installation, you get one by doing the following:
 
        1.  Go to https://conda.io/miniconda.html and download the Python 3.6 64-bit (bash installer), "Miniconda3-latest-Linux-x86_64.sh".  Save this script to your hard drive.

@@ -1,0 +1,2 @@
+CEXE_sources += main.cpp MultiCompNodeLap.cpp
+CEXE_headers += MultiCompNodeLap.H

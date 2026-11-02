@@ -1,0 +1,30 @@
+# Stop at max_step steps or at stop_time, whichever comes first. The shear
+# layers roll up by t = 1.
+max_step  = 10
+stop_time = 2.0
+
+# Periodic domain [0,1] x [0,1] (x [0,0.25] in 3D). The level 0 grid is
+# 64 x 64 in 2D and 32 x 32 x 8 in 3D unless amr.n_cell is given.
+geometry.prob_lo     = 0.0 0.0 0.0
+geometry.is_periodic = 1   1   1
+
+# Refinement (the nodal projection needs ref_ratio 2)
+amr.max_level       = 1
+amr.ref_ratio       = 2
+amr.blocking_factor = 8
+amr.max_grid_size   = 32
+amr.n_error_buf     = 2
+amr.regrid_int      = 2
+amr.v               = 0
+
+# Viscosity, CFL number, and refinement where |vorticity| > vort_tag
+incflow.nu       = 0.0001
+incflow.cfl      = 0.5
+incflow.vort_tag = 10.0
+
+# Output (negative interval: none)
+amr.plot_file = plt
+amr.plot_int  = 5
+amr.chk_file  = chk
+amr.chk_int   = 5
+# amr.restart = chk00005

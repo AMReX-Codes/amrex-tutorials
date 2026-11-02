@@ -1,0 +1,3 @@
+n_cell = 32               # domain of the main program
+max_grid_size = 16        # boxes of the main program
+agent_max_grid_size = 8   # boxes of the agent program

@@ -1,0 +1,11 @@
+# Coarse grid size; the program also solves on a grid twice as fine.
+n_cell = 32
+max_grid_size = 16
+
+# Boundary condition in each direction: dirichlet, neumann or periodic
+bc = dirichlet neumann periodic
+
+# MLMG settings.  The default mlmg.tol_rel is 1e-10 (1e-5 in single precision).
+mlmg.verbose = 1
+mlmg.max_iter = 100
+mlmg.tol_abs = 0.0
