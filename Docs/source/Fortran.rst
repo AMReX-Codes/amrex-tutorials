@@ -65,5 +65,6 @@ Configure from the repository root, build and run:
 
 .. code-block:: text
 
-   Finished 69 steps at time 1.0000000000E-02, mode amplitude = 3.0594420570E-01, relative max error = 6.3830294209E-03
+   Finished 69 steps at time 1.0000000000E-02, mode amplitude = 3.0594420565E-01
+   Max error = 1.9528508660E-03, tolerance = 8.6145674863E-03
    PASSED

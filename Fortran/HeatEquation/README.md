@@ -52,6 +52,7 @@ Add `plot_int=10` to write a plotfile every 10 steps, and e.g.
 ```
 Step 10, time = 1.4648437500E-03
 ...
-Finished 69 steps at time 1.0000000000E-02, mode amplitude = 3.0594420570E-01, relative max error = 6.3830294209E-03
+Finished 69 steps at time 1.0000000000E-02, mode amplitude = 3.0594420565E-01
+Max error = 1.9528508660E-03, tolerance = 8.6145674863E-03
 PASSED
 ```

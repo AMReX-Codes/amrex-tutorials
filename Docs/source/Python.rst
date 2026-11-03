@@ -114,5 +114,6 @@ Run:
 
    Step 10, time = 0.0014648437499999998
    ...
-   Finished 69 steps at time 0.01, mode amplitude = 0.3059442056503393, relative max error = 0.006383029421373866
+   Finished 69 steps at time 0.01, mode amplitude = 0.3059442057
+   Max error = 0.001952850866, tolerance = 0.008614567486
    PASSED

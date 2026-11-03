@@ -109,20 +109,21 @@ def main():
         phi = phi_new.array(mfi).to_xp(copy=False)[..., 0]
         err = error.array(mfi).to_xp(copy=False)[..., 0]
         err[...] = xp.abs(phi[v] - (1.0 + decay * sine_mode(mfi.validbox())))
-    rel_err = error.max(0) / decay  # max over all ranks, relative to the amplitude
-    amr.Print(
-        f"Finished {step} steps at time {time}, mode amplitude = {decay}, "
-        f"relative max error = {rel_err}"
-    )
+    max_err = error.max(0)  # max over all ranks
 
     # Allow twice the leading truncation errors of the Laplacian (dx^2)
-    # and of forward Euler (dt), plus round-off of about one epsilon per
-    # step on phi ~ 1, relative to the decaying mode amplitude.
+    # and of forward Euler (dt), which decay with the mode, plus round-off
+    # of about one epsilon per step on phi ~ 1.
     space_err = k2 / 3 * dx[0] ** 2 / 12.0
     time_err = diffusion_coef * k2 * dt / 2.0
-    tol = 2.0 * diffusion_coef * time * k2 * (space_err + time_err)
-    tol += step * sys.float_info.epsilon / decay
-    if rel_err > tol:
+    tol = 2.0 * decay * diffusion_coef * time * k2 * (space_err + time_err)
+    tol += step * sys.float_info.epsilon
+    amr.Print(
+        f"Finished {step} steps at time {time:.10g}, mode amplitude = {decay:.10g}"
+    )
+    amr.Print(f"Max error = {max_err:.10g}, tolerance = {tol:.10g}")
+
+    if max_err > tol:
         amr.Print("FAILED")
         return 1
     amr.Print("PASSED")

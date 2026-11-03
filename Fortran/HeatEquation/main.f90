@@ -85,19 +85,20 @@ program main
   ! Exact solution: each sine mode decays as exp(-D |k|^2 t), |k|^2 = dim (2 pi)^2.
   k2 = amrex_spacedim * 4.0_amrex_real * pi**2
   decay = exp(-diffusion_coef * k2 * time)
-  err = max_error(phi_new, geom, decay) / decay ! relative to the mode amplitude
+  err = max_error(phi_new, geom, decay)
   ! Allow twice the leading truncation errors of the Laplacian (dx^2)
-  ! and of forward Euler (dt), plus round-off of about one epsilon per
-  ! step on phi ~ 1, relative to the decaying mode amplitude.
+  ! and of forward Euler (dt), which decay with the mode, plus round-off
+  ! of about one epsilon per step on phi ~ 1.
   space_err = k2 / amrex_spacedim * geom%dx(1)**2 / 12.0_amrex_real
   time_err = diffusion_coef * k2 * dt / 2.0_amrex_real
-  tol = 2.0_amrex_real * diffusion_coef * time * k2 * (space_err + time_err) &
-       + step * epsilon(1.0_amrex_real) / decay
+  tol = 2.0_amrex_real * decay * diffusion_coef * time * k2 * (space_err + time_err) &
+       + step * epsilon(1.0_amrex_real)
   passed = err <= tol
 
   if (amrex_parallel_ioprocessor()) then
-     print '("Finished ", i0, " steps at time ", es16.10, ", mode amplitude = ", es16.10, &
-           &", relative max error = ", es16.10)', step, time, decay, err
+     print '("Finished ", i0, " steps at time ", es16.10, ", mode amplitude = ", es16.10)', &
+           step, time, decay
+     print '("Max error = ", es16.10, ", tolerance = ", es16.10)', err, tol
      if (passed) then
         print '(a)', "PASSED"
      else

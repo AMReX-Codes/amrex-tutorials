@@ -127,18 +127,19 @@ int main (int argc, char* argv[])
             Real exact = 1.0_rt + decay * sine_mode(amrex::IntVect(AMREX_D_DECL(i,j,k)), prob_lo, dx);
             ea[b](i,j,k) = pa[b](i,j,k) - exact;
         });
-        Real const err = error.norm0() / decay; // relative to the mode amplitude
-        amrex::Print() << "Finished " << step << " steps at time " << time
-                       << ", mode amplitude = " << decay
-                       << ", relative max error = " << err << "\n";
+        Real const err = error.norm0();
 
         // Allow twice the leading truncation errors of the Laplacian (dx^2)
-        // and of forward Euler (dt), plus round-off of about one epsilon per
-        // step on phi ~ 1, relative to the decaying mode amplitude.
+        // and of forward Euler (dt), which decay with the mode, plus round-off
+        // of about one epsilon per step on phi ~ 1.
         Real const space_err = k2 / AMREX_SPACEDIM * dx[0] * dx[0] / 12.0_rt;
         Real const time_err = diffusion_coef * k2 * dt / 2.0_rt;
-        Real const tol = 2.0_rt * diffusion_coef * time * k2 * (space_err + time_err)
-            + Real(step) * std::numeric_limits<Real>::epsilon() / decay;
+        Real const tol = 2.0_rt * decay * diffusion_coef * time * k2 * (space_err + time_err)
+            + Real(step) * std::numeric_limits<Real>::epsilon();
+        amrex::Print() << "Finished " << step << " steps at time " << time
+                       << ", mode amplitude = " << decay << "\n"
+                       << "Max error = " << err << ", tolerance = " << tol << "\n";
+
         if (err > tol) {
             amrex::Print() << "FAILED\n";
             status = 1;
