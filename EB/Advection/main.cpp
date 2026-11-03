@@ -159,7 +159,7 @@ public:
         for (int d = 0; d < AMREX_SPACEDIM; ++d) {
             rate += m_ua[d].norminf() * dxinv[d];
         }
-        return cfl / rate;
+        return (rate > 0.0_rt) ? cfl / rate : std::numeric_limits<Real>::max();
     }
 
     // Compute the redistributed dS/dt.  S must have nghost filled ghost cells.

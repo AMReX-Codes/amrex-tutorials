@@ -234,8 +234,8 @@ void advect (PC& pc, Array<MultiFab,AMREX_SPACEDIM> const& u, MultiFab const& sd
                     for (int d = 0; d < AMREX_SPACEDIM; ++d) {
                         p.x[d] += ParticleReal(-2.0_rt * s * grad[d] / gnorm);
                     }
+                    ptd.idata(IntIdx::reflected)[i] += 1;
                 }
-                ptd.idata(IntIdx::reflected)[i] += 1;
             }
             for (int d = 0; d < AMREX_SPACEDIM; ++d) { ptd.pos(d, i) = p.x[d]; }
         });

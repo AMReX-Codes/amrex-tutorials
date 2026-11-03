@@ -68,6 +68,12 @@ if(AMReX_FOUND)
     if(AMReX_FORTRAN_INTERFACES AND NOT AMReX_FINTERFACES)
         message(FATAL_ERROR "The installed AMReX was built without Fortran interfaces")
     endif()
+    # A GPU backend given on the command line must match the installed AMReX.
+    if(NOT "$CACHE{AMReX_GPU_BACKEND}" STREQUAL "NONE" AND
+       NOT "$CACHE{AMReX_GPU_BACKEND}" STREQUAL "${AMReX_GPU_BACKEND}")
+        message(FATAL_ERROR "AMReX_GPU_BACKEND=$CACHE{AMReX_GPU_BACKEND} was requested, "
+                "but the installed AMReX was built with ${AMReX_GPU_BACKEND}")
+    endif()
     # An AMReX built with a GPU backend needs that language enabled here.
     if(AMReX_GPU_BACKEND STREQUAL "CUDA")
         enable_language(CUDA)
