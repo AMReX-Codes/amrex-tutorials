@@ -196,22 +196,26 @@ IncFlow::ComputeViscousTerm (Vector<MultiFab>& visc, Vector<MultiFab>& vel)
 {
     int const nlevs = finest_level + 1;
 
-    // Only the operator is needed, no multigrid hierarchy.
-    LPInfo info;
-    info.setMaxCoarseningLevel(0);
-    MLABecLaplacian op(LevelGeom(), LevelGrids(), LevelDmap(), info, {}, AMREX_SPACEDIM);
-    op.setDomainBC(LinOpBC(LinOpBCType::Dirichlet), LinOpBC(LinOpBCType::Dirichlet));
+    if (!visc_op) {
+        // Only the operator is needed, no multigrid hierarchy.
+        LPInfo info;
+        info.setMaxCoarseningLevel(0);
+        visc_op = std::make_unique<MLABecLaplacian>(LevelGeom(), LevelGrids(), LevelDmap(),
+                                                    info, Vector<FabFactory<FArrayBox> const*>{},
+                                                    AMREX_SPACEDIM);
+        visc_op->setDomainBC(LinOpBC(LinOpBCType::Dirichlet), LinOpBC(LinOpBCType::Dirichlet));
+        // alpha a u - beta div(b grad(u)) with alpha = 0, beta = b = 1
+        visc_op->setScalars(0.0_rt, 1.0_rt);
+        for (int lev = 0; lev < nlevs; ++lev) {
+            visc_op->setBCoeffs(lev, 1.0_rt);
+        }
+    }
     for (int lev = 0; lev < nlevs; ++lev) {
         // The ghost cells outside walls hold the wall velocity.
-        op.setLevelBC(lev, &vel[lev]);
-    }
-    // alpha a u - beta div(b grad(u)) with alpha = 0, beta = b = 1
-    op.setScalars(0.0_rt, 1.0_rt);
-    for (int lev = 0; lev < nlevs; ++lev) {
-        op.setBCoeffs(lev, 1.0_rt);
+        visc_op->setLevelBC(lev, &vel[lev]);
     }
 
-    MLMG mlmg(op);
+    MLMG mlmg(*visc_op);
     mlmg.apply(GetVecOfPtrs(visc), GetVecOfPtrs(vel));
     for (int lev = 0; lev < nlevs; ++lev) {
         visc[lev].mult(-nu);

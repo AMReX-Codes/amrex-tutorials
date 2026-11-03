@@ -307,7 +307,7 @@ projection makes it divergence free: solve
 
 .. literalinclude:: ../../Applications/IncFlow/Source/Projection.cpp
    :language: cpp
-   :start-at: MLPoisson op(
+   :start-at: if (!mac_op) {
    :end-at: mlmg.solve(
    :dedent:
 
@@ -319,17 +319,19 @@ ghost cells) and coarse/fine boundaries:
 
 .. literalinclude:: ../../Applications/IncFlow/Source/Advance.cpp
    :language: cpp
-   :start-at: MLABecLaplacian op(
+   :start-at: if (!visc_op) {
    :end-at: mlmg.apply(
    :dedent:
 
 The nodal projection solves :math:`\nabla^2\phi = \nabla\cdot u` with
 :math:`\phi` on the nodes. Since the update has no pressure gradient,
-:math:`u = u_{div\,free} + \Delta t\,\nabla p`, so :math:`p = \phi/\Delta t`:
+:math:`u = u_{div\,free} + \Delta t\,\nabla p`, so :math:`p = \phi/\Delta t`.
+Building a linear operator sets up its multigrid hierarchy, so all three
+operators are built when first needed and kept until the grids change:
 
 .. literalinclude:: ../../Applications/IncFlow/Source/Projection.cpp
    :language: cpp
-   :start-at: MLNodeLaplacian op(
+   :start-at: if (!nodal_op) {
    :end-at: mlmg.solve(
    :dedent:
 

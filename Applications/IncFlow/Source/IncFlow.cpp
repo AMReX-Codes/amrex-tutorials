@@ -86,7 +86,7 @@ IncFlow::ReadParameters ()
         // Refine where |vorticity| > vort_tag[lev]. The last value is used
         // for finer levels.
         Vector<Real> vort_tag{10.0_rt};
-        pp.queryarr("vort_tag", vort_tag);
+        if (Vector<Real> v; pp.queryarr("vort_tag", v)) { vort_tag = v; } // replace all
         error_tags.emplace_back(vort_tag, AMRErrorTag::GREATER, "vort");
     }
 
@@ -192,6 +192,15 @@ IncFlow::DefineLevel (int lev, const BoxArray& ba, const DistributionMapping& dm
     vel_new[lev].setVal(0.0_rt);
     vel_old[lev].setVal(0.0_rt);
     pressure[lev].setVal(0.0_rt);
+    ResetSolvers();
+}
+
+void
+IncFlow::ResetSolvers ()
+{
+    visc_op.reset();
+    mac_op.reset();
+    nodal_op.reset();
 }
 
 void
@@ -234,6 +243,7 @@ IncFlow::ClearLevel (int lev)
     vel_new[lev].clear();
     vel_old[lev].clear();
     pressure[lev].clear();
+    ResetSolvers();
 }
 
 void

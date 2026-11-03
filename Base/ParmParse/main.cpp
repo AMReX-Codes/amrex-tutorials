@@ -48,8 +48,12 @@ int main (int argc, char* argv[])
         found = pp.query("title", title);
         amrex::Print() << "title         = " << title << " " << source(found) << "\n";
 
+        // queryarr only overwrites as many entries as are given and keeps the
+        // rest, so read into an empty vector to replace a default array.
         std::vector<int> n_cell{64, 32, 16};
-        found = pp.queryarr("n_cell", n_cell);
+        std::vector<int> n_cell_in;
+        found = pp.queryarr("n_cell", n_cell_in);
+        if (found) { n_cell = n_cell_in; }
         amrex::Print() << "n_cell        = " << to_string(n_cell) << source(found) << "\n";
 
         // Math expressions
@@ -84,7 +88,7 @@ int main (int argc, char* argv[])
         Real diffusivity = 0.1_rt;
         found = pp_phys.query("diffusivity", diffusivity);
         std::vector<Real> gravity{0.0_rt, -9.81_rt};
-        pp_phys.queryarr("gravity", gravity);
+        if (std::vector<Real> g; pp_phys.queryarr("gravity", g)) { gravity = g; }
         amrex::Print() << "physics.diffusivity = " << diffusivity << " " << source(found) << "\n"
                        << "physics.gravity     = " << to_string(gravity) << "\n";
 

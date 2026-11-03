@@ -79,9 +79,12 @@ else()
 endif()
 
 # An AMReX built for several dimensions (e.g., AMReX_SPACEDIM="2;3") can be
-# used for any of them. The last one is the default.
-list(GET AMReX_SPACEDIM -1 _amrex_last_dim)
-set(AMReXTutorials_DIM ${_amrex_last_dim} CACHE STRING "Dimension of the tutorials")
+# used for any of them. The last one is the default; it is not cached, so
+# that it follows AMReX_SPACEDIM when the build is reconfigured.
+set(AMReXTutorials_DIM "" CACHE STRING "Dimension of the tutorials (default: the last of AMReX_SPACEDIM)")
+if(AMReXTutorials_DIM STREQUAL "")
+    list(GET AMReX_SPACEDIM -1 AMReXTutorials_DIM)
+endif()
 if(NOT AMReXTutorials_DIM IN_LIST AMReX_SPACEDIM)
     message(FATAL_ERROR "AMReXTutorials_DIM=${AMReXTutorials_DIM} is not in "
                         "AMReX_SPACEDIM=${AMReX_SPACEDIM}")

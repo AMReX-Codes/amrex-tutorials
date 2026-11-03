@@ -149,7 +149,10 @@ int main (int argc, char* argv[])
             ParmParse pp;
             pp.query("n_cell", n_cell);
             pp.query("max_grid_size", max_grid_size);
-            pp.queryarr("geometries", geometries);
+            // queryarr only overwrites as many entries as are given, so read
+            // into an empty vector to replace the default list.
+            std::vector<std::string> g;
+            if (pp.queryarr("geometries", g)) { geometries = g; }
             surface_geometry = geometries[0];
             pp.query("surface_geometry", surface_geometry);
         }

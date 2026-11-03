@@ -5,8 +5,12 @@
 #include <AMReX_BCRec.H>
 #include <AMReX_ErrorList.H>
 #include <AMReX_LO_BCTYPES.H>
+#include <AMReX_MLABecLaplacian.H>
+#include <AMReX_MLNodeLaplacian.H>
+#include <AMReX_MLPoisson.H>
 #include <AMReX_MultiFab.H>
 
+#include <memory>
 #include <string>
 
 // Incompressible Navier-Stokes equations with constant density (rho = 1),
@@ -62,6 +66,8 @@ public:
     // Projections (Projection.cpp)
     void MacProjection (amrex::Vector<amrex::Array<amrex::MultiFab,AMREX_SPACEDIM>>& umac);
     void NodalProjection (amrex::Vector<amrex::MultiFab>& vel, amrex::Real dt_proj);
+    // Discard the linear operators; they are rebuilt for the new grids.
+    void ResetSolvers ();
 
     // Fill a MultiFab including ghost cells from this level and the level below.
     void FillPatch (int lev, amrex::Real time, amrex::MultiFab& mf);
@@ -117,6 +123,13 @@ private:
 
     // Refine where |vorticity| exceeds a threshold
     amrex::Vector<amrex::AMRErrorTag> error_tags;
+
+    // Linear operators over all levels. Building one sets up its multigrid
+    // hierarchy, so they are built when first needed and kept until the
+    // grids change.
+    std::unique_ptr<amrex::MLABecLaplacian> visc_op;
+    std::unique_ptr<amrex::MLPoisson> mac_op;
+    std::unique_ptr<amrex::MLNodeLaplacian> nodal_op;
 
     // Runtime parameters
     int max_step = 20;

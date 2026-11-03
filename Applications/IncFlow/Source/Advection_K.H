@@ -60,14 +60,15 @@ void face_values (amrex::IntVect const& iv, int n, int d,
     }
 }
 
-// Normal velocity on a face: the upwind value, or zero where the flow
-// stagnates
+// Normal velocity on a face, from the Riemann problem of Burgers' equation:
+// zero where the flow diverges (ul < 0 < ur), otherwise the upwind value
+// given by the sign of ul + ur
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 amrex::Real normal_velocity (amrex::Real ul, amrex::Real ur)
 {
     using namespace amrex::literals;
     constexpr amrex::Real small = 1.e-10_rt;
-    if ((ul >= 0.0_rt && ur <= 0.0_rt) || std::abs(ul+ur) < small) {
+    if ((ul < 0.0_rt && ur > 0.0_rt) || std::abs(ul+ur) < small) {
         return 0.0_rt;
     }
     return (ul+ur > 0.0_rt) ? ul : ur;

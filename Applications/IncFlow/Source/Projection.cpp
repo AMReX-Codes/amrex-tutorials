@@ -33,13 +33,15 @@ IncFlow::MacProjection (Vector<Array<MultiFab,AMREX_SPACEDIM>>& umac)
     }
 
     // All levels are solved together (composite solve).
-    MLPoisson op(LevelGeom(), LevelGrids(), LevelDmap());
-    op.setDomainBC(LinOpBC(LinOpBCType::Neumann), LinOpBC(LinOpBCType::Neumann));
-    for (int lev = 0; lev < nlevs; ++lev) {
-        op.setLevelBC(lev, nullptr);
+    if (!mac_op) {
+        mac_op = std::make_unique<MLPoisson>(LevelGeom(), LevelGrids(), LevelDmap());
+        mac_op->setDomainBC(LinOpBC(LinOpBCType::Neumann), LinOpBC(LinOpBCType::Neumann));
+        for (int lev = 0; lev < nlevs; ++lev) {
+            mac_op->setLevelBC(lev, nullptr);
+        }
     }
 
-    MLMG mlmg(op);
+    MLMG mlmg(*mac_op);
     mlmg.setVerbose(mg_verbose);
     mlmg.solve(GetVecOfPtrs(phi), GetVecOfConstPtrs(rhs), solver_tolerance(), 0.0_rt);
 
@@ -83,17 +85,20 @@ IncFlow::NodalProjection (Vector<MultiFab>& vel, Real dt_proj)
         gradphi[lev].define(grids[lev], dmap[lev], AMREX_SPACEDIM, 0);
     }
 
-    // Constant sigma = 1. The empty list of factories means no embedded
-    // boundaries.
-    Vector<FabFactory<FArrayBox> const*> const no_eb{};
-    MLNodeLaplacian op(LevelGeom(), LevelGrids(), LevelDmap(), LPInfo(), no_eb, 1.0_rt);
-    op.setDomainBC(LinOpBC(LinOpBCType::Neumann), LinOpBC(LinOpBCType::Neumann));
+    if (!nodal_op) {
+        // Constant sigma = 1. The empty list of factories means no embedded
+        // boundaries.
+        Vector<FabFactory<FArrayBox> const*> const no_eb{};
+        nodal_op = std::make_unique<MLNodeLaplacian>(LevelGeom(), LevelGrids(), LevelDmap(),
+                                                     LPInfo(), no_eb, 1.0_rt);
+        nodal_op->setDomainBC(LinOpBC(LinOpBCType::Neumann), LinOpBC(LinOpBCType::Neumann));
+    }
 
     // rhs = div(vel) on the nodes, including the coarse/fine synchronization.
     // This also sets the velocity outside walls to zero.
-    op.compRHS(GetVecOfPtrs(rhs), GetVecOfPtrs(vel), {}, {});
+    nodal_op->compRHS(GetVecOfPtrs(rhs), GetVecOfPtrs(vel), {}, {});
 
-    MLMG mlmg(op);
+    MLMG mlmg(*nodal_op);
     mlmg.setVerbose(mg_verbose);
     mlmg.solve(GetVecOfPtrs(phi), GetVecOfConstPtrs(rhs), solver_tolerance(), 0.0_rt);
 

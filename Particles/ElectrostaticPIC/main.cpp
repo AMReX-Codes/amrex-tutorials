@@ -74,11 +74,10 @@ int main (int argc, char* argv[])
         {
             amrex::ParmParse pp;
             // Read 3 values; a 2D build uses the first two.
-            std::vector<int> v;
-            if (pp.queryarr("n_cell", v)) {
+            if (std::vector<int> v; pp.queryarr("n_cell", v)) {
                 for (int d = 0; d < AMREX_SPACEDIM; ++d) { n_cell[d] = v.at(d); }
             }
-            if (pp.queryarr("nppc", v)) {
+            if (std::vector<int> v; pp.queryarr("nppc", v)) {
                 for (int d = 0; d < AMREX_SPACEDIM; ++d) { nppc[d] = v.at(d); }
             }
             pp.query("max_grid_size", max_grid_size);

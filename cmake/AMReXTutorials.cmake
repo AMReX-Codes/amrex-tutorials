@@ -125,7 +125,7 @@ function(amrex_tutorial_add _name)
         endif()
         find_package(MPI REQUIRED COMPONENTS CXX)
         set(_command ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${_arg_NPROCS}
-            ${MPIEXEC_PREFLAGS} ${_command} ${MPIEXEC_POSTFLAGS})
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:${_target}> ${MPIEXEC_POSTFLAGS} ${_test_args})
     endif()
     add_test(NAME ${_target} COMMAND ${_command}
              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
