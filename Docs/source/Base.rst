@@ -421,10 +421,10 @@ GpuContainers
 
 :Level: ★★
 :Source: `Base/GpuContainers <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Base/GpuContainers>`__
-:Key APIs: ``Gpu::DeviceVector``, ``Gpu::HostVector``, ``Gpu::PinnedVector``,
-           ``Gpu::copyAsync``, ``Gpu::streamSynchronize``, ``ParallelForRNG``,
-           ``amrex::Random``, ``Scan::PrefixSum``, ``Scan::ExclusiveSum``,
-           ``The_Arena``, ``The_Async_Arena``, ``The_Pinned_Arena``
+:Key APIs: ``Gpu::DeviceVector``, ``Gpu::PinnedVector``, ``Gpu::copyAsync``,
+           ``Gpu::streamSynchronize``, ``ParallelForRNG``, ``amrex::Random``,
+           ``Scan::PrefixSum``, ``Scan::ExclusiveSum``, ``The_Arena``,
+           ``The_Async_Arena``, ``The_Pinned_Arena``
 
 Fills a ``Gpu::DeviceVector`` with random numbers, keeps the values above a
 threshold with a prefix-sum based stream compaction, copies the results to
@@ -442,8 +442,8 @@ arrays:
    :dedent:
 
 ``DeviceVector`` memory comes from ``The_Arena()`` (device memory on GPU),
-``PinnedVector`` from ``The_Pinned_Arena()`` (page-locked host memory, needed
-for truly asynchronous copies), and ``HostVector`` is ordinary host memory.
+and ``PinnedVector`` from ``The_Pinned_Arena()`` (page-locked host memory,
+needed for truly asynchronous copies).
 ``copyAsync`` may return before the copy is done, so synchronize the stream
 before using the data:
 

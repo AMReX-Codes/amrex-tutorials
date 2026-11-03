@@ -6,16 +6,16 @@ with a prefix-sum based stream compaction, copy results to pinned host
 memory, and check them against the same operations done on the host. The
 code is the same for CPU and GPU builds.
 
-**Key APIs:** `Gpu::DeviceVector`, `Gpu::HostVector`, `Gpu::PinnedVector`,
-`Gpu::copyAsync`, `Gpu::streamSynchronize`, `ParallelForRNG`,
-`amrex::Random`, `Scan::PrefixSum`, `Scan::ExclusiveSum`, `The_Arena`,
-`The_Async_Arena`, `The_Pinned_Arena`
+**Key APIs:** `Gpu::DeviceVector`, `Gpu::PinnedVector`, `Gpu::copyAsync`,
+`Gpu::streamSynchronize`, `ParallelForRNG`, `amrex::Random`,
+`Scan::PrefixSum`, `Scan::ExclusiveSum`, `The_Arena`, `The_Async_Arena`,
+`The_Pinned_Arena`
 
 ## Notes
 
 - `DeviceVector` memory comes from `The_Arena()` (device memory on GPU), and
   `PinnedVector` from `The_Pinned_Arena()` (page-locked host memory, needed
-  for truly asynchronous copies). `HostVector` is ordinary host memory.
+  for truly asynchronous copies).
 - `copyAsync` returns before the copy is done on GPU; call
   `Gpu::streamSynchronize()` before using the data.
 - `The_Async_Arena()` is for temporaries: memory freed there is reused only

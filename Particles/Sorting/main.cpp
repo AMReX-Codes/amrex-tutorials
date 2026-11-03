@@ -173,7 +173,8 @@ int main (int argc, char* argv[])
         amrex::DenseBins<ConstPTD> bins;
         for (PC::ParIterType pti(pc, lev); pti.isValid(); ++pti)
         {
-            const amrex::Box bx = pti.validbox();
+            // With particle tiling, a grid holds several tiles.
+            const amrex::Box bx = pti.tilebox();
             const auto ptd = pti.GetParticleTile().getConstParticleTileData();
             const amrex::IntVect lo = bx.smallEnd();
             const auto domain_box = geom.Domain();

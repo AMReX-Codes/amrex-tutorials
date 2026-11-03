@@ -10,7 +10,8 @@ program main
 
   integer :: n_cell, max_grid_size, plot_int, step
   real(amrex_real) :: diffusion_coef, cfl, stop_time
-  real(amrex_real) :: dt, dt_step, time, decay, err
+  real(amrex_real) :: dt, dt_step, time, decay, err, k2, tol
+  real(amrex_real) :: space_err, time_err
   logical :: passed
   type(amrex_parmparse) :: pp
   type(amrex_box) :: domain
@@ -82,10 +83,15 @@ program main
   end do
 
   ! Exact solution: each sine mode decays as exp(-D |k|^2 t), |k|^2 = dim (2 pi)^2.
-  decay = exp(-diffusion_coef * amrex_spacedim * 4.0_amrex_real * pi**2 * time)
+  k2 = amrex_spacedim * 4.0_amrex_real * pi**2
+  decay = exp(-diffusion_coef * k2 * time)
   err = max_error(phi_new, geom, decay) / decay ! relative to the mode amplitude
-  ! The relative error grows linearly in time, and so does the tolerance.
-  passed = err <= 2.0_amrex_real * max(time, 0.01_amrex_real)
+  ! Allow twice the leading truncation errors of the Laplacian (dx^2)
+  ! and of forward Euler (dt).
+  space_err = k2 / amrex_spacedim * geom%dx(1)**2 / 12.0_amrex_real
+  time_err = diffusion_coef * k2 * dt / 2.0_amrex_real
+  tol = 2.0_amrex_real * diffusion_coef * time * k2 * (space_err + time_err)
+  passed = err <= tol
 
   if (amrex_parallel_ioprocessor()) then
      print '("Finished ", i0, " steps at time ", es16.10, ", mode amplitude = ", es16.10, &

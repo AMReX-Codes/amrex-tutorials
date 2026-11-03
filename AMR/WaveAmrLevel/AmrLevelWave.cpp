@@ -59,7 +59,13 @@ AmrLevelWave::AmrLevelWave (Amr& amr, int lev, const Geometry& gm,
                             const BoxArray& ba, const DistributionMapping& dm,
                             Real time)
     : AmrLevel(amr, lev, gm, ba, dm, time)
-{}
+{
+    // cell_quartic_interp only supports a refinement ratio of 2.
+    if (lev > 0) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(amr.refRatio(lev-1) == 2,
+                                         "WaveAmrLevel requires amr.ref_ratio = 2");
+    }
+}
 
 void
 AmrLevelWave::variableSetUp ()
@@ -188,16 +194,10 @@ AmrLevelWave::computeRHS (MultiFab& dSdt, MultiFab const& S)
 void
 AmrLevelWave::computeInitialDt (int finest_level, int /*sub_cycle*/,
                                 Vector<int>& n_cycle,
-                                const Vector<IntVect>& ref_ratio,
+                                const Vector<IntVect>& /*ref_ratio*/,
                                 Vector<Real>& dt_level, Real stop_time)
 {
     if (Level() > 0) { return; } // level 0 sets dt for all levels
-
-    // cell_quartic_interp only supports a refinement ratio of 2.
-    for (int ilev = 0; ilev < finest_level; ++ilev) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratio[ilev] == 2,
-                                         "WaveAmrLevel requires amr.ref_ratio = 2");
-    }
 
     // Number of steps of each level in one level-0 step
     Vector<int> nsteps(n_cycle.size());

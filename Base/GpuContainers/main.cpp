@@ -74,7 +74,7 @@ int main (int argc, char* argv[])
         // Scan::ExclusiveSum on raw device memory. The_Async_Arena() is for
         // temporaries: on GPU, free() is ordered on the stream, so there is
         // no need to synchronize before freeing.
-        amrex::Gpu::HostVector<int> h_counts(n);
+        amrex::Gpu::PinnedVector<int> h_counts(n);
         for (int i = 0; i < n; ++i) { h_counts[i] = i % 4; }
         amrex::Gpu::DeviceVector<int> counts(n);
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_counts.begin(), h_counts.end(), counts.begin());

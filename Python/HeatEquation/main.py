@@ -102,7 +102,8 @@ def main():
             )
 
     # Exact solution: the sine mode decays as exp(-D |k|^2 t), |k|^2 = 3 (2 pi)^2.
-    decay = math.exp(-diffusion_coef * 3 * 4.0 * math.pi**2 * time)
+    k2 = 3 * 4.0 * math.pi**2
+    decay = math.exp(-diffusion_coef * k2 * time)
     error = amr.MultiFab(ba, dm, 1, 0)
     for mfi in error:
         phi = phi_new.array(mfi).to_xp(copy=False)[..., 0]
@@ -114,8 +115,12 @@ def main():
         f"relative max error = {rel_err}"
     )
 
-    # The relative error grows linearly in time, and so does the tolerance.
-    if rel_err > 2.0 * max(time, 0.01):
+    # Allow twice the leading truncation errors of the Laplacian (dx^2)
+    # and of forward Euler (dt).
+    space_err = k2 / 3 * dx[0] ** 2 / 12.0
+    time_err = diffusion_coef * k2 * dt / 2.0
+    tol = 2.0 * diffusion_coef * time * k2 * (space_err + time_err)
+    if rel_err > tol:
         amr.Print("FAILED")
         return 1
     amr.Print("PASSED")

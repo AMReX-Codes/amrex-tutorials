@@ -115,8 +115,9 @@ int main (int argc, char* argv[])
         }
 
         // Exact solution: each sine mode decays as exp(-D |k|^2 t), |k|^2 = dim (2 pi)^2.
-        Real const decay = std::exp(-diffusion_coef * AMREX_SPACEDIM * 4.0_rt
-                                    * amrex::Math::pi<Real>() * amrex::Math::pi<Real>() * time);
+        Real const pi = amrex::Math::pi<Real>();
+        Real const k2 = AMREX_SPACEDIM * 4.0_rt * pi * pi;
+        Real const decay = std::exp(-diffusion_coef * k2 * time);
         amrex::MultiFab error(ba, dm, 1, 0);
         auto const& pa = phi_new.const_arrays();
         auto const& ea = error.arrays();
@@ -130,8 +131,12 @@ int main (int argc, char* argv[])
                        << ", mode amplitude = " << decay
                        << ", relative max error = " << err << "\n";
 
-        // The relative error grows linearly in time, and so does the tolerance.
-        if (err > 2.0_rt * std::max(time, 0.01_rt)) {
+        // Allow twice the leading truncation errors of the Laplacian (dx^2)
+        // and of forward Euler (dt).
+        Real const space_err = k2 / AMREX_SPACEDIM * dx[0] * dx[0] / 12.0_rt;
+        Real const time_err = diffusion_coef * k2 * dt / 2.0_rt;
+        Real const tol = 2.0_rt * diffusion_coef * time * k2 * (space_err + time_err);
+        if (err > tol) {
             amrex::Print() << "FAILED\n";
             status = 1;
         } else {
