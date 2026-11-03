@@ -41,6 +41,14 @@ Useful options:
 A single tutorial is built with its target, `<Topic>_<Name>`, e.g.,
 `cmake --build build --target Base_HeatEquation`.
 
+On a GPU, AMReX preallocates 3/4 of the device memory at startup. If the
+test ranks share one GPU, they may run out of memory; set a smaller initial
+size through the `AMREX_DEFAULT_INIT` environment variable:
+
+```
+AMREX_DEFAULT_INIT="amrex.the_arena_init_size=268435456" ctest --test-dir build
+```
+
 With GNU Make, clone AMReX next to this repository (or set `AMREX_HOME`)
 and run `make -j8` in a tutorial directory. See each tutorial's README.
 

@@ -100,6 +100,14 @@ or ``-DAMReX_FPE=ON``.
    ctest --test-dir build --output-on-failure
    ctest --test-dir build -R LinearSolvers
 
+On a GPU, AMReX preallocates 3/4 of the device memory at startup. If the
+test ranks share one GPU, they may run out of memory; set a smaller initial
+size through the ``AMREX_DEFAULT_INIT`` environment variable:
+
+.. code-block:: console
+
+   AMREX_DEFAULT_INIT="amrex.the_arena_init_size=268435456" ctest --test-dir build
+
 Building with GNU Make
 ----------------------
 
