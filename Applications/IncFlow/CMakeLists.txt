@@ -1,8 +1,8 @@
-# IncFlow builds one executable per problem in Exec/: IncFlow_TaylorGreen
-# and IncFlow_LidDrivenCavity.
+# IncFlow builds one executable per problem in Exec/: IncFlow_TaylorGreen,
+# IncFlow_DoubleShearLayer and IncFlow_LidDrivenCavity.
 #
 # Inside the tutorials superbuild, amrex_tutorial_add creates the targets
-# Applications_IncFlow_TaylorGreen and Applications_IncFlow_LidDrivenCavity.
+# Applications_IncFlow_<problem>, e.g., Applications_IncFlow_TaylorGreen.
 # When this directory is copied out and built on its own, AMReX is fetched
 # with FetchContent:
 #

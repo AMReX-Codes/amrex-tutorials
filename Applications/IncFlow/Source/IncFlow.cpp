@@ -264,16 +264,31 @@ IncFlow::ComputeVorticity (int lev, Real time, MultiFab& vort)
     FillPatch(lev, time, vel);
 
     auto const dxinv = Geom(lev).InvCellSizeArray();
+    Box const domain = Geom(lev).Domain();
+    GpuArray<bool,AMREX_SPACEDIM> is_wall{};
+    for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+        is_wall[d] = !Geom(lev).isPeriodic(d);
+    }
     auto const& u = vel.const_arrays();
     auto const& w = vort.arrays();
     ParallelFor(vort, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
     {
         auto const& v = u[b];
-        // Central differences of velocity component n in direction d
-        auto ddx = [&] (int n, int d) {
+        // Derivative of velocity component n in direction d. Next to a wall,
+        // the ghost cell holds the wall velocity dx/2 away, so use a
+        // one-sided second-order difference there.
+        auto ddx = [&] (int n, int d) -> Real {
             auto const e = IntVect::TheDimensionVector(d);
             IntVect const iv(AMREX_D_DECL(i,j,k));
-            return 0.5_rt * (v(iv+e,n) - v(iv-e,n)) * dxinv[d];
+            if (is_wall[d] && iv[d] == domain.smallEnd(d)) {
+                return (-4.0_rt/3.0_rt * v(iv-e,n) + v(iv,n)
+                        + 1.0_rt/3.0_rt * v(iv+e,n)) * dxinv[d];
+            } else if (is_wall[d] && iv[d] == domain.bigEnd(d)) {
+                return (4.0_rt/3.0_rt * v(iv+e,n) - v(iv,n)
+                        - 1.0_rt/3.0_rt * v(iv-e,n)) * dxinv[d];
+            } else {
+                return 0.5_rt * (v(iv+e,n) - v(iv-e,n)) * dxinv[d];
+            }
         };
 #if (AMREX_SPACEDIM == 2)
         w[b](i,j,k) = ddx(1,0) - ddx(0,1);

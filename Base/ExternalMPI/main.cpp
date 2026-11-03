@@ -8,6 +8,7 @@
 
 #include <AMReX_String.H>
 
+#include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -29,8 +30,8 @@ int main (int argc, char* argv[])
     int group_size = 0;
     MPI_Comm_size(group_comm, &group_size);
 
-    // The application handles its own command line: an optional inputs file,
-    // then `name=value` arguments, which override the file.
+    // The application handles its own command line: an optional inputs file
+    // and `name=value` arguments, which override the file.
     std::string inputs_file;
     std::vector<std::pair<std::string,std::string>> name_values;
     for (int i = 1; i < argc; ++i) {
@@ -38,8 +39,16 @@ int main (int argc, char* argv[])
         auto const pos = arg.find('=');
         if (pos != std::string::npos) {
             name_values.emplace_back(arg.substr(0,pos), arg.substr(pos+1));
-        } else if (i == 1) {
+        } else if (inputs_file.empty()) {
             inputs_file = arg;
+        } else {
+            // Every rank sees the same arguments, so all of them stop here.
+            if (world_rank == 0) {
+                std::cerr << "ExternalMPI: unexpected argument " << arg << "\n";
+            }
+            MPI_Comm_free(&group_comm);
+            MPI_Finalize();
+            return 1;
         }
     }
 

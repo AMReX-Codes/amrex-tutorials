@@ -16,20 +16,26 @@ list(APPEND _main ${AMReXTutorials_TEST_ARGS})
 set(_agent_args inputs ${AMReXTutorials_TEST_ARGS})
 
 # If a multi-program launch fails, run the tests with the PMIx "ompi" plugin
-# disabled when that makes the launch work.
-set(_probe ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS}
-    ${CMAKE_COMMAND} -E true : ${MPIEXEC_NUMPROC_FLAG} 1 ${CMAKE_COMMAND} -E true)
-set(_test_env)
-execute_process(COMMAND ${_probe} RESULT_VARIABLE _probe_rc
-                OUTPUT_QUIET ERROR_QUIET TIMEOUT 30)
-if(NOT _probe_rc EQUAL 0)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E env PMIX_MCA_pmdl=^ompi ${_probe}
-                    RESULT_VARIABLE _probe_rc OUTPUT_QUIET ERROR_QUIET TIMEOUT 30)
-    if(_probe_rc EQUAL 0)
-        message(STATUS "Coupling_MPMD: launcher needs PMIX_MCA_pmdl=^ompi for MPMD runs")
-        set(_test_env PMIX_MCA_pmdl=^ompi)
+# disabled when that makes the launch work. The result is cached, so the
+# launcher is only probed on the first configure.
+if(NOT DEFINED CACHE{AMReXTutorials_MPMD_TEST_ENV})
+    set(_probe ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS}
+        ${CMAKE_COMMAND} -E true : ${MPIEXEC_NUMPROC_FLAG} 1 ${CMAKE_COMMAND} -E true)
+    set(_env)
+    execute_process(COMMAND ${_probe} RESULT_VARIABLE _probe_rc
+                    OUTPUT_QUIET ERROR_QUIET TIMEOUT 30)
+    if(NOT _probe_rc EQUAL 0)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E env PMIX_MCA_pmdl=^ompi ${_probe}
+                        RESULT_VARIABLE _probe_rc OUTPUT_QUIET ERROR_QUIET TIMEOUT 30)
+        if(_probe_rc EQUAL 0)
+            message(STATUS "Coupling_MPMD: launcher needs PMIX_MCA_pmdl=^ompi for MPMD runs")
+            set(_env PMIX_MCA_pmdl=^ompi)
+        endif()
     endif()
+    set(AMReXTutorials_MPMD_TEST_ENV "${_env}" CACHE INTERNAL
+        "Environment for the MPMD tests")
 endif()
+set(_test_env ${AMReXTutorials_MPMD_TEST_ENV})
 
 # mpiexec -n 2 MPMD_Main inputs : -n 2 MPMD_Agent inputs
 add_test(NAME Coupling_MPMD

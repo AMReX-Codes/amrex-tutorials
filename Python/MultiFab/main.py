@@ -62,7 +62,8 @@ def main():
             + (z[None, None, :] - 0.5) ** 2
         )
         # Valid cells only: skip ng ghost cells on each side
-        phi[ng:-ng, ng:-ng, ng:-ng, 0] = 1.0 + xp.exp(-r2 / 0.01)
+        valid = phi[ng : ng + x.size, ng : ng + y.size, ng : ng + z.size, 0]
+        valid[...] = 1.0 + xp.exp(-r2 / 0.01)
 
     # All local boxes at once: a list of views, one per box
     for phi in mf.to_xp():
