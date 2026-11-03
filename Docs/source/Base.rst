@@ -308,6 +308,72 @@ Run:
 Try ``phi_lo=2 phi_hi=-1``, or ``stop_time=0.5 plot_int=100`` to follow
 the approach to the steady state.
 
+.. _base-staggeredgrids:
+
+StaggeredGrids
+--------------
+
+:Level: ★★
+:Source: `Base/StaggeredGrids <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Base/StaggeredGrids>`__
+:Key APIs: ``convert``, ``IntVect::TheDimensionVector``,
+           ``IntVect::TheNodeVector``, ``IndexType``, ``MultiFab::ixType``,
+           ``MFIter::nodaltilebox``, ``OverrideSync``, ``computeDivergence``,
+           ``average_face_to_cellcenter``, ``average_cellcenter_to_face``,
+           ``average_node_to_cellcenter``, ``GetArrOfPtrs``,
+           ``GetArrOfConstPtrs``, ``ParReduce``
+
+Data on cell centers, faces and nodes of the same grids. The ``BoxArray``
+of a ``MultiFab`` carries the index type, and ``convert`` turns the
+cell-centered ``BoxArray`` into one of face-centered boxes (one more point
+than cells in that direction) or node-centered boxes:
+
+.. literalinclude:: ../../Base/StaggeredGrids/main.cpp
+   :language: cpp
+   :start-at: amrex::MultiFab phi(ba, dm, 1, 1);
+   :end-at: amrex::MultiFab psi(
+   :dedent:
+
+A node at index ``i`` sits at ``i*dx`` and a cell center at
+``(i+1/2)*dx``, so the position of a point depends on ``ixType()``. The
+program sets a velocity on the faces, as a MAC projection or a
+finite-volume flux needs it. In an ``MFIter`` loop over the cell-centered
+data, ``mfi.nodaltilebox(d)`` is the box of the tile's faces in direction
+``d``; the face boxes of different tiles do not overlap, so the faces can
+be written in the same loop as the cells. A face on the boundary between
+two boxes is stored in both boxes, and ``OverrideSync`` copies the value
+of one box to the others so that the copies agree. The example does not
+need it, because the value depends only on the index, but it is needed
+when the boxes compute different values, for instance from round-off in a
+sum:
+
+.. literalinclude:: ../../Base/StaggeredGrids/main.cpp
+   :language: cpp
+   :start-at: for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+   :end-before: // The divergence of the face velocity
+   :dedent:
+
+Face data can have ghost faces, filled by ``FillBoundary`` like ghost
+cells, and ``FillBoundaryAndSync`` does that and ``OverrideSync`` in one
+call. The utilities below read valid faces only, so the example has no
+ghost faces. The face-based utilities take an
+``Array<MultiFab*,AMREX_SPACEDIM>`` (``GetArrOfPtrs``,
+``GetArrOfConstPtrs``): ``computeDivergence`` of the face velocity is
+cell-centered, ``average_face_to_cellcenter`` gives the velocity at cell
+centers, ``average_cellcenter_to_face`` the scalar on the faces, and
+``average_node_to_cellcenter`` moves nodal data to cell centers. Plotfile
+viewers usually expect cell-centered data, so face and nodal data are
+written to the plotfile after averaging. The discrete divergence of the
+shear flow is exactly zero, and the averages reproduce linear functions to
+round-off.
+
+Run:
+
+.. code-block:: console
+
+   cmake --build build --target Base_StaggeredGrids -j 8
+   cd build/Base/StaggeredGrids
+   mpiexec -n 2 ./StaggeredGrids inputs
+
 .. _base-checkpointrestart:
 
 CheckpointRestart
