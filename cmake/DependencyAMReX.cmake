@@ -34,6 +34,15 @@ endif()
 set(_amrex_find_args)
 if(DEFINED AMReX_ROOT OR DEFINED AMReX_DIR OR DEFINED ENV{AMReX_ROOT})
     set(_amrex_find_args FIND_PACKAGE_ARGS CONFIG REQUIRED)
+    # An installed AMReX built with Fortran requires Fortran to be enabled
+    # before it is found. Enable it if a Fortran compiler is available.
+    if(NOT AMReX_FORTRAN_INTERFACES)
+        include(CheckLanguage)
+        check_language(Fortran)
+        if(CMAKE_Fortran_COMPILER)
+            enable_language(Fortran)
+        endif()
+    endif()
 endif()
 
 include(FetchContent)
@@ -57,6 +66,13 @@ if(AMReX_FOUND)
     set(AMReX_LINEAR_SOLVERS ${AMReX_LSOLVERS})
     if(AMReX_FORTRAN_INTERFACES AND NOT AMReX_FINTERFACES)
         message(FATAL_ERROR "The installed AMReX was built without Fortran interfaces")
+    endif()
+    # The GPU language must have been enabled above, before AMReX was found.
+    if((AMReX_GPU_BACKEND STREQUAL "CUDA" AND NOT CMAKE_CUDA_COMPILER_LOADED) OR
+       (AMReX_GPU_BACKEND STREQUAL "HIP" AND NOT CMAKE_HIP_COMPILER_LOADED))
+        message(FATAL_ERROR "The installed AMReX was built with "
+                "AMReX_GPU_BACKEND=${AMReX_GPU_BACKEND}. Configure the tutorials "
+                "with -DAMReX_GPU_BACKEND=${AMReX_GPU_BACKEND} as well.")
     endif()
 else()
     message(STATUS "Building AMReX from ${amrex_SOURCE_DIR}")

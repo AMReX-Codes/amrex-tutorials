@@ -447,7 +447,7 @@ int main (int argc, char* argv[])
             amrex::Print() << "PASSED\n";
         }
 
-        write_plotfile(step, time);
+        if (plot_int > 0 && step % plot_int != 0) { write_plotfile(step, time); }
     }
     amrex::Finalize();
     return status;

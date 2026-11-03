@@ -7,7 +7,7 @@ if(NOT TARGET Coupling_MPMD_Main)
     return()
 endif()
 
-file(COPY agent.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(agent.py ${CMAKE_CURRENT_BINARY_DIR}/agent.py COPYONLY)
 
 find_package(MPI REQUIRED COMPONENTS CXX)
 set(_main ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
@@ -48,7 +48,7 @@ if(AMReXTutorials_PYTHON)
         find_package(Python3 REQUIRED COMPONENTS Interpreter)
         add_test(NAME Coupling_MPMD_Python
             COMMAND ${_main} : ${MPIEXEC_NUMPROC_FLAG} 2 ${Python3_EXECUTABLE} agent.py inputs
-                    dim=${AMReXTutorials_DIM}
+                    dim=${AMReXTutorials_DIM} ${AMReXTutorials_GPU_TEST_ARGS}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
         if(_test_env)
             set_tests_properties(Coupling_MPMD_Python PROPERTIES ENVIRONMENT "${_test_env}")

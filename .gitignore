@@ -6,7 +6,8 @@ nohup.out
 *.exe.dSYM
 *~
 build/
-build*/
+# build-2d/, build_cuda/, build2/, ...; not BuildSystems/ when git ignores case
+/build[-_0-9]*/
 tmp_build_dir/
 d/
 f/
