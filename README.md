@@ -84,6 +84,7 @@ complete code to copy as the starting point of an application.
 | [Parser](Base/Parser) | ★★ | Functions defined at runtime and evaluated in GPU kernels |
 | [CompileTimeOptions](Base/CompileTimeOptions) | ★★★ | Specialized kernels from runtime options |
 | [TagParallelFor](Base/TagParallelFor) | ★★★ | One launch for many small boxes with `TagVector` |
+| [SharedMemory](Base/SharedMemory) | ★★★ | A hand-written GPU kernel with shared memory, and its CPU counterpart |
 | [ExternalMPI](Base/ExternalMPI) | ★★ | AMReX on a communicator owned by the application |
 
 ### AMR: adaptive mesh refinement with `AmrCore` and `AmrLevel`

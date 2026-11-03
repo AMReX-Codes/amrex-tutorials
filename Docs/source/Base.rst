@@ -619,6 +619,83 @@ For timings, build with TinyProfiler on and an optimized GPU build, and
 use e.g. ``n_cell=256 nrepeat=20 tiny_profiler.print_threshold=0``; the
 difference between the methods grows with the number of boxes.
 
+.. _base-sharedmemory:
+
+SharedMemory
+------------
+
+:Level: ★★★
+:Source: `Base/SharedMemory <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Base/SharedMemory>`__
+:Key APIs: ``amrex::launch<nthreads>(nblocks, stream, f)``,
+           ``amrex::launch<nthreads>(nblocks, shared_mem_bytes, stream, f)``,
+           ``__shared__`` (CUDA, HIP), ``Gpu::Handler`` (SYCL),
+           ``Gpu::Atomic::AddNoRet``, ``HostDevice::Atomic::Add``,
+           ``BoxIndexer``, ``Gpu::Device::maxBlocksPerLaunch``,
+           ``AMREX_USE_GPU``, ``AMREX_USE_SYCL``
+
+A GPU kernel written by hand, with shared memory, and a separate CPU
+implementation. ``ParallelFor`` is portable and the right choice almost
+always; a raw launch is for the rare kernel whose threads must cooperate
+within a block. The example bins the cells by the value of one field and
+sums a signed integer field over each bin. Integer sums are exact, so the
+two methods must agree to the bit, and they need a signed 64-bit
+accumulator. With ``ParallelFor`` and one atomic add per cell, all threads
+compete for the same few addresses in global memory:
+
+.. literalinclude:: ../../Base/SharedMemory/main.cpp
+   :language: cpp
+   :start-at: void binned_sum_atomic
+   :end-before: // 2. Each thread block
+
+Atomic adds to the same address are serialized, so the fewer the bins, the
+slower this version. The hand-written kernel gives each thread block
+private ``int`` sums in shared memory, where contention is cheap, and adds
+them to the global ``Long`` sums once per block, so the global atomics
+number one per bin and block instead of one per cell. ``amrex::launch``
+runs the kernel on ``nblocks`` blocks of ``nthreads`` threads; the threads
+of a block walk the cells of the box in a grid-stride loop, with
+``BoxIndexer`` converting the linear index to ``(i,j,k)``. With CUDA and
+HIP the body uses ``threadIdx``, ``blockIdx``, ``__syncthreads()`` and a
+static ``__shared__`` array:
+
+.. literalinclude:: ../../Base/SharedMemory/main.cpp
+   :language: cpp
+   :start-at: amrex::launch<nthreads>(nblocks, amrex::Gpu::gpuStream(),
+   :end-at: });
+   :dedent:
+
+With SYCL, the shared memory is dynamic with its size passed to
+``amrex::launch``, and that overload hands the kernel a ``Gpu::Handler``
+whose ``threadIdx()``, ``blockDim()``, ``gridDim()``, ``globalIdx()``,
+``syncThreads()`` and ``sharedMemory()`` play these roles; atomics on the
+shared memory take the ``local_space`` address space; see the
+``AMREX_USE_SYCL`` branch in the source. There is no CPU version of
+this launch. The CPU path, selected with ``#ifdef AMREX_USE_GPU``, is an
+``MFIter`` loop with a vector of private sums per OpenMP thread, merged
+after the parallel region; its cell loop is ``amrex::Loop``, not
+``ParallelFor``, because it scatters into the sums:
+
+.. literalinclude:: ../../Base/SharedMemory/main.cpp
+   :language: cpp
+   :start-at: // Private sums per OpenMP thread
+   :end-at: } // end of merge
+
+The program checks that both results agree and times them with
+``BL_PROFILE`` (see :ref:`profiling`).
+
+Run:
+
+.. code-block:: console
+
+   cmake --build build --target Base_SharedMemory -j 8
+   cd build/Base/SharedMemory
+   mpiexec -n 2 ./SharedMemory inputs
+
+For timings, build with TinyProfiler on and use a GPU build with e.g.
+``n_cell=128 max_grid_size=128 nbins=64 nrepeat=5
+tiny_profiler.print_threshold=0``. The fewer the bins, the more the global
+atomics collide, and the larger the speedup of the shared-memory version.
+
 .. _base-externalmpi:
 
 ExternalMPI
