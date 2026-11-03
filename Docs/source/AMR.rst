@@ -151,12 +151,13 @@ With subcycling, ``TimeStepWithSubcycling`` advances level ``lev`` and then
 calls itself ``ref_ratio`` times for ``lev+1``. Every ``amr.regrid_int``
 steps it regrids the finer levels first. After the fine steps, ``Reflux``
 and ``average_down`` synchronize the levels. ``TimeStepNoSubcycling``
-(``adv.do_subcycle=0``) advances every level with the same ``dt``.
+(``adv.do_subcycle=0``) regrids, then advances every level with a ``dt``
+that is stable on all of them.
 
 .. literalinclude:: ../../AMR/AdvectionAmrCore/AmrCoreAdv.cpp
    :language: cpp
    :start-at: // Advance level lev by one step, then its finer levels
-   :end-before: // Advance all levels with the same dt.
+   :end-before: // Regrid, then advance all levels with the same dt.
 
 ``AdvanceLevel`` uses Heun's method (two-stage SSP Runge-Kutta) with upwind
 fluxes from MC-limited linear reconstructions. Before each stage,

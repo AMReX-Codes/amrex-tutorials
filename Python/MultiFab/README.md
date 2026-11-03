@@ -16,9 +16,9 @@ views, fill ghost cells, compute reductions, and write a plotfile.
 memory with the box's data. It includes the ghost cells, is indexed
 `[x, y, z, component]`, and its indices start at 0, so the valid cells are
 `[ng:ng+nx, ng:ng+ny, ng:ng+nz]` for a box of `nx*ny*nz` cells.
-`mf.to_xp()` returns the views of all local
-boxes as a list. Writing to a view changes the MultiFab. Pass `order="C"`
-for `[component, z, y, x]` indexing, which is usually faster with CuPy.
+`mf.to_xp()` returns the views of all local boxes as a list. Writing to a
+view changes the MultiFab. Pass `order="C"` for `[component, z, y, x]`
+indexing, which is usually faster with CuPy.
 
 ## Requirements
 

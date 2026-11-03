@@ -36,9 +36,10 @@ plotfile.
 ``mf.array(mfi).to_xp(copy=False)`` returns a NumPy or CuPy array that
 shares memory with the box's data. The view includes the ghost cells, is
 indexed ``[x, y, z, component]`` with indices starting at 0, so the valid
-cells are ``[ng:-ng, ng:-ng, ng:-ng]``. ``mf.to_xp()`` returns the views of
-all local boxes as a list. Pass ``order="C"`` for ``[component, z, y, x]``
-indexing, which is usually faster with CuPy.
+cells are ``[ng:ng+nx, ng:ng+ny, ng:ng+nz]`` for a box of ``nx*ny*nz``
+cells. ``mf.to_xp()`` returns the views of all local boxes as a list. Pass
+``order="C"`` for ``[component, z, y, x]`` indexing, which is usually faster
+with CuPy.
 
 .. literalinclude:: ../../Python/MultiFab/main.py
    :language: python

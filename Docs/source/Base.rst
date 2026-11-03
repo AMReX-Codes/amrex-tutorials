@@ -563,8 +563,8 @@ ExternalMPI
 :Level: ★★
 :Source: `Base/ExternalMPI <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Base/ExternalMPI>`__
 :Key APIs: ``amrex::Initialize(argc, argv, build_parm_parse, comm, func)``,
-           ``ParmParse::add``, ``ParmParse::addfile``,
-           ``ParallelDescriptor::NProcs``
+           ``ParmParse::add``, ``ParmParse::addarr``,
+           ``ParmParse::addfile``, ``ParallelDescriptor::NProcs``
 
 Uses AMReX inside an application that manages MPI itself. The application
 calls ``MPI_Init``, splits ``MPI_COMM_WORLD`` into even and odd ranks, and
@@ -573,9 +573,11 @@ the given communicator and does not finalize MPI; the application calls
 ``MPI_Finalize`` after ``amrex::Finalize``.
 
 With ``build_parm_parse = false``, AMReX ignores ``argc``/``argv``. The
-callback runs before AMReX reads its own parameters, so it is the place to
-set them in code. On GPUs, ranks of both groups may share a device, so the
-callback disables the up-front memory reservation.
+application reads the inputs file itself and adds ``name=value`` arguments
+with ``ParmParse::addarr``. The callback runs before AMReX reads its own
+parameters, so it is the place to set them in code. On GPUs, ranks of both
+groups may share a device, so the callback disables the up-front memory
+reservation.
 
 .. literalinclude:: ../../Base/ExternalMPI/main.cpp
    :language: cpp
