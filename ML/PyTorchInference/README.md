@@ -39,8 +39,8 @@ cmake --build build --target ML_PyTorchInference -j 8
 cd build/ML/PyTorchInference && mpiexec -n 2 ./PyTorchInference inputs
 ```
 
-GNU Make, with AMReX cloned next to this repository (LibTorch built with the
-pre-C++11 ABI also needs `-D_GLIBCXX_USE_CXX11_ABI=0`):
+GNU Make, with AMReX cloned next to this repository (for LibTorch built with
+the pre-C++11 ABI, add `EXTRACXXFLAGS=-D_GLIBCXX_USE_CXX11_ABI=0` to `make`):
 
 ```
 make -j8 PYTORCH_ROOT=/path/to/libtorch

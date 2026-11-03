@@ -31,9 +31,9 @@ exactly.
    `dst_max_grid_size` cells, so it partly lies outside the domain. The
    copy fills its valid and ghost cells, using periodicity for the cells
    outside the domain. `ParallelAdd` then adds the source again.
-3. **SumBoundary.** Every valid cell deposits 1 into itself and its
-   $3^d$ neighbors, including ghost cells. After `SumBoundary`, every valid
-   cell holds $3^d$.
+3. **SumBoundary.** Every valid cell deposits 1 into the $3^d$ cells
+   around it, itself included, some of them ghost cells. After
+   `SumBoundary`, every valid cell holds $3^d$.
 
 ## Build and run
 

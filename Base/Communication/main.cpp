@@ -115,9 +115,9 @@ int main (int argc, char* argv[])
         // SumBoundary is the reverse of FillBoundary: values in ghost cells
         // are added to the valid cells they overlap. This is what deposition
         // needs, e.g., of particles near a box boundary. Here every valid
-        // cell deposits 1 into itself and its 3^dim neighbors, including
-        // ghost cells. Each cell of a box computes how much it receives from
-        // the valid cells of the same box, which avoids races.
+        // cell deposits 1 into the 3^dim cells around it, itself included,
+        // some of them ghost cells. Each cell of a box computes how much it
+        // receives from the valid cells of the same box, which avoids races.
         amrex::MultiFab c(ba, dm, 1, 1);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """MultiFab basics with pyAMReX: build a MultiFab, fill it through zero-copy
-NumPy/CuPy views, fill ghost cells, compute reductions, and write a plotfile.
+NumPy/CuPy/dpnp views, fill ghost cells, compute reductions, and write a
+plotfile.
 
     python3 main.py inputs
     mpiexec -n 2 python3 main.py inputs n_cell=64
@@ -19,12 +20,9 @@ def query(pp, name, default):
 
 
 def main():
-    # NumPy on CPU, CuPy on GPU. Array views of AMReX data use the same
-    # module (see to_xp below).
-    if amr.Config.have_gpu:
-        import cupy as xp
-    else:
-        import numpy as xp
+    # The array module of the views returned by to_xp: NumPy on CPU,
+    # CuPy for CUDA/HIP, dpnp for SYCL
+    xp = amr.xp
 
     pp = amr.ParmParse("")
     n_cell = query(pp, "n_cell", 32)
@@ -94,6 +92,8 @@ def main():
 
 
 if __name__ == "__main__":
+    if not hasattr(amr, "xp"):
+        sys.exit("This tutorial needs pyAMReX 26.09 or newer.")
     # Command line arguments, e.g., an inputs file, are passed to AMReX.
     amr.initialize(sys.argv[1:])
     status = main()  # AMReX objects must be gone before finalize

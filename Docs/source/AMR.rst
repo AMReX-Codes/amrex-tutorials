@@ -57,7 +57,7 @@ possible and otherwise interpolates conservatively from level 0:
    :end-at: amrex::average_down(phi[1], phi[0], 0, 1, ratio);
    :dedent:
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -175,7 +175,7 @@ shares with its coarser and finer neighbors:
 Running
 ^^^^^^^
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -252,7 +252,7 @@ Run:
 .. code-block:: text
 
    Finished 320 level-0 steps at time 1 with 2 levels
-   Max error of v: 1.046478355e-05
+   Max error of v: 1.063265662e-05
    PASSED
 
 Useful options are ``wave.rk_order``, ``wave.cfl``, ``amr.n_cell``,

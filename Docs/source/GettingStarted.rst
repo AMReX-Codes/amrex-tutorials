@@ -4,8 +4,10 @@ Getting Started
 ===============
 
 The tutorials need a C++20 compiler and, for MPI builds (the default), an
-MPI library. GPU builds need CUDA, ROCm (HIP) or oneAPI (SYCL). Every
-tutorial builds with CMake or with GNU Make.
+MPI library. GPU builds need CUDA, ROCm (HIP) or oneAPI (SYCL). CPU builds
+with CMake also need FFTW (or ``-DAMReX_FFT=OFF``, which skips the FFT
+tutorials). Every tutorial except the Python scripts builds with CMake or
+with GNU Make.
 
 .. code-block:: console
 
@@ -27,7 +29,8 @@ By default, AMReX is downloaded and built as part of the tutorials
 
 Each tutorial ``<Topic>/<Name>`` is the target ``<Topic>_<Name>``. Its
 executable, named ``<Name>``, and its ``inputs`` file are placed in
-``build/<Topic>/<Name>``:
+``build/<Topic>/<Name>``. The Applications have one target per problem,
+e.g. ``Applications_CNS_Sod``; see their READMEs.
 
 .. code-block:: console
 
@@ -51,6 +54,8 @@ Options
      - Build only some topics
    * - ``-DAMReX_SPACEDIM=2``
      - Build for 1, 2 or 3 dimensions (default 3)
+   * - ``-DAMReXTutorials_DIM=2``
+     - Dimension to use when AMReX is built for several (default the last)
    * - ``-DAMReX_GPU_BACKEND=CUDA -DCMAKE_CUDA_ARCHITECTURES=native``
      - GPU build (also ``HIP``, ``SYCL``)
    * - ``-DAMReX_OMP=ON``, ``-DAMReX_MPI=OFF``
@@ -64,7 +69,7 @@ Options
    * - ``-DAMReX_ROOT=/path/to/install``
      - Use an installed AMReX
    * - ``-DAMReX_TESTING=ON``
-     - Trap floating-point exceptions in the tests
+     - Trap floating-point exceptions in the tests (CPU, GCC or Clang)
    * - ``-DAMReX_TINY_PROFILE=ON``
      - Build with TinyProfiler; see :ref:`profiling`
    * - ``-DAMReX_SUNDIALS=ON``
@@ -88,12 +93,14 @@ Tests
 ^^^^^
 
 Each tutorial is registered as a CTest test that runs it with its
-``inputs`` file, on 2 MPI ranks in MPI builds. Tutorials with an exact or
-reference answer check it and return a non-zero exit code if the error is
-too large. On CPUs, the tests trap floating-point exceptions
-(``amrex.fpe_trap_invalid=1 amrex.fpe_trap_zero=1
-amrex.fpe_trap_overflow=1``) when AMReX is built with ``-DAMReX_TESTING=ON``
-or ``-DAMReX_FPE=ON``.
+``inputs`` file, on 2 MPI ranks in MPI builds (the MPMD test needs 4;
+with Open MPI, add ``-DMPIEXEC_PREFLAGS=--oversubscribe`` if needed).
+Tutorials with an exact or reference answer check it and return a non-zero
+exit code if the error is too large. With GCC or Clang on CPUs, the tests
+trap floating-point exceptions (``amrex.fpe_trap_invalid=1
+amrex.fpe_trap_zero=1 amrex.fpe_trap_overflow=1``) when the tutorials are
+configured with ``-DAMReX_TESTING=ON`` or AMReX is built with
+``-DAMReX_FPE=ON``.
 
 .. code-block:: console
 
@@ -116,6 +123,7 @@ source tree, and run ``make`` in a tutorial directory:
 
 .. code-block:: console
 
+   cd ..
    git clone https://github.com/AMReX-Codes/amrex.git
    cd amrex-tutorials/Base/HeatEquation
    make -j8
@@ -131,7 +139,7 @@ command line, e.g. ``make -j8 DIM=2 USE_OMP=TRUE``:
    * - Variable
      - Meaning
    * - ``AMREX_HOME``
-     - Path to AMReX (default ``../../../amrex``)
+     - Path to AMReX (default: ``amrex`` next to this repository)
    * - ``DIM``
      - 1, 2 or 3
    * - ``COMP``

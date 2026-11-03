@@ -6,7 +6,7 @@ To update the online AMReX-Tutorials documentation using sphinx:
 
       3. Commit/push your changes.
 
-The GitHub action script will build the html pages and commit them to AMReX-Tutorials' gh-pages repo for you. If you would like to
+The GitHub action script will build the html pages and commit them to AMReX-Codes.github.io (main branch, amrex/tutorials_html/) for you. If you would like to
 preview the html locally, you can:
 
         4. Go back into amrex-tutorials/Docs.
@@ -35,7 +35,7 @@ or, with pip:
 
 If you don't have a conda Python installation, you get one by doing the following:
 
-       1.  Go to https://conda.io/miniconda.html and download the Python 3.6 64-bit (bash installer), "Miniconda3-latest-Linux-x86_64.sh".  Save this script to your hard drive.
+       1.  Go to https://conda.io/miniconda.html and download the Miniconda installer, e.g. "Miniconda3-latest-Linux-x86_64.sh".  Save this script to your hard drive.
 
        2.  Type "bash Miniconda3-latest-Linux-x86_64.sh" and follow the installation prompts.
 

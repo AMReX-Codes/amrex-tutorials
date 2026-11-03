@@ -7,12 +7,15 @@ AMReX's geometric multigrid solver ``MLMG`` with cell-centered, nodal and
 edge-centered operators, GMRES, the algebraic multigrid solver AlgMG, and a
 user-defined operator. These
 tutorials require AMReX built with ``AMReX_LINEAR_SOLVERS=ON`` (the
-default). They run in 1D, 2D and 3D, except NodalProjection (2D and 3D).
+default); CurlCurl also needs ``AMReX_LINEAR_SOLVERS_EM`` and
+NodalProjection ``AMReX_LINEAR_SOLVERS_INCFLO`` (both ``ON`` by default).
+They run in 1D, 2D and 3D, except NodalProjection (2D and 3D).
 Build only this topic with ``-DAMReXTutorials_TOPICS=LinearSolvers``; see
 :doc:`GettingStarted`.
 
 All tutorials here read the ``MLMG`` options ``mlmg.verbose`` and
-``mlmg.tol_rel`` (and some ``mlmg.max_iter``) from the inputs.
+``mlmg.tol_rel`` (and some ``mlmg.max_iter``) from the inputs, except
+GMRES, which reads ``verbose`` and ``tol_rel``.
 ``MLMG::solve(sol, rhs, tol_rel, tol_abs)`` stops when the max norm of the
 residual is at most ``max(tol_abs, tol_rel*norm0)``, where ``norm0`` is by
 default the larger of the max norms of the right-hand side and the initial
@@ -52,7 +55,7 @@ grids, and the error drops by a factor of four when the cell size is halved.
    :end-at: mlmg.solve({&phi}, {&rhs}, p.tol_rel, p.tol_abs);
    :dedent:
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -119,7 +122,7 @@ After the solve, ``MLMG`` has averaged the fine solution onto the covered
 coarse cells, and the error is checked on every level against
 :math:`\phi = \prod_d \sin(2\pi x_d + \pi/4)`.
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -169,7 +172,7 @@ known factor, and the program checks the solution against this to the
 solver tolerance. It also prints the error against the PDE solution, which
 is dominated by the :math:`O(\Delta t)` error of backward Euler.
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -187,7 +190,7 @@ NodalProjection
 :Level: ★★
 :Source: `LinearSolvers/NodalProjection <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/LinearSolvers/NodalProjection>`__
 :Key APIs: ``MLNodeLaplacian``, ``compDivergence``, ``updateVelocity``,
-           ``setSigma``, nodal ``BoxArray`` (``convert(ba, IntVect::TheNodeVector())``)
+           nodal ``BoxArray`` (``convert(ba, IntVect::TheNodeVector())``)
 
 Project a cell-centered velocity :math:`\mathbf{u}` onto a divergence-free
 field, the core step of incompressible flow solvers:
@@ -220,7 +223,7 @@ product of the discrete divergence and gradient, so
 The program checks that the remaining divergence and the error in the
 projected velocity are :math:`O(\Delta x^2)`.
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -278,7 +281,7 @@ when MLMG alone converges slowly.
 Both problems use homogeneous Dirichlet boundaries and the exact solution
 :math:`u = \prod_d \sin(\pi x_d)`.
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -286,8 +289,8 @@ Run (from a CMake build directory, see :doc:`GettingStarted`):
    cd build/LinearSolvers/GMRES
    mpiexec -n 2 ./GMRES inputs
 
-Runtime parameters: ``n_cell``, ``velocity`` (the vector :math:`\mathbf{c}`),
-``use_precond``, ``verbose`` and ``tol_rel``.
+Runtime parameters: ``n_cell``, ``max_grid_size``, ``velocity`` (the vector
+:math:`\mathbf{c}`), ``use_precond``, ``verbose`` and ``tol_rel``.
 
 .. _linearsolvers-algmg:
 
@@ -423,7 +426,7 @@ nearly singular; MLCurlCurl's smoother is designed for this. The exact
 solution :math:`E_d = \prod_{e \ne d} \sin(\pi x_e)` vanishes tangentially
 on the walls, and the error is checked to be :math:`O(\Delta x^2)`.
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -481,7 +484,7 @@ in the AMReX documentation). The program checks the error against the exact solu
 :math:`\phi_n = \prod_d \sin((n+1)\pi x_d)`, which is zero on the Dirichlet
 boundary.
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 

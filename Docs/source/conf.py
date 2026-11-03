@@ -25,7 +25,10 @@ from datetime import datetime
 
 def get_amrex_version():
     today = datetime.today()
-    return u'%s.%.2d-dev' % (str(today.year)[-2:], (today.month + 1) % 12)
+    year, month = today.year, today.month + 1  # next month
+    if month > 12:
+        year, month = year + 1, 1
+    return u'%s.%.2d-dev' % (str(year)[-2:], month)
 
 # -- General configuration ------------------------------------------------
 

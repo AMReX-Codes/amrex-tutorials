@@ -21,17 +21,21 @@ cmake --build build -j 8
 ctest --test-dir build
 ```
 
+This needs a C++20 compiler, MPI, and, for CPU builds, FFTW (or
+`-DAMReX_FFT=OFF`, which skips the FFT tutorials).
+
 Useful options:
 
 | Option | Meaning |
 |---|---|
 | `-DAMReXTutorials_TOPICS="Base;FFT"` | Build only some topics |
 | `-DAMReX_SPACEDIM=2` | Build for 1, 2 or 3 dimensions (default 3) |
+| `-DAMReXTutorials_DIM=2` | Dimension to use when AMReX is built for several (default the last) |
 | `-DAMReX_GPU_BACKEND=CUDA -DCMAKE_CUDA_ARCHITECTURES=native` | GPU build (also `HIP`, `SYCL`) |
 | `-DAMReX_OMP=ON`, `-DAMReX_MPI=OFF` | OpenMP on, MPI off |
 | `-DFETCHCONTENT_SOURCE_DIR_AMREX=/path/to/amrex` | Use a local AMReX source tree |
 | `-DAMReX_ROOT=/path/to/install` | Use an installed AMReX |
-| `-DAMReX_TESTING=ON` | Trap floating-point exceptions in the tests |
+| `-DAMReX_TESTING=ON` | Trap floating-point exceptions in the tests (CPU, GCC or Clang) |
 | `-DAMReX_TINY_PROFILE=ON` | Build with TinyProfiler (see [Base/HeatEquation](Base/HeatEquation)) |
 | `-DAMReX_SUNDIALS=ON` | Build the SUNDIALS tutorial (SUNDIALS is downloaded) |
 | `-DAMReX_FORTRAN_INTERFACES=ON` | Build the Fortran tutorials (needs a Fortran compiler) |
@@ -50,7 +54,8 @@ AMREX_DEFAULT_INIT="amrex.the_arena_init_size=268435456" ctest --test-dir build
 ```
 
 With GNU Make, clone AMReX next to this repository (or set `AMREX_HOME`)
-and run `make -j8` in a tutorial directory. See each tutorial's README.
+and run `make -j8` in a tutorial directory (`Exec/<problem>` for the
+Applications). See each tutorial's README.
 
 The `inputs` files use small settings so that each tutorial runs in a few
 seconds. Production runs usually use a much larger `max_grid_size` and
@@ -152,7 +157,7 @@ complete code to copy as the starting point of an application.
 
 | Tutorial | Level | What it shows |
 |---|---|---|
-| [MultiFab](Python/MultiFab) | ★ | MultiFabs with NumPy/CuPy views |
+| [MultiFab](Python/MultiFab) | ★ | MultiFabs with NumPy/CuPy/dpnp views |
 | [HeatEquation](Python/HeatEquation) | ★ | Heat equation written in Python |
 
 ### ML

@@ -24,9 +24,9 @@ The problem is a Langmuir (plasma) oscillation. In normalized units
 `omega_p = sqrt(n0 q^2 / (epsilon0 m)) = 1`. The electrons start at rest,
 displaced by `xi0 sin(kx)`. Linear theory gives
 `E_x = -q n0 xi0 / epsilon0 sin(kx) cos(omega_p t)`. The code measures the
-frequency from the zero crossings of the `sin(kx)` mode of `E_x`, and
-checks it, the initial amplitude, and the total (field plus kinetic)
-energy against theory to 2%.
+frequency from the zero crossings of the `sin(kx)` mode of `E_x`. It
+checks that the frequency and the initial amplitude agree with theory to
+2%, and that the total (field plus kinetic) energy changes by less than 2%.
 
 **Key APIs:** `amrex::ParticleContainerPureSoA`, `amrex::ParticleToMesh`,
 `amrex::MeshToParticle`, `amrex::ParticleInterpolator::Linear`,

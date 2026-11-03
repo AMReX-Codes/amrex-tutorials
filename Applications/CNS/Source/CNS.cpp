@@ -1,6 +1,7 @@
 #include "CNS.H"
 #include "CNS_K.H"
 
+#include <AMReX_BC_TYPES.H>
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_ParmParse.H>
 
@@ -53,16 +54,20 @@ CNS::read_params ()
                                      "cns.rk_order must be 2 or 3");
     pp.query("do_reflux", do_reflux);
 
-    // Physical boundary types: 0 Interior (periodic), 1 Inflow, 2 Outflow,
-    // 3 Symmetry, 4 SlipWall, 5 NoSlipWall
-    Vector<int> lo_bc(AMREX_SPACEDIM, 0), hi_bc(AMREX_SPACEDIM, 0);
+    // Physical boundary types, numbered as amrex::PhysBCType: 0 interior
+    // (periodic), 1 inflow, 2 outflow, 3 symmetry, 4 slipwall, 5 noslipwall
+    Vector<int> lo_bc(AMREX_SPACEDIM, PhysBCType::interior);
+    Vector<int> hi_bc(AMREX_SPACEDIM, PhysBCType::interior);
     pp.queryarr("lo_bc", lo_bc, 0, AMREX_SPACEDIM);
     pp.queryarr("hi_bc", hi_bc, 0, AMREX_SPACEDIM);
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
         for (int bc : {lo_bc[dir], hi_bc[dir]}) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(bc >= 0 && bc <= 5, "cns.lo_bc/hi_bc must be in [0,5]");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(bc >= PhysBCType::interior && bc <= PhysBCType::noslipwall,
+                                             "cns.lo_bc/hi_bc must be in [0,5]");
             // Inflow needs problem-specific boundary values. See CnsFillExtDir.
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(bc != 1, "cns: Inflow is not implemented");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(bc != PhysBCType::inflow, "cns: Inflow is not implemented");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE((bc == PhysBCType::interior) == DefaultGeometry().isPeriodic(dir),
+                "cns: boundary type 0 (interior) must be used exactly on the periodic directions");
         }
         phys_bc.setLo(dir, lo_bc[dir]);
         phys_bc.setHi(dir, hi_bc[dir]);
@@ -90,9 +95,8 @@ bool
 CNS::isClosedDomain ()
 {
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        // 1: Inflow, 2: Outflow
         for (int bc : {phys_bc.lo(dir), phys_bc.hi(dir)}) {
-            if (bc == 1 || bc == 2) { return false; }
+            if (bc == PhysBCType::inflow || bc == PhysBCType::outflow) { return false; }
         }
     }
     return true;

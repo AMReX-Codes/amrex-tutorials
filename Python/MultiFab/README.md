@@ -1,28 +1,30 @@
 # MultiFab (Python) ★
 
 The Python version of [Base/MultiFab](../../Base/MultiFab) with pyAMReX:
-build a `MultiFab`, fill it through zero-copy NumPy (CPU) or CuPy (GPU)
-views, fill ghost cells, compute reductions, and write a plotfile.
+build a `MultiFab`, fill it through zero-copy NumPy (CPU), CuPy (CUDA/HIP)
+or dpnp (SYCL) views, fill ghost cells, compute reductions, and write a
+plotfile.
 
 **Key APIs:** `amr.initialize`, `amr.Box`, `amr.BoxArray`,
-`amr.DistributionMapping`, `amr.Geometry`, `amr.MultiFab`,
+`amr.DistributionMapping`, `amr.Geometry`, `amr.MultiFab`, `amr.xp`,
 `mf.array(mfi).to_xp()`, `mf.to_xp()`, `mf.fill_boundary`, `mf.min`,
 `mf.max`, `mf.sum`, `amr.write_single_level_plotfile`, `amr.ParmParse`
 
 ## Zero-copy views
 
 `for mfi in mf:` loops over the boxes owned by this MPI rank, and
-`mf.array(mfi).to_xp(copy=False)` returns a NumPy or CuPy array that shares
-memory with the box's data. It includes the ghost cells, is indexed
+`mf.array(mfi).to_xp(copy=False)` returns a NumPy, CuPy or dpnp array
+that shares memory with the box's data. It includes the ghost cells, is indexed
 `[x, y, z, component]`, and its indices start at 0, so the valid cells are
 `[ng:ng+nx, ng:ng+ny, ng:ng+nz]` for a box of `nx*ny*nz` cells.
 `mf.to_xp()` returns the views of all local boxes as a list. Writing to a
 view changes the MultiFab. Pass `order="C"` for `[component, z, y, x]`
-indexing, which is usually faster with CuPy.
+indexing, which is usually faster on GPUs.
 
 ## Requirements
 
-pyAMReX (`import amrex`), and CuPy for GPU builds of pyAMReX. See the
+pyAMReX 26.09 or newer (`import amrex`), plus CuPy for CUDA/HIP or dpnp
+for SYCL GPU builds of pyAMReX. See the
 [pyAMReX documentation](https://pyamrex.readthedocs.io) for installation.
 
 ## Run

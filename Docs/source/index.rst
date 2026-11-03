@@ -5,9 +5,10 @@ These tutorials show how to write codes with `AMReX
 <https://github.com/AMReX-Codes/amrex>`__, a software framework for
 block-structured adaptive mesh refinement. Each tutorial is a small,
 self-contained program that runs on CPUs and GPUs (the Fortran ones on CPUs
-only), with MPI and OpenMP, and builds with CMake or GNU Make. Most of them
+only, PyTorchInference not with HIP or SYCL), with MPI and OpenMP, and
+builds with CMake or GNU Make (the Python ones are scripts). Most of them
 check their result against an exact or reference answer, and all of them
-run as tests in CI.
+run as tests in CI (GPU builds are compiled only).
 
 The source is in the `amrex-tutorials repository
 <https://github.com/AMReX-Codes/amrex-tutorials>`__. For the concepts and
@@ -17,9 +18,10 @@ the full API, see the `AMReX documentation
 Organization
 ------------
 
-Tutorials are organized by topic. Each one lives in ``<Topic>/<Name>/``
+Tutorials are organized by topic. Most live in ``<Topic>/<Name>/``
 with a ``README.md``, an ``inputs`` file, a ``CMakeLists.txt`` and a
-``GNUmakefile``. Each has a level:
+``GNUmakefile``; the Applications, BuildSystems and Python ones differ.
+Each has a level:
 
 - ★ introductory
 - ★★ intermediate

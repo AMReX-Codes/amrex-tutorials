@@ -105,7 +105,7 @@ int main (int argc, char* argv[])
         const amrex::DistributionMapping dm(ba);
 
         // Electrons, displaced by xi0*sin(k x), which gives the density
-        // perturbation n0*perturbation*cos(k x) to first order.
+        // perturbation -n0*perturbation*cos(k x) to first order.
         const amrex::Real xi0 = perturbation / k;
         PICParticleContainer electrons(geom, dm, ba, q, m);
         electrons.initLangmuirWave(nppc, n0, k, xi0);

@@ -206,8 +206,9 @@ bool solve_mlmg (Box const& domain, Real dx, Coef const& coef, Real reltol,
         });
     }
 
-    // alpha*a - beta*div(b grad) with alpha = 0 and beta = 1. Max order 2
-    // gives the same boundary stencil as the matrix of part 1.
+    // a*alpha*phi - b*div(beta grad phi) with scalars a = 0 and b = 1; beta
+    // is the face coefficient above. Max order 2 gives the same boundary
+    // stencil as the matrix of part 1.
     MLABecLaplacian mlabec({geom}, {ba}, {dm});
     mlabec.setMaxOrder(2);
     mlabec.setDomainBC({AMREX_D_DECL(LinOpBCType::Dirichlet, LinOpBCType::Dirichlet,

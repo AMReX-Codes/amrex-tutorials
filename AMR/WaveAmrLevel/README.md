@@ -40,7 +40,7 @@ program compares with the result.
   data under the fine level with `FourthOrderInterpFromFineToCoarse`. The
   code does not reflux, so the integral of $v$ is not conserved exactly
   across levels.
-- **Tagging.** `errorEst` refines where $|v| > 0.75$.
+- **Tagging.** `errorEst` refines where $|v| > 0.25$.
 
 ## Build and run
 
@@ -68,6 +68,6 @@ passes if the max error of $v$ is below $10^{-4}$.
 
 ```
 Finished 320 level-0 steps at time 1 with 2 levels
-Max error of v: 1.046478355e-05
+Max error of v: 1.063265662e-05
 PASSED
 ```

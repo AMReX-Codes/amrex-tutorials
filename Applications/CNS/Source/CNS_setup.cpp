@@ -9,8 +9,8 @@ using namespace amrex;
 namespace {
 
 // Map the physical boundary types (cns.lo_bc, cns.hi_bc) to the BCType of
-// each state component.  Index: Interior, Inflow, Outflow, Symmetry,
-// SlipWall, NoSlipWall.
+// each state component. Indexed by amrex::PhysBCType: interior, inflow,
+// outflow, symmetry, slipwall, noslipwall.
 constexpr int scalar_bc[] = {
     BCType::int_dir, BCType::ext_dir, BCType::foextrap,
     BCType::reflect_even, BCType::reflect_even, BCType::reflect_even
