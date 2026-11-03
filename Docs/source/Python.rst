@@ -71,6 +71,7 @@ Run:
    integral(phi) = 1.0055683279968117 (exact: 1.0055683279968317)
    max(2 phi)    = 3.8587514391706774
    Wrote plt00000
+   PASSED
 
 .. _python-heatequation:
 

@@ -29,8 +29,8 @@ program compares with the result.
 - **State data.** `variableSetUp` defines one cell-centered `StateData`
   with the components `u` and `v`, two ghost cells for the stencil, and the
   fourth-order `cell_quartic_interp` interpolater for the coarse/fine
-  boundary. The x boundaries use a `GpuBndryFuncFab` for the Dirichlet
-  condition.
+  boundary. This interpolater requires `amr.ref_ratio = 2`. The x
+  boundaries use a `GpuBndryFuncFab` for the Dirichlet condition.
 - **Time stepping.** `advance` calls `AmrLevel::RK` with a function that
   computes the right-hand side. `AmrLevel::RK` fills the ghost cells at
   every stage, including those at the coarse/fine boundary at the stage

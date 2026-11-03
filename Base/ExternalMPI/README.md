@@ -20,9 +20,6 @@ its own command line and sets AMReX parameters in a callback. Requires MPI.
   `ParmParse::addarr`.
 - The callback runs before AMReX reads its own parameters (e.g.
   `amrex.verbose`), so it is the place to change them in code.
-- Each AMReX instance only knows the ranks in its group. On GPUs, ranks of
-  both groups may share a device, so the callback disables the large
-  up-front memory reservation (`amrex.the_arena_init_size`).
 
 ## Build and run
 

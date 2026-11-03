@@ -130,7 +130,8 @@ int main (int argc, char* argv[])
                        << ", mode amplitude = " << decay
                        << ", relative max error = " << err << "\n";
 
-        if (err > 0.02_rt) {
+        // The relative error grows linearly in time, and so does the tolerance.
+        if (err > 2.0_rt * std::max(time, 0.01_rt)) {
             amrex::Print() << "FAILED\n";
             status = 1;
         } else {

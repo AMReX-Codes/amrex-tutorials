@@ -67,4 +67,5 @@ Main: 2 of 4 ranks in MPI_COMM_WORLD
 Agent: 2 of 4 ranks in MPI_COMM_WORLD
 Agent: received component 0 with min = 1, max = 1.92937572
 Main: max error of the round trip = 0
+PASSED
 ```

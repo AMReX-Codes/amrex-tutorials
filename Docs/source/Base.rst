@@ -575,9 +575,7 @@ the given communicator and does not finalize MPI; the application calls
 With ``build_parm_parse = false``, AMReX ignores ``argc``/``argv``. The
 application reads the inputs file itself and adds ``name=value`` arguments
 with ``ParmParse::addarr``. The callback runs before AMReX reads its own
-parameters, so it is the place to set them in code. On GPUs, ranks of both
-groups may share a device, so the callback disables the up-front memory
-reservation.
+parameters, so it is the place to set them in code.
 
 .. literalinclude:: ../../Base/ExternalMPI/main.cpp
    :language: cpp

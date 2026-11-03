@@ -4,6 +4,10 @@
 if(NOT AMReXTutorials_PYTHON)
     return()
 endif()
+if(NOT AMReXTutorials_DIM EQUAL 3)
+    message(STATUS "Skipping Python tutorials: they are written for 3D")
+    return()
+endif()
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
@@ -18,7 +22,6 @@ foreach(_name IN ITEMS MultiFab HeatEquation)
     set(_args main.py inputs ${AMReXTutorials_GPU_TEST_ARGS})
     set(_command ${Python3_EXECUTABLE} ${_args})
     if(AMReX_MPI)
-        find_package(MPI REQUIRED COMPONENTS CXX)
         set(_command ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
             ${MPIEXEC_PREFLAGS} ${Python3_EXECUTABLE} ${MPIEXEC_POSTFLAGS} ${_args})
     endif()

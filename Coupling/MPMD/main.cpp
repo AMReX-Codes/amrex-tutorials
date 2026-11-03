@@ -78,6 +78,8 @@ int main (int argc, char* argv[])
         if (err > 100._rt*std::numeric_limits<Real>::epsilon()) {
             amrex::Print() << "FAILED\n";
             status = 1;
+        } else {
+            amrex::Print() << "PASSED\n";
         }
     }
     amrex::Finalize();

@@ -188,10 +188,16 @@ AmrLevelWave::computeRHS (MultiFab& dSdt, MultiFab const& S)
 void
 AmrLevelWave::computeInitialDt (int finest_level, int /*sub_cycle*/,
                                 Vector<int>& n_cycle,
-                                const Vector<IntVect>& /*ref_ratio*/,
+                                const Vector<IntVect>& ref_ratio,
                                 Vector<Real>& dt_level, Real stop_time)
 {
     if (Level() > 0) { return; } // level 0 sets dt for all levels
+
+    // cell_quartic_interp only supports a refinement ratio of 2.
+    for (int ilev = 0; ilev < finest_level; ++ilev) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratio[ilev] == 2,
+                                         "WaveAmrLevel requires amr.ref_ratio = 2");
+    }
 
     // Number of steps of each level in one level-0 step
     Vector<int> nsteps(n_cycle.size());
@@ -243,11 +249,10 @@ AmrLevelWave::post_timestep (int iteration)
         Real const t = get_state_data(State_Type).curTime();
 
         IntVect const ratio = parent->refRatio(Level());
-        AMREX_ALWAYS_ASSERT(ratio == 2 || ratio == 4);
-        if (ratio == 2) {
-            // The fourth-order average needs one fine ghost cell.
-            FillPatch(fine_level, S_fine, 1, t, State_Type, 0, ncomp);
-        }
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ratio == 2,
+                                         "WaveAmrLevel requires amr.ref_ratio = 2");
+        // The fourth-order average needs one fine ghost cell.
+        FillPatch(fine_level, S_fine, 1, t, State_Type, 0, ncomp);
         FourthOrderInterpFromFineToCoarse(S_crse, 0, ncomp, S_fine, ratio);
     }
 

@@ -97,7 +97,6 @@ if __name__ == "__main__":
     # Command line arguments, e.g., an inputs file, are passed to AMReX.
     amr.initialize(sys.argv[1:])
     status = main()  # AMReX objects must be gone before finalize
-    if status != 0:
-        amr.Print("FAILED")
+    amr.Print("PASSED" if status == 0 else "FAILED")
     amr.finalize()
     sys.exit(status)

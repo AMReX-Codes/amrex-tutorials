@@ -222,7 +222,7 @@ compares with the result.
 through a ``LevelBld``. ``variableSetUp`` defines the state data: two
 components, two ghost cells for the stencil, a boundary function for the x
 boundaries, and the fourth-order ``cell_quartic_interp`` interpolater for
-the coarse/fine boundary.
+the coarse/fine boundary. This interpolater requires ``amr.ref_ratio = 2``.
 
 The time step uses AMReX's built-in Runge-Kutta support. ``AmrLevel::RK``
 advances the state with RK3 or RK4 (``wave.rk_order``) and fills the

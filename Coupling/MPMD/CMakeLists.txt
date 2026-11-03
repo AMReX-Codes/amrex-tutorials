@@ -9,7 +9,6 @@ endif()
 
 configure_file(agent.py ${CMAKE_CURRENT_BINARY_DIR}/agent.py COPYONLY)
 
-find_package(MPI REQUIRED COMPONENTS CXX)
 set(_main ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
     $<TARGET_FILE:Coupling_MPMD_Main> ${MPIEXEC_POSTFLAGS} inputs)
 list(APPEND _main ${AMReXTutorials_TEST_ARGS})

@@ -58,10 +58,6 @@ int main (int argc, char* argv[])
     {
         amrex::ParmParse pp_amrex("amrex");
         pp_amrex.add("verbose", 0);
-        // On GPU, AMReX reserves most of the device memory up front, shared
-        // among the ranks of its own communicator. It cannot see the other
-        // group's ranks on the same GPU, so do not reserve memory up front.
-        pp_amrex.add("the_arena_init_size", 0);
 
         if (!inputs_file.empty()) {
             amrex::ParmParse::addfile(inputs_file);

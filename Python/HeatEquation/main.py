@@ -114,7 +114,8 @@ def main():
         f"relative max error = {rel_err}"
     )
 
-    if rel_err > 0.02:
+    # The relative error grows linearly in time, and so does the tolerance.
+    if rel_err > 2.0 * max(time, 0.01):
         amr.Print("FAILED")
         return 1
     amr.Print("PASSED")
