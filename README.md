@@ -83,6 +83,7 @@ complete code to copy as the starting point of an application.
 | [GpuContainers](Base/GpuContainers) | ★★ | Device/pinned vectors, async copies, prefix sums, random numbers, arenas |
 | [Parser](Base/Parser) | ★★ | Functions defined at runtime and evaluated in GPU kernels |
 | [CompileTimeOptions](Base/CompileTimeOptions) | ★★★ | Specialized kernels from runtime options |
+| [TagParallelFor](Base/TagParallelFor) | ★★★ | One launch for many small boxes with `TagVector` |
 | [ExternalMPI](Base/ExternalMPI) | ★★ | AMReX on a communicator owned by the application |
 
 ### AMR: adaptive mesh refinement with `AmrCore` and `AmrLevel`

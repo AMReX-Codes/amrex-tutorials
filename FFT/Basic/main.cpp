@@ -1,6 +1,7 @@
 #include <AMReX.H>
 #include <AMReX_FFT.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_ParReduce.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
@@ -61,9 +62,15 @@ void fill (MultiFab& mf, Geometry const& geom, F const& f)
 
 Real max_diff (MultiFab const& a, MultiFab const& b)
 {
-    MultiFab d(a.boxArray(), a.DistributionMap(), 1, 0);
-    MultiFab::LinComb(d, Real(1), a, 0, Real(-1), b, 0, 0, 1, 0);
-    return d.norm0();
+    auto const& ma = a.const_arrays();
+    auto const& mb = b.const_arrays();
+    Real r = ParReduce(TypeList<ReduceOpMax>{}, TypeList<Real>{}, a, IntVect(0),
+        [=] AMREX_GPU_DEVICE (int box_no, int i, int j, int k) -> GpuTuple<Real>
+        {
+            return { std::abs(ma[box_no](i,j,k) - mb[box_no](i,j,k)) };
+        });
+    ParallelDescriptor::ReduceRealMax(r);
+    return r;
 }
 
 }

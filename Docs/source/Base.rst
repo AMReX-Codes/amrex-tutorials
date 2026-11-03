@@ -555,6 +555,70 @@ Run:
 For timings, build with TinyProfiler on and use e.g. ``n_cell=256
 nrepeat=20 max_grid_size=128`` and an optimized GPU build.
 
+.. _base-tagparallelfor:
+
+TagParallelFor
+--------------
+
+:Level: ★★★
+:Source: `Base/TagParallelFor <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Base/TagParallelFor>`__
+:Key APIs: ``ParallelFor(Vector<Tag>, ncomp, f)``,
+           ``ParallelFor(TagVector<Tag>, ncomp, f)``, ``TagVector``,
+           ``Array4BoxOrientationTag``, ``Orientation``,
+           ``OrientationIter``, ``adjCell``, ``BL_PROFILE``
+
+Runs many small kernels as one launch. Filling the ghost cells outside the
+domain boundary touches a thin box per domain face of every box at the
+boundary: many small boxes of different sizes, each too small to fill a
+GPU. The program fills them with a reflecting boundary condition in three
+ways, checks that the results agree, and times them with ``BL_PROFILE``
+(see :ref:`profiling`): one ``ParallelFor`` per box and face inside an
+``MFIter`` loop, the baseline, not recommended on GPU for many small boxes
+since no launch fills the device; one ``ParallelFor`` over a ``Vector`` of
+tags, which packs all the boxes into a single launch; and the same with a
+``TagVector`` built once and reused.
+
+A tag is a small struct with a ``box()`` member (``size()`` for 1D work)
+that carries what the kernel needs, here the ``Array4``, the thin box and
+the face. The tags are built on the host:
+
+.. literalinclude:: ../../Base/TagParallelFor/main.cpp
+   :language: cpp
+   :start-at: // One tag per (local box, domain face it touches)
+   :end-before: // Largest difference
+
+The kernel receives ``(i, j, k, n, tag)``. ``ParallelFor`` over a
+``Vector`` of tags copies the tags to the device and synchronizes the
+stream on every call, so for repeated use the ``TagVector`` is built once:
+
+.. literalinclude:: ../../Base/TagParallelFor/main.cpp
+   :language: cpp
+   :start-at: // 3. The TagVector is built once
+   :end-before: // Expected result
+   :dedent:
+
+On CPU, the launch is a loop over the tags that opens its own OpenMP
+parallel region, so it must not be called inside one. AMReX
+provides ``Array4BoxTag``, ``Array4BoxValTag``,
+``Array4BoxOrientationTag``, ``Array4PairTag``, ``Array4CopyTag`` and
+``VectorTag``, and any struct with ``box()`` or ``size()`` works. Use
+``ParallelFor(mf, ...)`` (:ref:`base-multifab`) when the work is the same
+on every box, and tags for irregular sets of boxes: physical boundary
+conditions, corrections at coarse/fine faces, operations on some boxes
+only.
+
+Run:
+
+.. code-block:: console
+
+   cmake --build build --target Base_TagParallelFor -j 8
+   cd build/Base/TagParallelFor
+   mpiexec -n 2 ./TagParallelFor inputs
+
+For timings, build with TinyProfiler on and an optimized GPU build, and
+use e.g. ``n_cell=256 nrepeat=20 tiny_profiler.print_threshold=0``; the
+difference between the methods grows with the number of boxes.
+
 .. _base-externalmpi:
 
 ExternalMPI

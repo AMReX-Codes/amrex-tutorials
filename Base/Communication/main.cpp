@@ -1,5 +1,6 @@
 #include <AMReX.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_ParReduce.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
@@ -18,15 +19,16 @@ amrex::Real cell_id (int i, int j, int k, int n)
 template <typename F>
 amrex::Real max_error (amrex::MultiFab const& mf, int ng, F const& f)
 {
-    amrex::MultiFab diff(mf.boxArray(), mf.DistributionMap(), 1, ng);
-    auto const& da = diff.arrays();
     auto const& ma = mf.const_arrays();
-    amrex::ParallelFor(diff, amrex::IntVect(ng),
-    [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
-    {
-        da[b](i,j,k) = ma[b](i,j,k) - f(i,j,k);
-    });
-    return diff.norm0(0, ng);
+    amrex::Real r = amrex::ParReduce(amrex::TypeList<amrex::ReduceOpMax>{},
+                                     amrex::TypeList<amrex::Real>{},
+                                     mf, amrex::IntVect(ng),
+        [=] AMREX_GPU_DEVICE (int b, int i, int j, int k) -> amrex::GpuTuple<amrex::Real>
+        {
+            return { std::abs(ma[b](i,j,k) - f(i,j,k)) };
+        });
+    amrex::ParallelDescriptor::ReduceRealMax(r);
+    return r;
 }
 
 int main (int argc, char* argv[])
