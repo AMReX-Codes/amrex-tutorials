@@ -1,0 +1,5 @@
+n_cell = 32           # coarse cells per direction
+max_grid_size = 16
+npart = 100000        # number of particles
+nsteps = 10           # steps of uniform motion
+write_plotfile = 1    # write plt_multilevel

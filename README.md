@@ -122,6 +122,7 @@ complete code to copy as the starting point of an application.
 |---|---|---|
 | [Basics](Particles/Basics) | ★ | Pure SoA container, push, redistribute, reductions, I/O |
 | [ParticleMesh](Particles/ParticleMesh) | ★★ | Deposition and gather |
+| [MultiLevel](Particles/MultiLevel) | ★★★ | Particles on an AMR hierarchy: levels, `Redistribute`, multi-level deposition, regridding |
 | [EBTracers](Particles/EBTracers) | ★★ | Tracer particles around an EB, reflected with the signed distance |
 | [Sorting](Particles/Sorting) | ★★ | Binning, sorting, partitioning, filtering |
 | [NeighborList](Particles/NeighborList) | ★★★ | Molecular dynamics with neighbor lists |
