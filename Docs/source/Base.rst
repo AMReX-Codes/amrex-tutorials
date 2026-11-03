@@ -8,8 +8,8 @@ parameters, the mesh data structures (``Box``, ``BoxArray``,
 ``DistributionMapping``, ``Geometry``, ``MultiFab``), GPU-portable kernels
 with ``ParallelFor``, ghost cells and boundary conditions, reductions, GPU
 containers, and I/O. They need no optional AMReX components; ExternalMPI
-requires MPI. Build only this topic with ``-DAMReXTutorials_TOPICS=Base``;
-see :doc:`GettingStarted`.
+requires MPI. Build only this topic with ``-DAMReXTutorials_TOPICS=Base``
+(add ``-DAMReX_FFT=OFF`` if FFTW is not installed); see :doc:`GettingStarted`.
 
 Start with HelloWorld, MultiFab and HeatEquation, in that order.
 
@@ -163,8 +163,8 @@ HeatEquation
            ``WriteSingleLevelPlotfile``
 
 Solves :math:`\partial\phi/\partial t = D\nabla^2\phi` with forward Euler
-on the periodic unit domain. The initial condition
-:math:`\phi = 1 + \prod_d \sin(2\pi x_d)` decays as
+on the periodic unit domain. The initial condition is
+:math:`\phi = 1 + \prod_d \sin(2\pi x_d)`; its sine mode decays as
 :math:`\exp(-4\pi^2 d D t)` in :math:`d` dimensions, and the program
 compares the result with this exact solution. The time step is
 :math:`\Delta t = \mathrm{cfl}\,\Delta x^2/(2 d D)`.
@@ -232,10 +232,10 @@ their periodic images. ``ParallelAdd`` adds instead of copying:
 
 ``SumBoundary`` is the reverse of ``FillBoundary``: values in ghost cells
 are added to the valid cells they overlap, as in deposition, e.g. of
-particles near a box boundary. Here every valid cell deposits 1 into
-itself and its :math:`3^d` neighbors, including ghost cells, and after
-``SumBoundary`` every valid cell holds :math:`3^d`. The ghost cells are not
-updated; call ``FillBoundary`` afterwards if they are needed.
+particles near a box boundary. Here every valid cell deposits 1 into the
+:math:`3^d` cells around it, itself included, some of them ghost cells,
+and after ``SumBoundary`` every valid cell holds :math:`3^d`. The ghost
+cells are not updated; call ``FillBoundary`` afterwards if they are needed.
 
 Run:
 
@@ -518,7 +518,7 @@ CompileTimeOptions
 :Level: ★★★
 :Source: `Base/CompileTimeOptions <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Base/CompileTimeOptions>`__
 :Key APIs: ``ParallelFor(TypeList<CompileTimeOptions<...>...>, {...}, box, f)``,
-           ``CompileTimeOptions``, ``AnyCTO``, ``if constexpr``,
+           ``CompileTimeOptions``, ``if constexpr``,
            ``AMREX_ENUM``, ``BL_PROFILE``
 
 Turns runtime options into compile-time constants inside kernels. A kernel
@@ -550,10 +550,10 @@ Run:
 
    cmake --build build --target Base_CompileTimeOptions -j 8
    cd build/Base/CompileTimeOptions
-   ./CompileTimeOptions inputs order=second
+   ./CompileTimeOptions inputs
 
 For timings, build with TinyProfiler on and use e.g. ``n_cell=256
-nrepeat=20`` and an optimized GPU build.
+nrepeat=20 max_grid_size=128`` and an optimized GPU build.
 
 .. _base-externalmpi:
 

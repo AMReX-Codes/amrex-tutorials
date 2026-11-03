@@ -64,7 +64,7 @@ foreach(_prob IN ITEMS TaylorGreen DoubleShearLayer LidDrivenCavity)
         # has a file named inputs.
         amrex_tutorial_add(IncFlow_${_prob}
             SOURCES ${_sources}
-            REQUIRES LSOLVERS
+            REQUIRES LSOLVERS LSOLVERS_INCFLO
             DIMS 2 3
             TEST_ARGS ${CMAKE_CURRENT_SOURCE_DIR}/Exec/${_prob}/inputs
                       amr.plot_file=${_prob}_plt amr.chk_file=${_prob}_chk)

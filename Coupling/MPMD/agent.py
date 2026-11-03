@@ -48,7 +48,8 @@ def main():
 
     copier.recv(mf, 0, 1)  # receive component 0
 
-    # Zero-copy NumPy (CPU) or CuPy (GPU) view of each box, indexed (x, y, z, comp)
+    # Zero-copy NumPy (CPU), CuPy (CUDA/HIP) or dpnp (SYCL) view of each box,
+    # indexed (x, y, z, comp)
     for mfi in mf:
         arr = mf.array(mfi).to_xp(copy=False)
         arr[..., 1] = 10.0 * arr[..., 0]

@@ -18,8 +18,9 @@ OpenMP.
 `main.f90` sets up the domain, the grids and two MultiFabs, and runs the
 time loop. `heat.f90` has the kernels. Each kernel loops over tiles with
 an `amrex_mfiter` inside an OpenMP parallel region, gets a pointer
-`p(i,j,k,n)` to the data of the tile's box with `dataptr`, and passes it
-to an ordinary Fortran loop. The indices are the cell indices of AMReX,
+`p(i,j,k,n)` to the whole box of data, including ghost cells, with
+`dataptr`, and passes it to an ordinary Fortran loop over the tile box
+`mfi%tilebox()`. The indices are the cell indices of AMReX,
 zero-based, and the code is the same in 1D, 2D and 3D: indices beyond
 `amrex_spacedim` are always 1.
 

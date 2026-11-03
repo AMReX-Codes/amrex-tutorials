@@ -109,7 +109,7 @@ the inputs, where ``TimeIntegrator`` reads them:
    :end-at: ParmParse("integration.rk").queryAdd("type", rk_type);
    :dedent:
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -194,8 +194,8 @@ chapter of the AMReX documentation). ``integration.rel_tol`` and
 Increase ``n_cell`` to make diffusion stiffer and the implicit, IMEX and MRI
 methods more attractive.
 
-Run (from a CMake build directory configured with ``-DAMReX_SUNDIALS=ON``,
-see :doc:`GettingStarted`):
+Run (from the top of the repository, with the build configured with
+``-DAMReX_SUNDIALS=ON``, see :doc:`GettingStarted`):
 
 .. code-block:: console
 

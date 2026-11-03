@@ -2,9 +2,9 @@
 
 Solve the heat equation $\partial\phi/\partial t = D\nabla^2\phi$ with
 explicit (forward Euler) time stepping on a periodic unit domain. The
-initial condition $\phi = 1 + \prod_d \sin(2\pi x_d)$ decays as
-$\exp(-4\pi^2 d D t)$ in $d$ dimensions, and the program compares the
-numerical solution with this exact solution.
+initial condition is $\phi = 1 + \prod_d \sin(2\pi x_d)$; its sine mode
+decays as $\exp(-4\pi^2 d D t)$ in $d$ dimensions, and the program compares
+the numerical solution with this exact solution.
 
 **Key APIs:** `MultiFab`, `Geometry`, `FillBoundary`, `ParallelFor(mf, ...)`,
 `const_arrays`, `WriteSingleLevelPlotfile`

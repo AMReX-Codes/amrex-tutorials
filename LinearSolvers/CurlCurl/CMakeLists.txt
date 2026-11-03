@@ -1,1 +1,1 @@
-amrex_tutorial_add(CurlCurl SOURCES main.cpp INPUTS inputs REQUIRES LSOLVERS)
+amrex_tutorial_add(CurlCurl SOURCES main.cpp INPUTS inputs REQUIRES LSOLVERS LSOLVERS_EM)

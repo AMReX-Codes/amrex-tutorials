@@ -66,7 +66,7 @@ The Python agent splits the communicator with mpi4py:
    :start-at: # Split MPI_COMM_WORLD with mpi4py
    :end-at: amr.MPMD_Finalize()
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 

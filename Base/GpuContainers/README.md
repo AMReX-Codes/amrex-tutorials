@@ -34,7 +34,7 @@ cd build/Base/GpuContainers && ./GpuContainers inputs
 ```
 
 GNU Make, with AMReX cloned next to this repository (add `USE_CUDA=TRUE`
-for a CUDA build):
+for a CUDA build, which makes `main3d.gnu.MPI.CUDA.ex`):
 
 ```
 make -j8

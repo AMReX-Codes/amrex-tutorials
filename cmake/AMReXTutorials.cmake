@@ -1,7 +1,8 @@
 # amrex_tutorial_add(<name>
 #     SOURCES <files>...
 #     [INPUTS <files>...]          # copied to the build directory
-#     [REQUIRES <features>...]     # EB FFT PARTICLES LSOLVERS AMRLEVEL MPI GPU NOGPU SUNDIALS
+#     [REQUIRES <features>...]     # EB FFT PARTICLES LSOLVERS LSOLVERS_EM LSOLVERS_INCFLO
+#                                  # AMRLEVEL MPI GPU NOGPU SUNDIALS
 #     [DIMS <dims>...]             # supported AMReX_SPACEDIM values, default 1 2 3
 #     [TEST_ARGS <args>...]        # default: the first INPUTS file
 #     [NPROCS <n>]                 # MPI ranks for the test, default 2
@@ -45,6 +46,10 @@ function(_amrex_tutorial_has_feature _feature _out)
         set(_has ${AMReX_PARTICLES})
     elseif(_feature STREQUAL "LSOLVERS")
         set(_has ${AMReX_LINEAR_SOLVERS})
+    elseif(_feature STREQUAL "LSOLVERS_EM")
+        set(_has ${AMReX_LINEAR_SOLVERS_EM})
+    elseif(_feature STREQUAL "LSOLVERS_INCFLO")
+        set(_has ${AMReX_LINEAR_SOLVERS_INCFLO})
     elseif(_feature STREQUAL "AMRLEVEL")
         set(_has ${AMReX_AMRLEVEL})
     elseif(_feature STREQUAL "MPI")

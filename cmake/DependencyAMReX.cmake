@@ -27,9 +27,10 @@ endif()
 
 # The Fortran tutorials need the AMReX Fortran interfaces. Fortran must be
 # enabled here, in the top-level directory, for the tutorials to use it.
+# FORCE, because an earlier configure may have cached AMReX_FORTRAN=OFF.
 if(AMReX_FORTRAN_INTERFACES)
     enable_language(Fortran)
-    set(AMReX_FORTRAN ON CACHE BOOL "Enable Fortran in AMReX")
+    set(AMReX_FORTRAN ON CACHE BOOL "Enable Fortran in AMReX" FORCE)
 endif()
 
 set(_amrex_find_args)
@@ -63,8 +64,10 @@ FetchContent_MakeAvailable(AMReX)
 if(AMReX_FOUND)
     message(STATUS "Using installed AMReX from ${AMReX_DIR}")
     include(AMReXTargetHelpers)
-    # The installed package names these AMReX_LSOLVERS and AMReX_FINTERFACES.
+    # The installed package names these AMReX_LSOLVERS* and AMReX_FINTERFACES.
     set(AMReX_LINEAR_SOLVERS ${AMReX_LSOLVERS})
+    set(AMReX_LINEAR_SOLVERS_EM ${AMReX_LSOLVERS_EM})
+    set(AMReX_LINEAR_SOLVERS_INCFLO ${AMReX_LSOLVERS_INCFLO})
     if(AMReX_FORTRAN_INTERFACES AND NOT AMReX_FINTERFACES)
         message(FATAL_ERROR "The installed AMReX was built without Fortran interfaces")
     endif()

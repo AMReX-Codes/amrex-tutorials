@@ -10,6 +10,7 @@
 #include <AMReX_MLPoisson.H>
 #include <AMReX_MultiFab.H>
 
+#include <limits>
 #include <memory>
 #include <string>
 
@@ -132,7 +133,7 @@ private:
     std::unique_ptr<amrex::MLNodeLaplacian> nodal_op;
 
     // Runtime parameters
-    int max_step = 20;
+    int max_step = std::numeric_limits<int>::max();
     amrex::Real stop_time = 1.0;
     amrex::Real nu = 0.01;
     amrex::Real cfl = 0.5;

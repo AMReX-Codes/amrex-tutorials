@@ -32,7 +32,7 @@ CMake, from the repository root:
 ```
 cmake -S . -B build -DAMReXTutorials_TOPICS=Base
 cmake --build build --target Base_CompileTimeOptions -j 8
-cd build/Base/CompileTimeOptions && ./CompileTimeOptions inputs order=second
+cd build/Base/CompileTimeOptions && ./CompileTimeOptions inputs
 ```
 
 GNU Make, with AMReX cloned next to this repository:
@@ -43,8 +43,8 @@ make -j8
 ```
 
 For timings, build with TinyProfiler on (`-DAMReX_TINY_PROFILE=ON` or
-`make TINY_PROFILE=TRUE`) and use e.g. `n_cell=256 nrepeat=20` and an
-optimized GPU build.
+`make TINY_PROFILE=TRUE`) and use e.g. `n_cell=256 nrepeat=20
+max_grid_size=128` and an optimized GPU build.
 
 ## Expected output
 

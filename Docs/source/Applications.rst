@@ -8,7 +8,8 @@ starting point of a new application. They may use a ``Source/`` directory
 for the solver and ``Exec/<Problem>/`` directories for problem setups.
 ``CNS`` needs AMReX built with ``AmrLevel`` support (``AMReX_AMRLEVEL``,
 on by default) and ``IncFlow`` needs the linear solvers
-(``AMReX_LINEAR_SOLVERS``, on by default). Both run in 2D and 3D only.
+(``AMReX_LINEAR_SOLVERS`` and ``AMReX_LINEAR_SOLVERS_INCFLO``, on by
+default). Both run in 2D and 3D only.
 Build only this topic with ``-DAMReXTutorials_TOPICS=Applications``; see
 :doc:`GettingStarted`.
 
@@ -155,7 +156,7 @@ Making your own code
 - **New physics:** add components in ``CNS_index.H`` and their names and
   boundary conditions in ``CNS_setup.cpp``, and change the kernels in
   ``CNS_hydro_K.H`` and ``compute_dSdt``. Inflow boundaries need values in
-  ``CnsFillExtDir``.
+  ``CnsFillExtDir`` and removal of the check in ``CNS::read_params``.
 - **New AmrLevel code:** keep the structure of ``main.cpp``,
   ``CNS_setup.cpp`` (``LevelBld``) and the ``AmrLevel`` overrides in
   ``CNS.cpp``, and replace ``advance``, the kernels and the tagging
@@ -181,7 +182,7 @@ checkout given by ``-DFETCHCONTENT_SOURCE_DIR_AMREX``):
 
 .. code-block:: console
 
-   cmake -S . -B build -DAMReX_SPACEDIM=2 -DAMReX_GPU_BACKEND=CUDA
+   cmake -S . -B build [-DAMReX_SPACEDIM=2] [-DAMReX_GPU_BACKEND=CUDA]
    cmake --build build -j 8
 
 With GNU Make, build in a problem directory:

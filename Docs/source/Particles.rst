@@ -69,7 +69,7 @@ neighboring ranks.
    :end-at: pc.Redistribute(0, -1, 0, 1);
    :dedent:
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -125,7 +125,7 @@ reads the mesh, the second accumulates each weighted value on the particle.
    :end-before: // Largest error of the gathered field.
    :dedent:
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -150,8 +150,8 @@ EBTracers
 Tracer particles carry a scalar through a flow around an embedded boundary:
 each particle has a fixed weight, and depositing the weights on the mesh
 gives the scalar field. It is the Lagrangian counterpart of
-:ref:`eb-advection`, and builds the same flow: a uniform velocity made to
-go around a sphere in a periodic domain with a MAC projection. The
+:ref:`eb-advection`, and builds the same kind of flow: a uniform velocity
+made to go around a sphere in a periodic domain with a MAC projection. The
 velocity is kept at face centers, where ``mac_interpolate`` expects it.
 
 Each step moves the particles with the midpoint method, with the face
@@ -239,7 +239,7 @@ containers. The destination tiles must be large enough.
    :end-before: const amrex::Long nslow = slow_pc
    :dedent:
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -292,7 +292,7 @@ The force kernel loops over the neighbors of each real particle:
    :end-at: });
    :dedent:
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -335,8 +335,9 @@ The problem is a Langmuir (plasma) oscillation. In normalized units
 at rest, displaced by :math:`\xi_0 \sin(kx)`, and linear theory gives
 :math:`E_x = -(q n_0 \xi_0/\epsilon_0) \sin(kx) \cos(\omega_p t)`. The code
 measures the frequency from the zero crossings of the :math:`\sin(kx)` mode
-of :math:`E_x`, and checks it, the initial amplitude, and the total (field
-plus kinetic) energy against theory to 2%.
+of :math:`E_x`. It checks that the frequency and the initial amplitude agree
+with theory to 2%, and that the total (field plus kinetic) energy changes by
+less than 2%.
 
 Code structure
 ^^^^^^^^^^^^^^
@@ -381,7 +382,7 @@ constructor, and reuses them every step:
    :end-before: void
    :lines: 1-18
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 

@@ -1,5 +1,6 @@
 #include "CNS.H"
 
+#include <AMReX_BC_TYPES.H>
 #include <AMReX_ParmParse.H>
 
 #include <string>
@@ -34,8 +35,9 @@ void cns_prob_defaults ()
 
     // Slip walls at the ends of the tube, so that no mass leaves the domain
     ParmParse ppc("cns");
-    std::vector<int> lo_bc{AMREX_D_DECL(4,0,0)};
-    std::vector<int> hi_bc{AMREX_D_DECL(4,0,0)};
+    std::vector<int> lo_bc{AMREX_D_DECL(PhysBCType::slipwall, PhysBCType::interior,
+                                        PhysBCType::interior)};
+    std::vector<int> hi_bc = lo_bc;
     ppc.queryAdd("lo_bc", lo_bc);
     ppc.queryAdd("hi_bc", hi_bc);
     int refine_max_dengrad_lev = 10;

@@ -63,7 +63,7 @@ wavenumbers:
    :end-before: MultiFab phi_low_exact
    :dedent:
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -118,7 +118,7 @@ high face) per direction, with a matching ``Geometry`` periodicity:
    :end-before: #endif
    :dedent:
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -171,7 +171,7 @@ In 3D, ``FFT::PoissonOpenBC`` provides the same Green's function:
 The error is second order in :math:`\Delta x/\sigma` and is checked against
 a tolerance.
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -221,7 +221,7 @@ across MPI ranks:
    :end-at: ParallelDescriptor::ReduceRealSum
    :dedent:
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -229,7 +229,8 @@ Run (from a CMake build directory, see :doc:`GettingStarted`):
    cd build/FFT/EnergySpectrum
    mpiexec -n 2 ./EnergySpectrum inputs
 
-The spectrum is written to ``spectrum.txt`` (set with ``outfile``):
+The spectrum is written to ``spectrum.txt`` (set with ``outfile``) in two
+columns, :math:`k` and :math:`E(k)`, and the program prints:
 
 .. code-block:: text
 

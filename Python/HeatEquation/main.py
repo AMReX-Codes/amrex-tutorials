@@ -20,11 +20,9 @@ def query(pp, name, default):
 
 
 def main():
-    # NumPy on CPU, CuPy on GPU, matching the views returned by to_xp
-    if amr.Config.have_gpu:
-        import cupy as xp
-    else:
-        import numpy as xp
+    # The array module of the views returned by to_xp: NumPy on CPU,
+    # CuPy for CUDA/HIP, dpnp for SYCL
+    xp = amr.xp
 
     pp = amr.ParmParse("")
     n_cell = query(pp, "n_cell", 32)
@@ -131,6 +129,8 @@ def main():
 
 
 if __name__ == "__main__":
+    if not hasattr(amr, "xp"):
+        sys.exit("This tutorial needs pyAMReX 26.09 or newer.")
     # Command line arguments, e.g., an inputs file, are passed to AMReX.
     amr.initialize(sys.argv[1:])
     status = main()  # AMReX objects must be gone before finalize

@@ -14,8 +14,10 @@ program builds each geometry listed in `geometries` on `[-1,1]^D` (default
 
 For each geometry, the program counts regular, cut and covered cells, sums
 the fluid volume, the EB surface area, and the fluid area of the plane
-`x = 0` from the x-face area fractions. It compares them with the exact
-values and fails if the relative error is larger than 2% (at `n_cell = 32`).
+`x = 0` from the x-face area fractions. It compares the volume with the
+exact value when one is known (not for a user-supplied `parser.function` or
+another `eb2.*` geometry), and for the sphere also the EB area and the area
+at `x = 0`. It fails if a relative error is larger than 2% (at `n_cell = 32`).
 It writes a plotfile `plt_<geometry>` with the cell type and the volume
 fraction, and in 3D the EB surface of `surface_geometry` to `eb.pvtp` for
 ParaView.

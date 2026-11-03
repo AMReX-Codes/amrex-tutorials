@@ -1,5 +1,6 @@
 #include "CNS.H"
 
+#include <AMReX_BC_TYPES.H>
 #include <AMReX_ParmParse.H>
 
 #include <string>
@@ -39,10 +40,9 @@ void cns_prob_defaults ()
 
     // Slip walls at the bottom and top
     ParmParse ppc("cns");
-    std::vector<int> lo_bc(AMREX_SPACEDIM, 0);
-    std::vector<int> hi_bc(AMREX_SPACEDIM, 0);
-    lo_bc.back() = 4;
-    hi_bc.back() = 4;
+    std::vector<int> lo_bc(AMREX_SPACEDIM, PhysBCType::interior);
+    lo_bc.back() = PhysBCType::slipwall;
+    std::vector<int> hi_bc = lo_bc;
     ppc.queryAdd("lo_bc", lo_bc);
     ppc.queryAdd("hi_bc", hi_bc);
     Real gravity = Real(-1.0);

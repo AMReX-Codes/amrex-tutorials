@@ -136,15 +136,15 @@ PASSED
 Double shear layer in 3D:
 
 ```
-Step 10 time = 0.07762177993 dt = 0.007698007639 levels = 2 kinetic energy = 0.1077343874
-Max |velocity| = 1.016523926, max |mean velocity| = 3.970890457e-18
+Step 10 time = 0.07762183139 dt = 0.007698062042 levels = 2 kinetic energy = 0.107734373
+Max |velocity| = 1.016516628, max |mean velocity| = 2.775557562e-17
 PASSED
 ```
 
 Lid-driven cavity in 3D:
 
 ```
-Step 10 time = 0.08138020833 dt = 0.008138020833 levels = 2 kinetic energy = 0.005179961653
-Max |velocity| = 0.4264155713, kinetic energy = 0.005179961653
+Step 10 time = 0.08138020833 dt = 0.008138020833 levels = 2 kinetic energy = 0.005179971794
+Max |velocity| = 0.4264178795, kinetic energy = 0.005179971794
 PASSED
 ```

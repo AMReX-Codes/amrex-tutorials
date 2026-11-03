@@ -23,6 +23,13 @@ IncFlow::MacProjection (Vector<Array<MultiFab,AMREX_SPACEDIM>>& umac)
 {
     int const nlevs = finest_level + 1;
 
+    // Make coarse faces under fine faces consistent, so coarse cells at the
+    // coarse/fine boundary see the fine flux in div(umac).
+    for (int lev = nlevs-1; lev > 0; --lev) {
+        amrex::average_down_faces(GetArrOfConstPtrs(umac[lev]), GetArrOfPtrs(umac[lev-1]),
+                                  refRatio(lev-1), Geom(lev-1));
+    }
+
     Vector<MultiFab> rhs(nlevs);
     Vector<MultiFab> phi(nlevs);
     for (int lev = 0; lev < nlevs; ++lev) {
@@ -95,7 +102,7 @@ IncFlow::NodalProjection (Vector<MultiFab>& vel, Real dt_proj)
     }
 
     // rhs = div(vel) on the nodes, including the coarse/fine synchronization.
-    // This also sets the velocity outside walls to zero.
+    // The velocity in ghost cells outside the Neumann walls is not used.
     nodal_op->compRHS(GetVecOfPtrs(rhs), GetVecOfPtrs(vel), {}, {});
 
     MLMG mlmg(*nodal_op);

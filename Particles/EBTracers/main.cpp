@@ -56,7 +56,8 @@ struct Problem
     GpuArray<Real,AMREX_SPACEDIM> blob{AMREX_D_DECL(0.25_rt, 0.45_rt, 0.5_rt)};
     Real blob_width = 0.08_rt;
 
-    // Exact distance inside the sphere (> 0 inside), used only for checking
+    // Exact distance inside the sphere (> 0 inside), used to remove initial
+    // particles inside it and for checking
     [[nodiscard]] AMREX_GPU_HOST_DEVICE Real depth (RealVect const& x) const {
         Real r2 = 0;
         for (int d = 0; d < AMREX_SPACEDIM; ++d) { r2 += (x[d]-center[d])*(x[d]-center[d]); }
@@ -94,7 +95,7 @@ void make_velocity (Array<MultiFab,AMREX_SPACEDIM>& u, Vector<Real> const& u0,
                                  LinOpBCType::Periodic)});
     op.setLevelBC(0, nullptr);
     op.setScalars(0.0_rt, 1.0_rt);
-    op.setBCoeffs(0, 1.0_rt); // homogeneous Neumann on the EB
+    op.setBCoeffs(0, 1.0_rt); // homogeneous Neumann on the EB by default
     MLMG mlmg(op);
     mlmg.setVerbose(0);
     const Real tol_rel = std::is_same_v<Real,float> ? 1.e-5_rt : 1.e-12_rt;
@@ -337,6 +338,12 @@ int main (int argc, char* argv[])
         MultiFab phi(ba, dm, 1, 1, MFInfo(), factory);
         deposit(pc, phi);
 
+        // Component names for I/O exclude the positions.
+        auto const& rnames = pc.GetRealSoANames();
+        auto const& inames = pc.GetIntSoANames();
+        const Vector<std::string> real_names(rnames.begin() + AMREX_SPACEDIM, rnames.end());
+        const Vector<std::string> int_names(inames.begin(), inames.end());
+
         auto write_plotfile = [&] (int step, Real time)
         {
             MultiFab plt(ba, dm, 1+AMREX_SPACEDIM, 0, MFInfo(), factory);
@@ -345,7 +352,7 @@ int main (int argc, char* argv[])
             const std::string name = amrex::Concatenate("plt", step, 5);
             EB_WriteSingleLevelPlotfile(name, plt, {"phi", AMREX_D_DECL("u","v","w")},
                                         geom, time, step);
-            pc.WritePlotFile(name, "particles");
+            pc.WritePlotFile(name, "particles", real_names, int_names);
         };
 
         // Exact maximum depth of particles inside the sphere, in cells

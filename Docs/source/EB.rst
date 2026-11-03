@@ -53,7 +53,7 @@ geometry from the ``eb2.*`` parameters (e.g., ``eb2.geom_type = stl``):
 .. literalinclude:: ../../EB/Geometry/main.cpp
    :language: cpp
    :start-at: Parser parser(function);
-   :end-at: max_coarsening_level);
+   :end-at: EB2::Build(geom, required_coarsening_level, max_coarsening_level);
    :dedent:
 
 For each geometry, the program counts regular, cut and covered cells, and
@@ -68,13 +68,15 @@ centroids, ...) are accessed in a kernel through the factory's
    :end-at: });
    :dedent:
 
-The results are compared with the exact values; the program fails if a
+The volume is compared with the exact value when one is known (not for a
+user-supplied ``parser.function`` or another ``eb2.*`` geometry), and for the
+sphere also the EB area and the area at :math:`x = 0`. The program fails if a
 relative error exceeds 2% at ``n_cell = 32`` (the tolerance scales with
 :math:`\Delta x^2`). It writes a plotfile ``plt_<geometry>`` with the cell
 type and the volume fraction, and in 3D the EB surface of
 ``surface_geometry`` to ``eb.pvtp`` for ParaView.
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -136,7 +138,7 @@ non-EB operator):
    :end-at: mlmg.solve({&phi}, {&rhs}, tol_rel, tol_abs);
    :dedent:
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 
@@ -218,7 +220,7 @@ checks that there are no NaNs, that the total mass
 constant stays constant, which holds only if the velocity is divergence
 free.
 
-Run (from a CMake build directory, see :doc:`GettingStarted`):
+Run (from the top of the repository, see :doc:`GettingStarted`):
 
 .. code-block:: console
 

@@ -42,7 +42,8 @@ pyAMReX
 
 `pyAMReX <https://pyamrex.readthedocs.io>`__ reads plotfiles with
 ``PlotFileData``, which returns each level as a ``MultiFab``. Each box can
-be viewed as a NumPy (or, on GPUs, CuPy) array without copying:
+be viewed as a NumPy (CPU), CuPy (CUDA/HIP) or dpnp (SYCL) array without
+copying:
 
 .. code-block:: python
 
@@ -148,8 +149,10 @@ optimizations may generate code that raises floating-point exceptions even
 where the source code does not. To avoid this, build with
 ``-DAMReX_FPE=ON`` or ``-DAMReX_TESTING=ON`` (CMake), or ``TEST=TRUE``
 (GNU Make). This may affect performance, so use it for debugging and
-testing only. With either CMake option, the CTest tests of CPU builds run
-with all three traps on.
+testing only. With either CMake option, the CTest tests of CPU builds with
+GCC or Clang run with all three traps on. With an installed AMReX built
+without ``AMReX_FPE``, also configure the tutorials with
+``-DAMReX_TESTING=ON``.
 
 Signals and backtraces
 ^^^^^^^^^^^^^^^^^^^^^^

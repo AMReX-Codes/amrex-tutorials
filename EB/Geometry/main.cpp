@@ -174,7 +174,8 @@ int main (int argc, char* argv[])
 #else
         const Real face_area_x = dx[1]*dx[2];
 #endif
-        // The cells whose low x-face lies on the plane x = 0
+        // The cells whose low x-face lies on the plane x = 0 (needs even n_cell)
+        AMREX_ALWAYS_ASSERT(n_cell % 2 == 0);
         const int i_mid = n_cell/2;
 
         // Relative tolerance for the second-order EB volumes and areas

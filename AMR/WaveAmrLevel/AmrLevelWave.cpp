@@ -267,7 +267,7 @@ AmrLevelWave::errorEst (TagBoxArray& tags, int /*clearval*/, int /*tagval*/,
     auto const& s = S_new.const_arrays();
     ParallelFor(tags, [=] AMREX_GPU_DEVICE (int bi, int i, int j, int k)
     {
-        if (std::abs(s[bi](i,j,k,1)) > 0.75_rt) {
+        if (std::abs(s[bi](i,j,k,1)) > 0.25_rt) {
             a[bi](i,j,k) = TagBox::SET;
         }
     });
