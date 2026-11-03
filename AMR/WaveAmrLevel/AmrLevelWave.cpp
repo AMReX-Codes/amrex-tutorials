@@ -249,8 +249,6 @@ AmrLevelWave::post_timestep (int iteration)
         Real const t = get_state_data(State_Type).curTime();
 
         IntVect const ratio = parent->refRatio(Level());
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ratio == 2,
-                                         "WaveAmrLevel requires amr.ref_ratio = 2");
         // The fourth-order average needs one fine ghost cell.
         FillPatch(fine_level, S_fine, 1, t, State_Type, 0, ncomp);
         FourthOrderInterpFromFineToCoarse(S_crse, 0, ncomp, S_fine, ratio);

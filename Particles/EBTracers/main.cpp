@@ -387,7 +387,7 @@ int main (int argc, char* argv[])
         // started, up to the time stepping error.
         Real umax = 0;
         for (int d = 0; d < AMREX_SPACEDIM; ++d) { umax = std::max(umax, u[d].norm0()); }
-        const int nsteps = int(std::ceil(stop_time * umax / (cfl * dx)));
+        const int nsteps = std::max(1, int(std::ceil(stop_time * umax / (cfl * dx))));
         const Real dt = stop_time / Real(nsteps);
         amrex::Print() << nsteps << " steps forward and back with dt = " << dt << "\n";
 

@@ -116,10 +116,12 @@ def main():
     )
 
     # Allow twice the leading truncation errors of the Laplacian (dx^2)
-    # and of forward Euler (dt).
+    # and of forward Euler (dt), plus round-off of about one epsilon per
+    # step on phi ~ 1, relative to the decaying mode amplitude.
     space_err = k2 / 3 * dx[0] ** 2 / 12.0
     time_err = diffusion_coef * k2 * dt / 2.0
     tol = 2.0 * diffusion_coef * time * k2 * (space_err + time_err)
+    tol += step * sys.float_info.epsilon / decay
     if rel_err > tol:
         amr.Print("FAILED")
         return 1

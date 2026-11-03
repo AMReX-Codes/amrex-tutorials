@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <type_traits>
 #include <utility>
 
@@ -132,10 +133,12 @@ int main (int argc, char* argv[])
                        << ", relative max error = " << err << "\n";
 
         // Allow twice the leading truncation errors of the Laplacian (dx^2)
-        // and of forward Euler (dt).
+        // and of forward Euler (dt), plus round-off of about one epsilon per
+        // step on phi ~ 1, relative to the decaying mode amplitude.
         Real const space_err = k2 / AMREX_SPACEDIM * dx[0] * dx[0] / 12.0_rt;
         Real const time_err = diffusion_coef * k2 * dt / 2.0_rt;
-        Real const tol = 2.0_rt * diffusion_coef * time * k2 * (space_err + time_err);
+        Real const tol = 2.0_rt * diffusion_coef * time * k2 * (space_err + time_err)
+            + Real(step) * std::numeric_limits<Real>::epsilon() / decay;
         if (err > tol) {
             amrex::Print() << "FAILED\n";
             status = 1;

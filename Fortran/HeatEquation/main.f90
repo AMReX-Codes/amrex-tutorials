@@ -87,10 +87,12 @@ program main
   decay = exp(-diffusion_coef * k2 * time)
   err = max_error(phi_new, geom, decay) / decay ! relative to the mode amplitude
   ! Allow twice the leading truncation errors of the Laplacian (dx^2)
-  ! and of forward Euler (dt).
+  ! and of forward Euler (dt), plus round-off of about one epsilon per
+  ! step on phi ~ 1, relative to the decaying mode amplitude.
   space_err = k2 / amrex_spacedim * geom%dx(1)**2 / 12.0_amrex_real
   time_err = diffusion_coef * k2 * dt / 2.0_amrex_real
-  tol = 2.0_amrex_real * diffusion_coef * time * k2 * (space_err + time_err)
+  tol = 2.0_amrex_real * diffusion_coef * time * k2 * (space_err + time_err) &
+       + step * epsilon(1.0_amrex_real) / decay
   passed = err <= tol
 
   if (amrex_parallel_ioprocessor()) then
