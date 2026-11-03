@@ -1,2 +1,0 @@
-CEXE_sources += main.cpp GMRES_Poisson.cpp
-CEXE_headers += GMRES_Poisson.H

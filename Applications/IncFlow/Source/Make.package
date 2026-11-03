@@ -1,0 +1,2 @@
+CEXE_sources += main.cpp IncFlow.cpp Advance.cpp Projection.cpp IO.cpp
+CEXE_headers += IncFlow.H Advection_K.H

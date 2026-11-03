@@ -1,0 +1,10 @@
+# Periodic unit square/cube with n_cell^D cells
+n_cell = 32
+max_grid_size = 16
+
+# Time step in units of the explicit stability limit dx^2/(2*D*kappa)
+nsteps = 20
+dt_factor = 10.0
+kappa = 1.0
+
+mlmg.verbose = 0

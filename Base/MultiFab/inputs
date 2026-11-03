@@ -1,0 +1,2 @@
+n_cell = 32           # cells in each direction
+max_grid_size = 16    # largest box size in each direction

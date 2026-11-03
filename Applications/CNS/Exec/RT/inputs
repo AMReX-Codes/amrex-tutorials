@@ -1,0 +1,41 @@
+# Rayleigh-Taylor instability.  Parameters not given here use the defaults
+# in cns_prob.cpp (cns_prob_defaults) and the AMReX defaults.
+
+max_step  = 20      # remove to run to stop_time
+stop_time = 1.9
+
+# The domain and boundary conditions depend on the dimension and are set in
+# cns_prob_defaults.  In 3D they are equivalent to
+#   geometry.is_periodic = 1    1    0
+#   geometry.prob_hi     = 0.5  0.5  1.
+#   amr.n_cell           = 16   16   32
+#   cns.lo_bc            = 0    0    4    # 4: SlipWall
+#   cns.hi_bc            = 0    0    4
+
+cns.gravity   = -1.0
+cns.eos_gamma = 1.6666666666666667
+
+cns.cfl = 0.3
+cns.v = 1              # 2: print conserved totals every coarse step
+amr.v = 1
+
+# Refinement
+amr.max_level       = 1
+amr.ref_ratio       = 2
+amr.regrid_int      = 2
+amr.blocking_factor = 8
+amr.max_grid_size   = 32
+amr.n_error_buf     = 2
+cns.refine_max_dengrad_lev = 10
+cns.refine_dengrad         = 0.01
+
+# Checkpoint files
+amr.checkpoint_files_output = 1
+amr.check_file              = chk
+amr.check_int               = 10
+
+# Plotfiles
+amr.plot_files_output = 1
+amr.plot_file         = plt
+amr.plot_int          = 10
+amr.derive_plot_vars  = pressure velocity

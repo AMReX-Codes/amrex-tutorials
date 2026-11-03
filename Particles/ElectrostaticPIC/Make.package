@@ -1,0 +1,2 @@
+CEXE_sources += main.cpp FieldSolver.cpp PICParticleContainer.cpp
+CEXE_headers += FieldSolver.H PICParticleContainer.H

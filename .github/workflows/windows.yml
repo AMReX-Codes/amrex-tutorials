@@ -11,51 +11,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Build all tutorials
-  tests_msvc:
-    name: MSVC w/o Fortran w/o MPI
+  msvc:
+    name: MSVC w/o MPI
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v7
-    - name: Build & Install
+    - name: Build
       run: |
-        cd ExampleCodes
         cmake -S . -B build   `
-              -DCMAKE_BUILD_TYPE=Debug      `
-              -DBUILD_SHARED_LIBS=ON        `
-              -DCMAKE_VERBOSE_MAKEFILE=ON   `
-              -DAMReX_FORTRAN=OFF           `
               -DAMReX_MPI=OFF               `
-              -DAMReX_LINEAR_SOLVERS=ON     `
-              -DAMReX_EB=ON                 `
-              -DAMReX_PARTICLES=ON
-        cmake --build build --config Debug -j 2
+              -DAMReX_FFT=OFF
+        cmake --build build --config Release -j 2
+    - name: Test
+      run: ctest --test-dir build -C Release --output-on-failure
 
-  # Build all tutorials
-  tutorials_clang:
-    name: Clang w/o Fortran w/o MPI
+  clang:
+    name: Clang w/o MPI, with OpenMP
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v7
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Set Up MSVC
       uses: ilammy/msvc-dev-cmd@v1
-    - name: Build & Install
+    - name: Build
       shell: cmd
       run: |
-        cd ExampleCodes
         cmake -S . -B build   ^
-              -G Ninja                  ^
-              -DCMAKE_C_COMPILER=clang-cl ^
+              -G Ninja                      ^
+              -DCMAKE_C_COMPILER=clang-cl   ^
               -DCMAKE_CXX_COMPILER=clang-cl ^
-              -DCMAKE_CXX_STANDARD=20       ^
               -DCMAKE_BUILD_TYPE=Release    ^
-              -DBUILD_SHARED_LIBS=ON        ^
-              -DCMAKE_VERBOSE_MAKEFILE=ON   ^
-              -DAMReX_FORTRAN=OFF           ^
               -DAMReX_MPI=OFF               ^
               -DAMReX_OMP=ON                ^
-              -DAMReX_LINEAR_SOLVERS=ON     ^
-              -DAMReX_EB=ON                 ^
-              -DAMReX_PARTICLES=ON
-        cmake --build build --config Release -j 2
+              -DAMReX_FFT=OFF
+        cmake --build build -j 2
+    - name: Test
+      shell: cmd
+      run: |
+        set OMP_NUM_THREADS=2
+        ctest --test-dir build --output-on-failure

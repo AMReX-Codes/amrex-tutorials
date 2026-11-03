@@ -1,2 +1,0 @@
-CEXE_sources += main.cpp advance.cpp init_phi.cpp
-CEXE_headers += myfunc.H mykernel.H

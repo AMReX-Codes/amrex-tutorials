@@ -1,0 +1,9 @@
+# Unit square/cube with n_cell^D cells and perfect-conductor walls
+n_cell = 32
+max_grid_size = 16
+
+# curl(alpha curl E) + beta E = f
+alpha = 1.0
+beta = 1.0
+
+mlmg.verbose = 1

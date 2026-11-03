@@ -10,45 +10,25 @@ concurrency:
   group: ${{ github.ref }}-${{ github.head_ref }}-macos
   cancel-in-progress: true
 
-env:
-  CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names -Wno-pass-failed"
-
 jobs:
-  # Build all tutorials
-  tests-macos:
-    name: AppleClang@15.0 GFortran@15.1 [tutorials]
+  appleclang:
+    name: AppleClang
     runs-on: macos-latest
+    env:
+      CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names -Wno-pass-failed"
+      OMP_NUM_THREADS: 2
     steps:
     - uses: actions/checkout@v7
     - name: Dependencies
       run: .github/workflows/dependencies/dependencies_mac.sh
-    - name: Build & Install
+    - name: Build
       run: |
-        export LIBRARY_PATH=/opt/homebrew/opt/gcc/lib/gcc/current/
-
-        cd ExampleCodes
         cmake -S . -B build             \
+            -DCMAKE_BUILD_TYPE=Debug    \
             -DBUILD_SHARED_LIBS=ON      \
-            -DCMAKE_BUILD_TYPE=Debug    \
-            -DCMAKE_VERBOSE_MAKEFILE=ON \
-            -DAMReX_LINEAR_SOLVERS=ON     \
-            -DAMReX_FORTRAN=ON          \
-            -DAMReX_FORTRAN_INTERFACES=ON \
-            -DAMReX_EB=ON                 \
-            -DAMReX_PARTICLES=ON        \
-            -DCMAKE_Fortran_COMPILER=$(which gfortran-15)   \
+            -DAMReX_FFT=OFF             \
+            -DMPIEXEC_PREFLAGS=--oversubscribe \
             -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)
-        cmake --build build --parallel 2
-
-        cmake -S . -B build             \
-            -DCMAKE_BUILD_TYPE=Debug    \
-            -DCMAKE_VERBOSE_MAKEFILE=ON \
-            -DAMReX_LINEAR_SOLVERS=ON     \
-            -DAMReX_FORTRAN=ON          \
-            -DAMReX_FORTRAN_INTERFACES=ON \
-            -DAMReX_EB=ON                 \
-            -DAMReX_PARTICLES=ON        \
-            -DCMAKE_Fortran_COMPILER=$(which gfortran-15)   \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)
-        cmake --build build --parallel 2
-
+        cmake --build build --parallel 3
+    - name: Test
+      run: ctest --test-dir build --output-on-failure

@@ -1,0 +1,30 @@
+# Wave equation u_tt = Laplacian(u) on [0,1] x [0,1/16] x [0,1/16], with
+# u = 0 at x = 0 and 1 and periodic in y and z. v = du/dt starts as a pulse
+# in the middle, splits in two, reflects at the walls, and at t = 1 the
+# exact solution is v = -v0.
+max_step  = 100000
+stop_time = 1.0
+
+geometry.is_periodic = 0  1  1
+geometry.coord_sys   = 0
+geometry.prob_lo     = 0.0  0.0     0.0
+geometry.prob_hi     = 1.0  0.0625  0.0625
+
+amr.n_cell            = 64 4 4
+amr.max_level         = 1        # one refined level
+amr.ref_ratio         = 2
+amr.regrid_int        = 2        # regrid every 2 level-0 steps
+amr.blocking_factor_x = 8
+amr.blocking_factor_y = 4
+amr.blocking_factor_z = 4
+amr.max_grid_size     = 32
+amr.v                 = 0        # 1 prints every step
+
+amr.checkpoint_files_output = 0  # 1 to write checkpoints every amr.check_int steps
+amr.check_int = 100
+amr.plot_files_output = 0        # 1 to write plotfiles every amr.plot_int steps
+amr.plot_int = 20
+amr.plot_vars = ALL
+
+wave.rk_order = 4                # 3 or 4
+wave.cfl = 0.2

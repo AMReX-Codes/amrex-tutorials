@@ -1,0 +1,6 @@
+add_subdirectory(Basics)
+add_subdirectory(ParticleMesh)
+add_subdirectory(EBTracers)
+add_subdirectory(Sorting)
+add_subdirectory(NeighborList)
+add_subdirectory(ElectrostaticPIC)

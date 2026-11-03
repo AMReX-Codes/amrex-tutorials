@@ -1,0 +1,35 @@
+# Advection-diffusion on the periodic unit domain. Diffusion is stiff: an
+# explicit method needs dt < ~0.009 here, and 4x less for each doubling of n_cell.
+n_cell        = 16
+max_grid_size = 8
+kappa         = 0.1
+velocity      = 1.0 0.5 0.25
+stop_time     = 0.1
+
+# Method types to run in turn (each sets integration.sundials.type):
+#   ERK      explicit Runge-Kutta, adaptive step
+#   DIRK     diagonally implicit Runge-Kutta, step dt
+#   IMEX-RK  implicit diffusion + explicit advection, step dt
+#   EX-MRI   multirate: explicit advection with step dt, diffusion with substeps fast_dt
+methods = ERK DIRK IMEX-RK EX-MRI
+
+dt      = 0.02
+fast_dt = 0.002
+
+# Tolerances for adaptive steps and for the Newton-Krylov implicit solves
+integration.rel_tol = 1.e-6
+integration.abs_tol = 1.e-10
+
+# Relative error vs. the exact solution above which the run fails
+max_error = 1.e-3
+
+# Optional SUNDIALS settings (see the AMReX documentation, Time Integration).
+# Method names are specific to a method type, so run one type when setting them.
+#integration.sundials.method      = ARKODE_BOGACKI_SHAMPINE_4_2_3   # ERK
+#integration.sundials.method      = ARKODE_SDIRK_5_3_4              # DIRK
+#integration.sundials.method_i    = ARKODE_ARK324L2SA_DIRK_4_2_3    # IMEX-RK
+#integration.sundials.method_e    = ARKODE_ARK324L2SA_ERK_4_2_3
+#integration.sundials.method      = ARKODE_MIS_KW3                  # EX-MRI slow
+#integration.sundials.fast_type   = ERK                             # EX-MRI fast: ERK or DIRK
+#integration.sundials.fast_method = ARKODE_KNOTH_WOLKE_3_3
+#integration.sundials.max_linear_iters = 20                         # GMRES iterations

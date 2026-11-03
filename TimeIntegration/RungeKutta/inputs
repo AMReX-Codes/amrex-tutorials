@@ -1,0 +1,23 @@
+# Advection-diffusion on the periodic unit domain
+n_cell        = 16
+max_grid_size = 8
+kappa         = 0.01
+velocity      = 1.0 0.5 0.25
+
+# Integrate to stop_time nruns times, halving dt each time
+stop_time = 0.25
+dt        = 0.01
+nruns     = 3
+
+# AMReX time integrator
+#   integration.type    = ForwardEuler, RungeKutta or SUNDIALS (needs AMReX built with SUNDIALS)
+#   integration.rk.type = 1 (forward Euler), 2 (trapezoid), 3 (SSPRK3), 4 (RK4), 0 (user tableau)
+integration.type    = RungeKutta
+integration.rk.type = 4
+
+# A user-defined tableau (Heun's method), used with integration.rk.type = 0.
+# The lower-triangular tableau is given row by row, including the diagonal.
+integration.rk.nodes   = 0.0 1.0
+integration.rk.weights = 0.5 0.5
+integration.rk.tableau = 0.0 \
+                         1.0 0.0

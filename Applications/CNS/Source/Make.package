@@ -1,0 +1,2 @@
+CEXE_sources += main.cpp CNS.cpp CNS_advance.cpp CNS_setup.cpp CNS_derive.cpp CNS_parm.cpp
+CEXE_headers += CNS.H CNS_K.H CNS_hydro_K.H CNS_index.H CNS_parm.H CNS_derive.H

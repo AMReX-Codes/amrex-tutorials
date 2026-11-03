@@ -1,0 +1,2 @@
+CEXE_sources += prob.cpp
+CEXE_headers += prob.H

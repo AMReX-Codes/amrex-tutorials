@@ -1,0 +1,18 @@
+# Domain [-1,1]^D with n_cell^D cells
+n_cell = 32
+max_grid_size = 16
+
+# Geometries to build, one after another
+geometries = sphere csg parser stl
+
+sphere.radius = 0.6
+
+# Fluid where the expression is negative
+# parser.function = "(x/0.8)^2 + (y/0.5)^2 + (z/0.4)^2 - 1"
+
+# Read by EB2::Build(geom, ...) for the "stl" geometry
+eb2.geom_type = stl
+eb2.stl_file = octahedron.stl
+
+# 3D only: write the EB surface of this geometry to eb.pvtp
+surface_geometry = csg

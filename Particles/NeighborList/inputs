@@ -1,0 +1,17 @@
+# Periodic domain of n_cell^dim unit cells
+n_cell = 8
+max_grid_size = 4
+
+# nppc^dim particles per cell on a lattice, Gaussian velocities
+nppc = 2
+v_thermal = 1.0
+
+# Soft-sphere diameter and spring constant
+sigma = 0.4
+stiffness = 100.0
+
+# Time step is cfl*sigma/max_speed
+nsteps = 100
+cfl = 0.05
+num_rebuild = 10
+print_int = 20

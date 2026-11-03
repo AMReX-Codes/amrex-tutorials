@@ -1,0 +1,34 @@
+# Each line is `name = value(s)`. Everything after '#' is a comment.
+# Values given on the command line after the inputs file override these.
+
+nsteps = 100
+title  = "ParmParse tutorial"   # quotes keep the spaces in a string
+n_cell = 64 32 16               # an array
+
+# Math expressions without spaces are evaluated by query()/get().
+max_grid_size = 2**5            # 32
+dt = 1.0/64                     # 0.015625
+
+# Unknown symbols in an expression are looked up in the database.  The
+# ParmParse object is created with "my_constants" as its parser prefix, so
+# `L` is found as my_constants.L.
+my_constants.L  = 2.0
+my_constants.pi = 3.141592653589793
+dx = L/32                       # 0.0625
+omega = 2 * pi / L              # with spaces: use queryWithParser
+
+# Names of an AMREX_ENUM, matched case-insensitively here.
+time_stepper = rk2
+
+# A 2D table: the Butcher matrix of Heun's method.
+butcher_a = {{ 0.0, 0.0 }
+             { 1.0, 0.0 }}
+
+# TOML-like tables: the entries below are physics.diffusivity, etc.
+[physics]
+diffusivity = 0.1
+gravity = 0.0 -9.81
+difusivity = 0.2                # typo: reported as an unused input
+
+[output]
+plot_int = 10

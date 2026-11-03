@@ -1,0 +1,3 @@
+add_subdirectory(StaticHierarchy)
+add_subdirectory(AdvectionAmrCore)
+add_subdirectory(WaveAmrLevel)

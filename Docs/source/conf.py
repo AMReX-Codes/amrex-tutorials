@@ -42,7 +42,38 @@ extensions = ['sphinx.ext.mathjax',
               'sphinx_design',
               'sphinx_copybutton',
               'sphinx.ext.intersphinx',
+              'sphinx_reredirects',
               'sphinx_rtd_theme']
+
+# Old page names -> new pages
+redirects = {
+    'AMR_Tutorial': 'AMR.html',
+    'Basic_Tutorial': 'Base.html',
+    'Blueprint_Tutorial': 'VisualizationAndDebugging.html',
+    'EB_Tutorial': 'EB.html',
+    'FFT_Tutorial': 'FFT.html',
+    'ForkJoin_Tutorial': 'Coupling.html',
+    'GPU_Tutorial': 'Base.html#gpucontainers',
+    'GuidedTutorials': 'Base.html',
+    'HeatEquation_EX1_C': 'Base.html#heatequation',
+    'HeatEquation_Simple': 'Base.html#heatequation',
+    'HeatEquation_UQ': 'index.html',
+    'HeatEquation_UQ_MathematicalDetails': 'index.html',
+    'HelloWorld': 'Base.html#helloworld',
+    'HelloWorld_CMake': 'GettingStarted.html',
+    'Hypre_Install': 'LinearSolvers.html',
+    'LinearSolvers_Tutorial': 'LinearSolvers.html',
+    'ML_Tutorial': 'ML.html',
+    'MPMD_Tutorials': 'Coupling.html#mpmd',
+    'MUI_Tutorial': 'Coupling.html',
+    'MultiFab': 'Base.html#multifab',
+    'NamespaceMultidim': 'Base.html',
+    'Particles_Tutorial': 'Particles.html',
+    'Python_Tutorial': 'Python.html',
+    'SDC_Tutorial': 'TimeIntegration.html',
+    'SENSEI_Tutorial': 'VisualizationAndDebugging.html',
+    'SUNDIALS_Tutorial': 'TimeIntegration.html#sundials',
+}
 
 intersphinx_mapping = {
     'amrex_docs': ('https://amrex-codes.github.io/amrex/docs_html/', None)
@@ -67,7 +98,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'amrex-tutorials'
-copyright = u'2017-2018, AMReX Team'
+copyright = u'2017-2026, AMReX Team'
 author = u'AMReX Team'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -156,8 +187,7 @@ latex_elements = {
     # 'pointsize': '10pt',
 
     # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
+    'preamble': r'\DeclareUnicodeCharacter{2605}{\ensuremath{\star}}',
 
     # Latex figure (float) alignment
     #

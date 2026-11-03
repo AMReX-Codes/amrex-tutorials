@@ -1,0 +1,17 @@
+# Level 0 grid; each finer level refines the middle half by a factor of 2.
+n_cell = 32
+max_grid_size = 16
+max_level = 1
+
+# Boundary condition in each direction: dirichlet, neumann or periodic
+bc = dirichlet neumann periodic
+
+# a*alpha*phi - b*div(beta*grad(phi)) = rhs, beta = beta_in inside a sphere
+a = 1.0
+b = 1.0
+beta_in = 10.0
+
+# MLMG settings
+mlmg.verbose = 1
+mlmg.max_iter = 100
+mlmg.linop_maxorder = 2
