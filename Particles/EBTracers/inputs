@@ -1,0 +1,11 @@
+n_cell = 32             # cells in each direction
+max_grid_size = 16
+
+radius = 0.15           # radius of the spherical obstacle in the middle
+velocity = 1.0 0.25 0.0 # uniform velocity before the MAC projection
+
+nppc = 4                # particles per cell
+stop_time = 0.3         # move forward to stop_time, then back to t = 0
+cfl = 0.5
+
+plot_int = -1           # write plotfiles every plot_int steps if > 0

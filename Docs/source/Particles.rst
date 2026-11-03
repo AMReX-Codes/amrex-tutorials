@@ -5,10 +5,12 @@ Particles
 
 These tutorials use AMReX particle containers: pure struct-of-arrays (SoA)
 particle data distributed over the same grids as mesh data, particle-mesh
-deposition and gather, sorting and filtering within tiles, neighbor lists,
-and a complete particle-in-cell code. All of them require AMReX built with
-particles (``AMReX_PARTICLES``, on by default); ElectrostaticPIC also needs
-the linear solvers. NeighborList and ElectrostaticPIC run in 2D and 3D only.
+deposition and gather, tracer particles around an embedded boundary,
+sorting and filtering within tiles, neighbor lists, and a complete
+particle-in-cell code. All of them require AMReX built with particles
+(``AMReX_PARTICLES``, on by default); EBTracers also needs EB and the
+linear solvers, and ElectrostaticPIC the linear solvers. EBTracers,
+NeighborList and ElectrostaticPIC run in 2D and 3D only.
 Build only this topic with ``-DAMReXTutorials_TOPICS=Particles``; see
 :doc:`GettingStarted`.
 
@@ -133,6 +135,62 @@ Run (from a CMake build directory, see :doc:`GettingStarted`):
 
 The plotfile ``plt00000`` holds the density ``rho``, the field, and the
 particles.
+
+.. _particles-ebtracers:
+
+EBTracers
+---------
+
+:Level: ★★
+:Source: `Particles/EBTracers <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Particles/EBTracers>`__
+:Key APIs: ``mac_interpolate``, ``FillSignedDistance``, ``ParticleToMesh``,
+           ``ParticleInterpolator::Linear``, ``ReduceSum``/``ReduceMax`` over
+           particles, ``MLEBABecLap``
+
+Tracer particles carry a scalar through a flow around an embedded boundary:
+each particle has a fixed weight, and depositing the weights on the mesh
+gives the scalar field. It is the Lagrangian counterpart of
+:ref:`eb-advection`, and builds the same flow: a uniform velocity made to
+go around a sphere in a periodic domain with a MAC projection. The
+velocity is kept at face centers, where ``mac_interpolate`` expects it.
+
+Each step moves the particles with the midpoint method, with the face
+velocity interpolated to the particles by ``mac_interpolate``. The
+interpolation does not know about the EB, so a few particles near the
+sphere end up inside it, up to about a cell deep. They are reflected back
+across the EB using the signed distance ``s`` to the EB, filled on the
+nodes by ``FillSignedDistance``: the depth is ``-s`` and the normal is the
+gradient of ``s``. This works for any EB geometry.
+
+.. literalinclude:: ../../Particles/EBTracers/main.cpp
+   :language: cpp
+   :start-at: // Inside the body (s < 0)
+   :end-before: for (int d = 0; d < AMREX_SPACEDIM; ++d) { ptd.pos(d, i) = p.x[d]; }
+   :dedent:
+
+The particles move forward to ``stop_time`` and back with the velocity
+reversed. The program checks that the deposited weight equals the total
+particle weight, that no particle stays more than 0.2 cells inside the
+sphere (measured with the exact sphere), and that the particles that were
+never reflected return, on average, to within 0.001 cells of where they
+started.
+
+Run:
+
+.. code-block:: console
+
+   cmake --build build --target Particles_EBTracers -j 8
+   cd build/Particles/EBTracers
+   mpiexec -n 2 ./EBTracers inputs
+
+.. code-block:: text
+
+   Back at t = 0:
+     particles reflected off the EB: 210
+     max depth inside the sphere after any step: 0.07412058333 cells
+     distance of the other particles from their start: mean 3.902734996e-05, max 0.0415392124 cells
+     relative error of the deposited weight: 2.526048763e-14
+   PASSED
 
 .. _particles-sorting:
 
