@@ -25,7 +25,7 @@ struct WaveBCFill
 {
     AMREX_GPU_DEVICE
     void operator() (const IntVect& iv, Array4<Real> const& dest,
-                     const int /*dcomp*/, const int /*numcomp*/,
+                     const int dcomp, const int numcomp,
                      GeometryData const& geom, const Real /*time*/,
                      const BCRec* /*bcr*/, const int /*bcomp*/,
                      const int /*orig_comp*/) const
@@ -33,13 +33,14 @@ struct WaveBCFill
         const int ilo = geom.Domain().smallEnd(0);
         const int ihi = geom.Domain().bigEnd(0);
         const auto [i,j,k] = iv.dim3();
-        if (i < ilo) {
-            dest(i,j,k,0) = -dest(2*ilo-i-1,j,k,0);
-            dest(i,j,k,1) = -dest(2*ilo-i-1,j,k,1);
-        }
-        if (i > ihi) {
-            dest(i,j,k,0) = -dest(2*ihi-i+1,j,k,0);
-            dest(i,j,k,1) = -dest(2*ihi-i+1,j,k,1);
+        // Fill only the components requested: dest may hold fewer than all
+        // state components, e.g. when a derived quantity is being computed.
+        for (int n = dcomp; n < dcomp+numcomp; ++n) {
+            if (i < ilo) {
+                dest(i,j,k,n) = -dest(2*ilo-i-1,j,k,n);
+            } else if (i > ihi) {
+                dest(i,j,k,n) = -dest(2*ihi-i+1,j,k,n);
+            }
         }
     }
 };

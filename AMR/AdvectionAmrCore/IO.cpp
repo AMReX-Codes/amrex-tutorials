@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <string>
 
 using namespace amrex;
 
@@ -73,6 +74,10 @@ AmrCoreAdv::ReadCheckpointFile ()
     std::getline(is, line);  // title
 
     is >> finest_level;
+    if (finest_level > max_level) {
+        amrex::Abort("Checkpoint has finest_level = " + std::to_string(finest_level)
+                     + " but amr.max_level = " + std::to_string(max_level));
+    }
     for (int lev = 0; lev <= finest_level; ++lev) { is >> istep[lev]; }
     for (int lev = 0; lev <= finest_level; ++lev) { is >> dt[lev]; }
     for (int lev = 0; lev <= finest_level; ++lev) { is >> t_new[lev]; }

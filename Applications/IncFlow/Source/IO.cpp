@@ -8,6 +8,7 @@
 #include <fstream>
 #include <limits>
 #include <sstream>
+#include <string>
 
 using namespace amrex;
 
@@ -87,6 +88,10 @@ IncFlow::ReadCheckpointFile ()
     std::getline(is, line);  // title
 
     is >> finest_level >> istep >> last_regrid_step >> t_new >> dt;
+    if (finest_level > max_level) {
+        amrex::Abort("Checkpoint has finest_level = " + std::to_string(finest_level)
+                     + " but amr.max_level = " + std::to_string(max_level));
+    }
     t_old = t_new;
 
     for (int lev = 0; lev <= finest_level; ++lev) {
