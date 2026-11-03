@@ -4,8 +4,9 @@ Tutorials for [AMReX](https://github.com/AMReX-Codes/amrex), a software
 framework for block-structured adaptive mesh refinement. The tutorials are
 organized by topic and range from introductory examples to complete codes
 meant as starting points for new applications. Every tutorial runs on CPUs
-and GPUs (except the Fortran ones, which run on CPUs), with MPI and
-OpenMP, and builds with CMake or GNU Make.
+and GPUs, with MPI and OpenMP, and builds with CMake or GNU Make. The
+exceptions are the Fortran tutorials, which run on CPUs only, and
+PyTorchInference, which supports CUDA but not HIP or SYCL.
 
 Documentation: https://amrex-codes.github.io/amrex/tutorials_html/
 

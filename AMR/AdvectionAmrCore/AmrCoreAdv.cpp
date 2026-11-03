@@ -107,9 +107,8 @@ AmrCoreAdv::Evolve ()
 
     for (int step = istep[0]; step < max_step && cur_time < stop_time; ++step)
     {
-        ComputeDt();
-
         if (do_subcycle) {
+            ComputeDt();
             TimeStepWithSubcycling(0, cur_time);
         } else {
             TimeStepNoSubcycling(cur_time);
@@ -331,7 +330,8 @@ AmrCoreAdv::TimeStepWithSubcycling (int lev, Real time)
     }
 }
 
-// Advance all levels with the same dt.
+// Regrid, then advance all levels with the same dt. dt is computed after
+// regridding so that it is stable on new and remade levels too.
 void
 AmrCoreAdv::TimeStepNoSubcycling (Real time)
 {
@@ -340,10 +340,9 @@ AmrCoreAdv::TimeStepNoSubcycling (Real time)
     {
         regrid(0, time);
         last_regrid_step[0] = istep[0];
-        for (int lev = 1; lev <= finest_level; ++lev) {
-            dt[lev] = dt[0];
-        }
     }
+
+    ComputeDt();
 
     for (int lev = 0; lev <= finest_level; ++lev) {
         AdvanceLevel(lev, time, dt[0]);

@@ -36,7 +36,7 @@ interpolation make this possible.
 - **Time stepping.** `TimeStepWithSubcycling` advances level `lev` and then
   calls itself `ref_ratio` times for `lev+1`. Every `amr.regrid_int` steps it
   regrids the finer levels first. `TimeStepNoSubcycling` (`adv.do_subcycle=0`)
-  advances every level with the same dt.
+  regrids, then advances every level with a dt that is stable on all of them.
 - **Single-level advance.** `AdvanceLevel` uses Heun's method (second-order
   Runge-Kutta). It computes upwind fluxes from MC-limited linear
   reconstructions. Before each stage, `FillPatch` fills the ghost cells.

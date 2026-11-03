@@ -60,8 +60,8 @@ foreach(_prob IN ITEMS TaylorGreen DoubleShearLayer LidDrivenCavity)
         endif()
     else()
         set(_target Applications_IncFlow_${_prob})
-        # The inputs are read from the source tree because both problems
-        # have a file named inputs.
+        # The inputs are read from the source tree because every problem
+        # has a file named inputs.
         amrex_tutorial_add(IncFlow_${_prob}
             SOURCES ${_sources}
             REQUIRES LSOLVERS

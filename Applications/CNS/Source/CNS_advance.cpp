@@ -51,10 +51,13 @@ CNS::compute_dSdt (const MultiFab& S, MultiFab& dSdt, Real dt,
     const auto dxinv = geom.InvCellSizeArray();
     auto const lparm = parm;
 
+    // The fluxes are saved only for refluxing.
     Array<MultiFab,AMREX_SPACEDIM> fluxes;
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        fluxes[dir].define(amrex::convert(S.boxArray(),IntVect::TheDimensionVector(dir)),
-                           S.DistributionMap(), NCONS, 0);
+    if (fr_as_crse || fr_as_fine) {
+        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+            fluxes[dir].define(amrex::convert(S.boxArray(),IntVect::TheDimensionVector(dir)),
+                               S.DistributionMap(), NCONS, 0);
+        }
     }
 
 #ifdef AMREX_USE_OMP

@@ -37,7 +37,6 @@ int main (int argc, char* argv[])
     auto add_parameters = [&] ()
     {
         amrex::ParmParse pp_amrex("amrex");
-        pp_amrex.add("fpe_trap_invalid", 1); // trap NaNs
         pp_amrex.add("verbose", 0);
         // On GPU, AMReX reserves most of the device memory up front, shared
         // among the ranks of its own communicator. It cannot see the other

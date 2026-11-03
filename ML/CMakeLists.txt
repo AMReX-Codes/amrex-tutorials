@@ -5,6 +5,11 @@ if(NOT AMReXTutorials_TORCH)
     return()
 endif()
 
+if(AMReX_GPU_BACKEND STREQUAL "HIP" OR AMReX_GPU_BACKEND STREQUAL "SYCL")
+    message(STATUS "Skipping ML tutorials: only CPU and CUDA builds are supported")
+    return()
+endif()
+
 find_package(Torch REQUIRED)
 
 add_subdirectory(PyTorchInference)
