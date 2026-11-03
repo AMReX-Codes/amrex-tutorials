@@ -6,7 +6,7 @@
 #
 # AMReX is fetched from GitHub by default. To use something else:
 #   local source:   -DFETCHCONTENT_SOURCE_DIR_AMREX=/path/to/amrex
-#   installed:      -DAMReX_ROOT=/path/to/install (pass the same AMReX_GPU_BACKEND)
+#   installed:      -DAMReX_ROOT=/path/to/install
 #
 # Optional dependencies: -DAMReX_SUNDIALS=ON (SUNDIALS is fetched unless
 # SUNDIALS_ROOT is given), -DAMReX_FORTRAN_INTERFACES=ON (needs a Fortran

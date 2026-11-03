@@ -17,7 +17,8 @@ set(AMReX_TINY_PROFILE   OFF CACHE BOOL "Build AMReX with TinyProfiler")
 set(AMReX_INSTALL        OFF CACHE BOOL "Generate AMReX install targets")
 set(AMReX_GPU_BACKEND   NONE CACHE STRING "GPU backend: NONE, CUDA, HIP or SYCL")
 
-# The GPU language must be enabled in this scope, before AMReX is added.
+# In a superbuild, the GPU language must be enabled in this scope, before
+# AMReX is added. An installed AMReX enables its own backend below.
 if(AMReX_GPU_BACKEND STREQUAL "CUDA")
     enable_language(CUDA)
 elseif(AMReX_GPU_BACKEND STREQUAL "HIP")
@@ -67,12 +68,11 @@ if(AMReX_FOUND)
     if(AMReX_FORTRAN_INTERFACES AND NOT AMReX_FINTERFACES)
         message(FATAL_ERROR "The installed AMReX was built without Fortran interfaces")
     endif()
-    # The GPU language must have been enabled above, before AMReX was found.
-    if((AMReX_GPU_BACKEND STREQUAL "CUDA" AND NOT CMAKE_CUDA_COMPILER_LOADED) OR
-       (AMReX_GPU_BACKEND STREQUAL "HIP" AND NOT CMAKE_HIP_COMPILER_LOADED))
-        message(FATAL_ERROR "The installed AMReX was built with "
-                "AMReX_GPU_BACKEND=${AMReX_GPU_BACKEND}. Configure the tutorials "
-                "with -DAMReX_GPU_BACKEND=${AMReX_GPU_BACKEND} as well.")
+    # An AMReX built with a GPU backend needs that language enabled here.
+    if(AMReX_GPU_BACKEND STREQUAL "CUDA")
+        enable_language(CUDA)
+    elseif(AMReX_GPU_BACKEND STREQUAL "HIP")
+        enable_language(HIP)
     endif()
 else()
     message(STATUS "Building AMReX from ${amrex_SOURCE_DIR}")

@@ -79,10 +79,10 @@ Options
 
 In a superbuild, AMReX is configured with EB, FFT, particles and linear
 solvers enabled. Any AMReX CMake option, e.g. ``-DAMReX_FFT=OFF``,
-can be passed on the command line. An installed AMReX must have been built
-with the same ``AMReX_GPU_BACKEND``. Tutorials that need a component the
-AMReX build does not have (e.g. EB, FFT, MPI or SUNDIALS), or that do not
-support the chosen dimension, are skipped with a message at configure time.
+can be passed on the command line. With an installed AMReX, the tutorials
+use its GPU backend. Tutorials that need a component the AMReX build does
+not have (e.g. EB, FFT, MPI or SUNDIALS), or that do not support the chosen
+dimension, are skipped with a message at configure time.
 
 Tests
 ^^^^^

@@ -70,24 +70,6 @@ struct Problem
     }
 };
 
-// Area fraction of the low face of cell (i,j,k) in direction d
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-Real face_area (EBDataArrays const& eb, int b, int d, int i, int j, int k)
-{
-    IntVect iv(AMREX_D_DECL(i,j,k));
-    iv[d] -= 1;
-    const Dim3 lo = iv.dim3();
-    auto flag_lo = eb.get<EBData_t::cellflag>(b, lo.x, lo.y, lo.z);
-    auto flag_hi = eb.get<EBData_t::cellflag>(b,i,j,k);
-    if (flag_lo.isRegular() && flag_hi.isRegular()) { return 1.0_rt; }
-    if (flag_lo.isCovered() || flag_hi.isCovered()) { return 0.0_rt; }
-    if (d == 0) { return eb.get<EBData_t::apx>(b,i,j,k); }
-#if (AMREX_SPACEDIM == 3)
-    if (d == 2) { return eb.get<EBData_t::apz>(b,i,j,k); }
-#endif
-    return eb.get<EBData_t::apy>(b,i,j,k);
-}
-
 // Make a uniform velocity flow around the EB with a MAC projection, as in
 // EB/Advection, and set it to zero on covered faces. The velocity is kept at
 // face centers, where mac_interpolate expects it; EB_computeDivergence
@@ -125,14 +107,11 @@ void make_velocity (Array<MultiFab,AMREX_SPACEDIM>& u, Vector<Real> const& u0,
     }
     mlmg.getFluxes({GetArrOfPtrs(gradphi)}, MLMG::Location::FaceCenter);
 
-    auto const& ebdata = factory.getEBDataArrays();
     for (int d = 0; d < AMREX_SPACEDIM; ++d) {
         MultiFab::Add(u[d], gradphi[d], 0, 0, 1, 0);
-        auto const& ua = u[d].arrays();
-        ParallelFor(u[d], [=] AMREX_GPU_DEVICE (int b, int i, int j, int k) noexcept
-        {
-            if (face_area(ebdata, b, d, i, j, k) == 0.0_rt) { ua[b](i,j,k) = 0.0_rt; }
-        });
+    }
+    EB_set_covered_faces(GetArrOfPtrs(u), 0.0_rt);
+    for (int d = 0; d < AMREX_SPACEDIM; ++d) {
         // Ghost faces are needed to interpolate at particles near box edges.
         u[d].FillBoundary(geom.periodicity());
     }
