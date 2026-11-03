@@ -39,7 +39,7 @@ cns_compute_temperature (int i, int j, int k, amrex::Array4<amrex::Real> const& 
 {
     using amrex::Real;
 
-    Real rhoinv = Real(1.0)/u(i,j,k,URHO);
+    Real rhoinv = Real(1.0)/amrex::max(u(i,j,k,URHO),parm.smallr);
     Real mx = u(i,j,k,UMX);
     Real my = u(i,j,k,UMY);
     Real mz = u(i,j,k,UMZ);

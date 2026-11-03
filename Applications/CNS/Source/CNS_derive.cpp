@@ -24,9 +24,10 @@ void cns_dervel (MultiFab& der, int dcomp, int /*ncomp*/,
 {
     auto const& vel = der.arrays();
     auto const& dat = data.const_arrays();
+    const Real smallr = CNS::parm.smallr;
     ParallelFor(der, der.nGrowVect(), AMREX_SPACEDIM,
     [=] AMREX_GPU_DEVICE (int b, int i, int j, int k, int n) noexcept
     {
-        vel[b](i,j,k,dcomp+n) = dat[b](i,j,k,1+n) / dat[b](i,j,k,0);
+        vel[b](i,j,k,dcomp+n) = dat[b](i,j,k,1+n) / amrex::max(dat[b](i,j,k,0), smallr);
     });
 }
