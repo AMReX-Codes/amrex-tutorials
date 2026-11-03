@@ -11,15 +11,14 @@ endif()
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-# The tests get the GPU arguments but no floating-point traps, which NumPy
-# does not expect.
+# The tests get no floating-point traps, which NumPy does not expect.
 foreach(_name IN ITEMS MultiFab HeatEquation)
     set(_dir ${CMAKE_CURRENT_BINARY_DIR}/${_name})
     # configure_file copies the files again when they change.
     foreach(_file IN ITEMS main.py inputs)
         configure_file(${_name}/${_file} ${_dir}/${_file} COPYONLY)
     endforeach()
-    set(_args main.py inputs ${AMReXTutorials_GPU_TEST_ARGS})
+    set(_args main.py inputs)
     set(_command ${Python3_EXECUTABLE} ${_args})
     if(AMReX_MPI)
         set(_command ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2

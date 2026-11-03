@@ -11,24 +11,20 @@
 # the parent directory, and registers a CTest test that runs it.  The tutorial
 # is skipped if a required feature or the current dimension is unavailable.
 
-# Extra arguments for the tests. On GPU, start with a small memory arena (it
-# grows as needed) so that several ranks can share a device. On CPU, trap
-# floating-point exceptions with -DAMReX_TESTING=ON or AMReX_FPE (which an
-# installed AMReX reports); the tutorials are then compiled so that clang does
-# not raise exceptions in unused SIMD lanes. An installed AMReX should also be
-# built with AMReX_TESTING or AMReX_FPE for its own compiled code. Traps are
-# only used with GCC and Clang, the compilers AMReX sets this up for.
-set(AMReXTutorials_GPU_TEST_ARGS)
+# Extra arguments for the tests. On CPU, trap floating-point exceptions with
+# -DAMReX_TESTING=ON or AMReX_FPE (which an installed AMReX reports); the
+# tutorials are then compiled so that clang does not raise exceptions in
+# unused SIMD lanes. An installed AMReX should also be built with
+# AMReX_TESTING or AMReX_FPE for its own compiled code. Traps are only used
+# with GCC and Clang, the compilers AMReX sets this up for.
 set(AMReXTutorials_FPE_TRAPS OFF)
-if(NOT AMReX_GPU_BACKEND STREQUAL "NONE")
-    set(AMReXTutorials_GPU_TEST_ARGS amrex.the_arena_init_size=268435456)
-elseif((AMReX_TESTING OR AMReX_FPE)
-       AND (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
-            OR (CMAKE_CXX_COMPILER_ID MATCHES "^(Apple)?Clang$"
-                AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")))
+if(AMReX_GPU_BACKEND STREQUAL "NONE" AND (AMReX_TESTING OR AMReX_FPE)
+   AND (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+        OR (CMAKE_CXX_COMPILER_ID MATCHES "^(Apple)?Clang$"
+            AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")))
     set(AMReXTutorials_FPE_TRAPS ON)
 endif()
-set(AMReXTutorials_TEST_ARGS ${AMReXTutorials_GPU_TEST_ARGS})
+set(AMReXTutorials_TEST_ARGS)
 if(AMReXTutorials_FPE_TRAPS)
     list(APPEND AMReXTutorials_TEST_ARGS
          amrex.fpe_trap_invalid=1 amrex.fpe_trap_zero=1 amrex.fpe_trap_overflow=1)

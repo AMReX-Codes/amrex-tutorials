@@ -53,7 +53,7 @@ if(AMReXTutorials_PYTHON)
         add_test(NAME Coupling_MPMD_Python
             COMMAND ${_main} : ${MPIEXEC_NUMPROC_FLAG} 2 ${Python3_EXECUTABLE}
                     ${MPIEXEC_POSTFLAGS} agent.py inputs
-                    dim=${AMReXTutorials_DIM} ${AMReXTutorials_GPU_TEST_ARGS}
+                    dim=${AMReXTutorials_DIM}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
         if(_test_env)
             set_tests_properties(Coupling_MPMD_Python PROPERTIES ENVIRONMENT "${_test_env}")
