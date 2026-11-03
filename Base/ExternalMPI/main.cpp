@@ -6,12 +6,7 @@
 
 #include <mpi.h>
 
-#include <AMReX_String.H>
-
-#include <iostream>
 #include <string>
-#include <utility>
-#include <vector>
 
 int main (int argc, char* argv[])
 {
@@ -30,26 +25,11 @@ int main (int argc, char* argv[])
     int group_size = 0;
     MPI_Comm_size(group_comm, &group_size);
 
-    // The application handles its own command line: an optional inputs file
-    // and `name=value` arguments, which override the file.
+    // The application handles its own command line; here the first argument
+    // is an inputs file, unless it looks like `name=value`.
     std::string inputs_file;
-    std::vector<std::pair<std::string,std::string>> name_values;
-    for (int i = 1; i < argc; ++i) {
-        std::string const arg(argv[i]);
-        auto const pos = arg.find('=');
-        if (pos != std::string::npos) {
-            name_values.emplace_back(arg.substr(0,pos), arg.substr(pos+1));
-        } else if (inputs_file.empty()) {
-            inputs_file = arg;
-        } else {
-            // Every rank sees the same arguments, so all of them stop here.
-            if (world_rank == 0) {
-                std::cerr << "ExternalMPI: unexpected argument " << arg << "\n";
-            }
-            MPI_Comm_free(&group_comm);
-            MPI_Finalize();
-            return 1;
-        }
+    if (argc > 1 && std::string(argv[1]).find('=') == std::string::npos) {
+        inputs_file = argv[1];
     }
 
     // Called by amrex::Initialize after the (empty) ParmParse database is
@@ -64,9 +44,6 @@ int main (int argc, char* argv[])
         }
 
         amrex::ParmParse pp;
-        for (auto const& [name, value] : name_values) {
-            pp.addarr(name, amrex::split(value)); // e.g., n_cell="32 32"
-        }
         pp.add("group", group);
     };
 
