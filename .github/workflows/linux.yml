@@ -11,8 +11,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  CXXFLAGS_STRICT: "-Werror -Wall -Wextra -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names"
   # GCC -Wmaybe-uninitialized gives false positives at -O3, including from AMReX headers.
-  CXXFLAGS_STRICT: "-Werror -Wall -Wextra -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names -Wno-maybe-uninitialized"
+  # Clang does not know this option and rejects it under -Werror.
+  CXXFLAGS_GCC: "-Wno-maybe-uninitialized"
   OMP_NUM_THREADS: 2
 
 jobs:
@@ -29,7 +31,7 @@ jobs:
         cmake -S . -B build                 \
             -DAMReX_TESTING=ON              \
             -DCMAKE_BUILD_TYPE=Debug        \
-            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT}" \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT} ${CXXFLAGS_GCC}" \
             -DAMReX_OMP=ON                  \
             -DAMReX_TINY_PROFILE=ON         \
             -DAMReX_FORTRAN_INTERFACES=ON   \
@@ -49,7 +51,7 @@ jobs:
       run: |
         cmake -S . -B build                 \
             -DAMReX_TESTING=ON                     \
-            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT}" \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT} ${CXXFLAGS_GCC}" \
             -DAMReX_SPACEDIM=2              \
             -DAMReX_FORTRAN_INTERFACES=ON   \
             -DMPIEXEC_PREFLAGS=--oversubscribe
@@ -68,7 +70,7 @@ jobs:
       run: |
         cmake -S . -B build                 \
             -DAMReX_TESTING=ON                     \
-            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT}" \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT} ${CXXFLAGS_GCC}" \
             -DAMReX_SPACEDIM=1              \
             -DAMReX_EB=OFF                  \
             -DAMReX_FFT=OFF                 \
@@ -223,7 +225,7 @@ jobs:
       run: |
         cmake -S . -B build                 \
             -DAMReX_TESTING=ON                     \
-            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT}" \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT} ${CXXFLAGS_GCC}" \
             -DAMReX_SUNDIALS=ON             \
             -DAMReX_EB=OFF                  \
             -DAMReX_FFT=OFF                 \
