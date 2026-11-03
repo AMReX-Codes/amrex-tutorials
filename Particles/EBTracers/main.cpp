@@ -435,7 +435,7 @@ int main (int argc, char* argv[])
         ParallelDescriptor::ReduceRealMax(max_disp);
         ParallelDescriptor::ReduceRealSum(mean_disp);
         ParallelDescriptor::ReduceLongSum(nreflected);
-        mean_disp /= Real(np - nreflected);
+        if (nreflected < np) { mean_disp /= Real(np - nreflected); }
 
         const Real weight_err = std::abs(phi.sum(0)*dv - total_weight) / total_weight;
         amrex::Print() << "Back at t = 0:\n"
@@ -452,7 +452,7 @@ int main (int argc, char* argv[])
                                 || std::is_same_v<ParticleReal,float>;
         const Real weight_tol = is_single ? 1.e-4_rt : 1.e-12_rt;
         if (pc.TotalNumberOfParticles() != np || weight_err > weight_tol ||
-            depth > 0.2_rt || mean_disp > 1.e-3_rt) {
+            depth > 0.2_rt || nreflected >= np || mean_disp > 1.e-3_rt) {
             amrex::Print() << "FAILED\n";
             status = 1;
         } else {

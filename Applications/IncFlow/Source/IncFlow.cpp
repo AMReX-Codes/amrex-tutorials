@@ -126,12 +126,12 @@ IncFlow::InitData ()
         if (chk_int > 0) {
             WriteCheckpointFile();
         }
+        if (plot_int > 0) {
+            WritePlotFile();
+        }
     } else {
+        // No plotfile here: the checkpoint has no pressure.
         ReadCheckpointFile();
-    }
-
-    if (plot_int > 0) {
-        WritePlotFile();
     }
 }
 

@@ -6,7 +6,8 @@ ranks), and initializes AMReX on each group's communicator. It also handles
 its own command line and sets AMReX parameters in a callback. Requires MPI.
 
 **Key APIs:** `amrex::Initialize(argc, argv, build_parm_parse, comm, func)`,
-`ParmParse::add`, `ParmParse::addfile`, `ParallelDescriptor::NProcs`
+`ParmParse::add`, `ParmParse::addarr`, `ParmParse::addfile`,
+`ParallelDescriptor::NProcs`
 
 ## Notes
 
@@ -14,8 +15,9 @@ its own command line and sets AMReX parameters in a callback. Requires MPI.
   communicator and does not finalize MPI; the application calls
   `MPI_Finalize` after `amrex::Finalize`.
 - With `build_parm_parse = false`, AMReX ignores `argc`/`argv`. Here the
-  application reads the inputs file itself with `ParmParse::addfile`, so
-  `name=value` arguments have no effect.
+  application reads the inputs file itself with `ParmParse::addfile` and
+  adds `name=value` arguments (e.g., `amrex.fpe_trap_invalid=1`) with
+  `ParmParse::addarr`.
 - The callback runs before AMReX reads its own parameters (e.g.
   `amrex.verbose`), so it is the place to change them in code.
 - Each AMReX instance only knows the ranks in its group. On GPUs, ranks of
