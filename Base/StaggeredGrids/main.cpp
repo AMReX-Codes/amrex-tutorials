@@ -102,20 +102,35 @@ int main (int argc, char* argv[])
                        << ", psi " << psi.ixType() << "\n";
 
         // 1. Face velocity. The faces of a cell-centered tile are
-        //    mfi.nodaltilebox(d): every face of a box belongs to exactly one tile.
+        //    mfi.nodaltilebox(d): every face of a box belongs to exactly one
+        //    tile. ParallelFor takes a box and a function per direction and
+        //    launches them together.
+        AMREX_D_TERM(amrex::IndexType const xtype = umac[0].ixType();,
+                     amrex::IndexType const ytype = umac[1].ixType();,
+                     amrex::IndexType const ztype = umac[2].ixType(););
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-            for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-                amrex::Box const& fbx = mfi.nodaltilebox(d);
-                auto const& u = umac[d].array(mfi);
-                amrex::IndexType const itype = umac[d].ixType();
-                amrex::ParallelFor(fbx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+            AMREX_D_TERM(auto const& u = umac[0].array(mfi);,
+                         auto const& v = umac[1].array(mfi);,
+                         auto const& w = umac[2].array(mfi););
+            amrex::ParallelFor(AMREX_D_DECL(mfi.nodaltilebox(0), mfi.nodaltilebox(1), mfi.nodaltilebox(2)),
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
                 {
-                    u(i,j,k) = shear(d, position(i, j, k, itype, plo, dx));
-                });
-            }
+                    u(i,j,k) = shear(0, position(i, j, k, xtype, plo, dx));
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+                {
+                    v(i,j,k) = shear(1, position(i, j, k, ytype, plo, dx));
+                }
+#if (AMREX_SPACEDIM == 3)
+              , [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+                {
+                    w(i,j,k) = shear(2, position(i, j, k, ztype, plo, dx));
+                }
+#endif
+                );
         }
         // A face on a box boundary is stored in both boxes. OverrideSync makes
         // the copies agree; not needed here, the value depends only on the index.

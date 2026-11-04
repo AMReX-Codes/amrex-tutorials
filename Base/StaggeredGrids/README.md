@@ -11,8 +11,8 @@ is exactly zero, and the averages reproduce linear functions to round-off.
 
 **Key APIs:** `convert`, `IntVect::TheDimensionVector`,
 `IntVect::TheNodeVector`, `IndexType`, `MultiFab::ixType`,
-`MFIter::nodaltilebox`, `OverrideSync`, `computeDivergence`,
-`average_face_to_cellcenter`,
+`MFIter::nodaltilebox`, `ParallelFor(box1, box2, box3, f1, f2, f3)`,
+`OverrideSync`, `computeDivergence`, `average_face_to_cellcenter`,
 `average_cellcenter_to_face`, `average_node_to_cellcenter`,
 `GetArrOfPtrs`, `GetArrOfConstPtrs`, `ParReduce`
 
@@ -31,7 +31,8 @@ is exactly zero, and the averages reproduce linear functions to round-off.
   box of the faces of the tile in direction `d`. The tiles' face boxes do not
   overlap: within a box, each face belongs to one tile, so face data can be
   written in the same loop as the cell data, without race conditions with
-  OpenMP.
+  OpenMP. `ParallelFor` takes one box and one function per direction and
+  runs them in a single launch.
 - A face on the boundary between two boxes is stored in both boxes.
   `OverrideSync` copies the value of one box to the others so that the
   copies agree. The example does not need it, because the value depends
