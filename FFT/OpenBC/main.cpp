@@ -2,6 +2,7 @@
 #include <AMReX_FFT.H>
 #include <AMReX_FFT_Poisson.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_ParReduce.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
@@ -60,9 +61,15 @@ Real exact_potential (Real r, Real sigma)
 
 Real rel_error (MultiFab const& phi, MultiFab const& phi_exact)
 {
-    MultiFab d(phi.boxArray(), phi.DistributionMap(), 1, 0);
-    MultiFab::LinComb(d, Real(1), phi, 0, Real(-1), phi_exact, 0, 0, 1, 0);
-    return d.norm0() / phi_exact.norm0();
+    auto const& ma = phi.const_arrays();
+    auto const& me = phi_exact.const_arrays();
+    Real r = ParReduce(TypeList<ReduceOpMax>{}, TypeList<Real>{}, phi, IntVect(0),
+        [=] AMREX_GPU_DEVICE (int box_no, int i, int j, int k) -> GpuTuple<Real>
+        {
+            return { std::abs(ma[box_no](i,j,k) - me[box_no](i,j,k)) };
+        });
+    ParallelDescriptor::ReduceRealMax(r);
+    return r / phi_exact.norm0();
 }
 
 }
