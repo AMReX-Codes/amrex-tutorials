@@ -8,6 +8,7 @@ it), takes its divergence, averages it to cell centers, averages a
 cell-centered scalar to the faces, averages nodal data to cell centers, and
 writes everything to a plotfile. The discrete divergence of the shear flow
 is exactly zero, and the averages reproduce linear functions to round-off.
+The tutorial runs in 2D and 3D.
 
 **Key APIs:** `convert`, `IntVect::TheDimensionVector`,
 `IntVect::TheNodeVector`, `IndexType`, `MultiFab::ixType`,
@@ -64,7 +65,7 @@ make -j8
 mpiexec -n 2 ./main3d.gnu.MPI.ex inputs
 ```
 
-## Expected output
+## Expected output (3D)
 
 ```
 Index types: phi (C,C,C), umac[0] (N,C,C), psi (N,N,N)

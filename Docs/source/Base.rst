@@ -8,7 +8,8 @@ parameters, the mesh data structures (``Box``, ``BoxArray``,
 ``DistributionMapping``, ``Geometry``, ``MultiFab``), GPU-portable kernels
 with ``ParallelFor``, ghost cells and boundary conditions, reductions, GPU
 containers, and I/O. They need no optional AMReX components; ExternalMPI
-requires MPI. Build only this topic with ``-DAMReXTutorials_TOPICS=Base``
+requires MPI, and StaggeredGrids runs in 2D and 3D only. Build only this
+topic with ``-DAMReXTutorials_TOPICS=Base``
 (add ``-DAMReX_FFT=OFF`` if FFTW is not installed); see :doc:`GettingStarted`.
 
 Start with HelloWorld, MultiFab and HeatEquation, in that order.
@@ -342,12 +343,19 @@ finite-volume flux needs it. In an ``MFIter`` loop over the cell-centered
 data, ``mfi.nodaltilebox(d)`` is the box of the tile's faces in direction
 ``d``; the face boxes of different tiles do not overlap, so the faces can
 be written in the same loop as the cells, and ``ParallelFor`` takes one
-box and one function per direction in a single launch. A face on the
-boundary between two boxes is stored in both boxes, and ``OverrideSync``
-copies the value of one box to the others so that the copies agree. The
-example does not need it, because the value depends only on the index, but
-it is needed when the boxes compute different values, for instance from
-round-off in a sum:
+box and one function per direction in a single launch, here a functor
+that sets one velocity component:
+
+.. literalinclude:: ../../Base/StaggeredGrids/main.cpp
+   :language: cpp
+   :start-at: struct FaceVelocity
+   :end-at: };
+
+A face on the boundary between two boxes is stored in both boxes, and
+``OverrideSync`` copies the value of one box to the others so that the
+copies agree. The example does not need it, because the value depends only
+on the index, but it is needed when the boxes compute different values,
+for instance from round-off in a sum:
 
 .. literalinclude:: ../../Base/StaggeredGrids/main.cpp
    :language: cpp

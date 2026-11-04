@@ -44,6 +44,20 @@ position (int i, int j, int k, amrex::IndexType itype,
     return x;
 }
 
+// Sets the velocity on the faces normal to direction dir.
+struct FaceVelocity
+{
+    int dir;
+    amrex::Array4<Real> u;
+    amrex::GpuArray<Real,AMREX_SPACEDIM> plo, dx;
+
+    AMREX_GPU_DEVICE void operator() (int i, int j, int k) const noexcept
+    {
+        amrex::IndexType const itype(amrex::IntVect::TheDimensionVector(dir));
+        u(i,j,k) = shear(dir, position(i, j, k, itype, plo, dx));
+    }
+};
+
 // Largest error of a MultiFab against a function of position (a device
 // lambda), valid cells only.
 template <typename F>
@@ -105,32 +119,14 @@ int main (int argc, char* argv[])
         //    mfi.nodaltilebox(d): every face of a box belongs to exactly one
         //    tile. ParallelFor takes a box and a function per direction and
         //    launches them together.
-        AMREX_D_TERM(amrex::IndexType const xtype = umac[0].ixType();,
-                     amrex::IndexType const ytype = umac[1].ixType();,
-                     amrex::IndexType const ztype = umac[2].ixType(););
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-            AMREX_D_TERM(auto const& u = umac[0].array(mfi);,
-                         auto const& v = umac[1].array(mfi);,
-                         auto const& w = umac[2].array(mfi););
             amrex::ParallelFor(AMREX_D_DECL(mfi.nodaltilebox(0), mfi.nodaltilebox(1), mfi.nodaltilebox(2)),
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                {
-                    u(i,j,k) = shear(0, position(i, j, k, xtype, plo, dx));
-                },
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                {
-                    v(i,j,k) = shear(1, position(i, j, k, ytype, plo, dx));
-                }
-#if (AMREX_SPACEDIM == 3)
-              , [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                {
-                    w(i,j,k) = shear(2, position(i, j, k, ztype, plo, dx));
-                }
-#endif
-                );
+                               AMREX_D_DECL((FaceVelocity{0, umac[0].array(mfi), plo, dx}),
+                                            (FaceVelocity{1, umac[1].array(mfi), plo, dx}),
+                                            (FaceVelocity{2, umac[2].array(mfi), plo, dx})));
         }
         // A face on a box boundary is stored in both boxes. OverrideSync makes
         // the copies agree; not needed here, the value depends only on the index.
