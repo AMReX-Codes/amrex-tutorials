@@ -1,0 +1,4 @@
+n_cell = 64           # cells per direction
+max_grid_size = 32
+nbins = 64            # histogram bins
+nrepeat = 10          # passes per method, for timing
