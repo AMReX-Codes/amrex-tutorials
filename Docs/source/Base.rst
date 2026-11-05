@@ -8,9 +8,9 @@ parameters, the mesh data structures (``Box``, ``BoxArray``,
 ``DistributionMapping``, ``Geometry``, ``MultiFab``), GPU-portable kernels
 with ``ParallelFor``, ghost cells and boundary conditions, reductions, GPU
 containers, load balancing, and I/O. They need no optional AMReX
-components; ExternalMPI requires MPI, StaggeredGrids runs in 2D and 3D
-only, and the explicit part of SIMD needs ``-DAMReX_SIMD=ON``. Build only
-this topic with ``-DAMReXTutorials_TOPICS=Base``
+components; ExternalMPI requires MPI, Tiling and StaggeredGrids run in 2D
+and 3D only, and the explicit part of SIMD needs ``-DAMReX_SIMD=ON``. Build
+only this topic with ``-DAMReXTutorials_TOPICS=Base``
 (add ``-DAMReX_FFT=OFF`` if FFTW is not installed); see :doc:`GettingStarted`.
 
 Start with HelloWorld, MultiFab and HeatEquation, in that order.
@@ -191,6 +191,81 @@ Run:
 Add ``plot_int=10`` to write a plotfile every 10 steps, and e.g.
 ``n_cell=128 stop_time=0.05`` for a larger run. To see where the time goes,
 build with TinyProfiler; see :ref:`profiling`.
+
+.. _base-tiling:
+
+Tiling
+------
+
+:Level: ★★
+:Source: `Base/Tiling <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Base/Tiling>`__
+:Key APIs: ``MFIter(mf, tile_size)``, ``TilingIfNotGPU``, ``MFIter::tilebox``,
+           ``MFIter::validbox``, ``MFIter::fabbox``, ``MFIter::growntilebox``,
+           ``MFIter::nodaltilebox``, ``MFIter::index``, ``MFIter::LocalTileIndex``,
+           ``HostDevice::Atomic::Add``, ``fabarray.mfiter_tile_size``
+
+The boxes an ``MFIter`` loop works on, and the bugs that come from picking
+the wrong one. On CPU, an ``MFIter`` constructed with tiling splits each
+box of a rank into tiles, and the loop body runs once per tile, in
+parallel with OpenMP. ``tilebox()`` is the current tile, ``validbox()``
+the whole box the tile belongs to, and ``fabbox()`` the box with its ghost
+cells. The tiles of a box do not overlap and together cover the valid box,
+so ``tilebox()`` is the box for almost all kernels. ``growntilebox()`` adds
+the ghost cells on the sides of the tile that lie on the boundary of the
+box, so the grown tiles do not overlap either and together cover the ghost
+cells; ``nodaltilebox(d)`` gives the faces of the tile in direction ``d``,
+each face belonging to one tile. ``validbox()`` is for a loop without
+tiling, for work that concerns the whole box, such as per-box costs for
+load balancing.
+
+The program prints these boxes for one box of 16 cells, then counts how
+many times each cell is written for several choices of the box of an
+iteration. The adds are atomic so that the counts are exact where tiles
+overlap; without the atomics, the overlaps are data races with OpenMP.
+The loop for ``tilebox()``, the others differ only in the box:
+
+.. literalinclude:: ../../Base/Tiling/main.cpp
+   :language: cpp
+   :start-at: // Correct: each tile does its own cells.
+   :end-before: vmin = visits.min(0);
+   :dedent:
+
+With ``tilebox()`` every valid cell is written once. With ``validbox()``
+in a tiled loop, every tile does the whole box: the work is multiplied by
+the number of tiles, a kernel that accumulates gives a wrong answer, and
+with OpenMP several threads write the same cells at the same time
+(``FArrayBox`` operations such as ``fab.setVal`` inside a tiled loop are
+the same bug, since they act on the whole box by default). A tile box
+grown by hand, ``grow(tilebox(), 1)``, overlaps the neighboring tiles,
+where ``growntilebox()`` does not. Converting the tile box by hand with
+``surroundingNodes(tilebox(), d)`` gives the face between two tiles to
+both, where ``nodaltilebox(d)`` does not. The opposite mistake,
+``tilebox()`` in per-box bookkeeping, records one tile per box instead of
+the box; such work belongs in a loop without tiling, with ``validbox()``,
+as in :ref:`base-loadbalance`.
+
+``MFIter mfi(mf, TilingIfNotGPU())`` is the usual form: ``TilingIfNotGPU()``
+is true on CPU and false on GPU, where a box is already split among the
+GPU threads and tiling would only make the kernels smaller. The tile size
+is the runtime parameter ``fabarray.mfiter_tile_size``, by default
+``1024000 8 8`` in 3D on CPU builds, so tiles are not split in ``x`` and
+the inner loop stays long for vectorization, and no splitting in 2D or
+on GPU builds. The demonstrations pass the tile size to the ``MFIter``
+explicitly so that they show tiles in 2D and on GPU builds too. The last
+part times a Laplacian with and without tiling, with the timers
+``laplacian_tiled`` and ``laplacian_untiled`` (see :ref:`profiling`).
+
+Run:
+
+.. code-block:: console
+
+   cmake --build build --target Base_Tiling -j 8
+   cd build/Base/Tiling
+   mpiexec -n 2 ./Tiling inputs
+
+With OpenMP (``-DAMReX_OMP=ON``), set ``OMP_NUM_THREADS`` to see the tiles
+shared among threads. For timings, build with TinyProfiler and use a
+larger problem, e.g. ``n_cell=256 max_grid_size=128 nrepeat=20``.
 
 .. _base-communication:
 

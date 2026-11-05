@@ -1,0 +1,4 @@
+n_cell = 64              # cells in each direction
+max_grid_size = 32       # boxes of 32 cells
+tile_size = 1024000 8 8  # tile size for the demonstrations (not split in x)
+nrepeat = 10             # repetitions of the timed Laplacian

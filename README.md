@@ -76,6 +76,7 @@ complete code to copy as the starting point of an application.
 | [ParmParse](Base/ParmParse) | ★ | Runtime parameters: arrays, expressions, enums, tables, sections |
 | [MultiFab](Base/MultiFab) | ★ | `BoxArray`, `DistributionMapping`, `Geometry`, `MultiFab`, `ParallelFor`, `MFIter`, plotfiles |
 | [HeatEquation](Base/HeatEquation) | ★ | Explicit heat equation on a periodic domain |
+| [Tiling](Base/Tiling) | ★★ | `MFIter` tiling: `tilebox` vs `validbox`, `growntilebox`, `nodaltilebox`, and the bugs of mixing them up |
 | [Communication](Base/Communication) | ★★ | `FillBoundary`, `ParallelCopy`, `ParallelAdd` and `SumBoundary` |
 | [BoundaryConditions](Base/BoundaryConditions) | ★★ | Physical boundary conditions with `BCRec` and `PhysBCFunct` |
 | [StaggeredGrids](Base/StaggeredGrids) | ★★ | Face- and node-centered data: `convert`, `nodaltilebox`, divergence and averaging |
