@@ -125,6 +125,7 @@ int main (int argc, char* argv[])
         // placed on the finest level that covers it, so the expected fraction
         // on level 1 is the volume fraction of the fine region.
         Real const weight = 1.0_rt / Real(npart);
+        // The position slots of the SoA data are ignored; InitRandom draws them.
         PC::ParticleInitData pdata = {{}, {}, {AMREX_D_DECL(0.0, 0.0, 0.0), weight}, {}};
         pc.InitRandom(npart, 451, pdata);
         amrex::Print() << "Initialized " << pc.TotalNumberOfParticles() << " particles on "
@@ -158,6 +159,10 @@ int main (int argc, char* argv[])
         // the periodic boundaries).
         amrex::GpuArray<Real,AMREX_SPACEDIM> const vel{AMREX_D_DECL(0.7_rt, 0.4_rt, 0.2_rt)};
         Real const dt = 0.5_rt * geom[0].CellSize(0) / vel[0]; // half a coarse cell per step
+        amrex::GpuArray<amrex::ParticleReal,AMREX_SPACEDIM> dpos;
+        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+            dpos[d] = static_cast<amrex::ParticleReal>(vel[d] * dt);
+        }
         for (int step = 1; step <= nsteps; ++step) {
             for (int lev = 0; lev < nlevs; ++lev) {
 #ifdef AMREX_USE_OMP
@@ -169,7 +174,7 @@ int main (int argc, char* argv[])
                     amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept
                     {
                         for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-                            ptd.pos(d, i) += static_cast<amrex::ParticleReal>(vel[d] * dt);
+                            ptd.pos(d, i) += dpos[d];
                         }
                     });
                 }
@@ -187,13 +192,13 @@ int main (int argc, char* argv[])
         region.shift(0, n_cell/4);
         grids[1].define(amrex::refine(region, ratio));
         grids[1].maxSize(max_grid_size);
-        dmap[1].define(grids[1]);
+        dmap[1] = amrex::DistributionMapping(grids[1]);
         pc.SetParticleBoxArray(1, grids[1]);
         pc.SetParticleDistributionMap(1, dmap[1]);
         pc.Redistribute();
         amrex::Print() << "After regridding level 1:\n";
         bool const regrid_ok = check_levels(pc, region);
-        ok = ok && regrid_ok;
+        ok = ok && regrid_ok && (pc.TotalNumberOfParticles() == npart);
 
         rho[1].define(grids[1], dmap[1], 1, 0);
         deposit(pc, rho);
