@@ -82,6 +82,7 @@ complete code to copy as the starting point of an application.
 | [CheckpointRestart](Base/CheckpointRestart) | ★★ | Checkpoint, restart, and reading plotfiles back |
 | [Reductions](Base/Reductions) | ★★ | `ReduceOps`, `ParReduce`, `Reducer`, MultiFab norms, MPI reductions |
 | [GpuContainers](Base/GpuContainers) | ★★ | Device/pinned vectors, async copies, prefix sums, random numbers, arenas |
+| [LoadBalance](Base/LoadBalance) | ★★ | `DistributionMapping` from measured costs: knapsack and space-filling curve |
 | [Parser](Base/Parser) | ★★ | Functions defined at runtime and evaluated in GPU kernels |
 | [CompileTimeOptions](Base/CompileTimeOptions) | ★★★ | Specialized kernels from runtime options |
 | [TagParallelFor](Base/TagParallelFor) | ★★★ | One launch for many small boxes with `TagVector` |

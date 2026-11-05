@@ -1,0 +1,5 @@
+n_cell = 64           # cells per direction
+max_grid_size = 8     # many boxes
+work_ratio = 50       # iterations per cell inside the blob (1 outside)
+nrepeat = 5           # timed passes per mapping
+strategy = knapsack   # knapsack or sfc

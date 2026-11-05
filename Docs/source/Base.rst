@@ -7,10 +7,10 @@ The Base tutorials cover the core of AMReX: initialization, runtime
 parameters, the mesh data structures (``Box``, ``BoxArray``,
 ``DistributionMapping``, ``Geometry``, ``MultiFab``), GPU-portable kernels
 with ``ParallelFor``, ghost cells and boundary conditions, reductions, GPU
-containers, and I/O. They need no optional AMReX components; ExternalMPI
-requires MPI, StaggeredGrids runs in 2D and 3D only, and the explicit
-part of SIMD needs ``-DAMReX_SIMD=ON``. Build only this topic with
-``-DAMReXTutorials_TOPICS=Base``
+containers, load balancing, and I/O. They need no optional AMReX
+components; ExternalMPI requires MPI, StaggeredGrids runs in 2D and 3D
+only, and the explicit part of SIMD needs ``-DAMReX_SIMD=ON``. Build only
+this topic with ``-DAMReXTutorials_TOPICS=Base``
 (add ``-DAMReX_FFT=OFF`` if FFTW is not installed); see :doc:`GettingStarted`.
 
 Start with HelloWorld, MultiFab and HeatEquation, in that order.
@@ -541,6 +541,84 @@ Run:
    cmake --build build --target Base_GpuContainers -j 8
    cd build/Base/GpuContainers
    ./GpuContainers inputs
+
+.. _base-loadbalance:
+
+LoadBalance
+-----------
+
+:Level: ★★
+:Source: `Base/LoadBalance <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Base/LoadBalance>`__
+:Key APIs: ``DistributionMapping::makeKnapSack``,
+           ``DistributionMapping::makeSFC``, ``LayoutData``,
+           ``ParallelCopy``, ``amrex::second``, ``ParallelAllReduce``
+
+Rebalances the work over MPI ranks when boxes cost different amounts. The
+default ``DistributionMapping`` gives every rank about the same number of
+cells,
+which is right when every cell costs the same. Here the cells inside a
+ball do ``work_ratio`` times more work than the others, so the ranks
+holding the
+ball are late at every synchronization point.
+
+The time each box takes is accumulated in a ``LayoutData<Real>``, which is
+indexed like a ``MultiFab`` in an ``MFIter`` loop. The timers need
+``Gpu::streamSynchronize()``, because kernels run asynchronously on GPUs.
+Any other measure of work can be used instead, e.g. the number of
+particles in a box.
+
+.. literalinclude:: ../../Base/LoadBalance/main.cpp
+   :language: cpp
+   :start-at: void run_and_time
+   :end-before: // The load imbalance
+
+``makeKnapSack`` and ``makeSFC`` build a new mapping from the costs and
+return, on the I/O rank, the efficiency (average cost per rank over the
+maximum) of the current and of the proposed mapping. The knapsack
+algorithm balances best; the space-filling curve keeps neighboring boxes
+on the same rank, which reduces communication. A new ``MultiFab`` on the
+new mapping receives the data with ``ParallelCopy``:
+
+.. literalinclude:: ../../Base/LoadBalance/main.cpp
+   :language: cpp
+   :start-at: Real eff_cur = 0.0_rt;
+   :end-at: phi_new.ParallelCopy(phi);
+   :dedent:
+
+The program measures again with the new mapping and checks that the
+result does not depend on the mapping. In an application, the costs are
+accumulated over some steps and the mapping redone every so often or after
+regridding; with ``broadcastToAll = false`` only the I/O rank gets the
+proposal, so the code can decide whether the gain is worth moving the
+data. A code built on ``AmrCore`` calls ``SetDistributionMap`` and
+``RemakeLevel`` (:ref:`amr-advectionamrcore` shows ``RemakeLevel``);
+``Amr``/``AmrLevel``
+codes override ``AmrLevel::estimateWork`` and set
+``amr.loadbalance_with_workestimates = 1``, which rebalances at every
+regrid, and on a single-level run every ``amr.loadbalance_level0_int``
+steps.
+
+Run:
+
+.. code-block:: console
+
+   cmake --build build --target Base_LoadBalance -j 8
+   cd build/Base/LoadBalance
+   mpiexec -n 2 ./LoadBalance inputs
+
+.. code-block:: text
+
+   512 boxes on 2 ranks
+   Default mapping: max/avg cost per rank = 1.20104519
+   Efficiency of the default mapping 0.8326081387, of the knapsack mapping 0.9987378103
+   New mapping: max/avg cost per rank = 1.00074445
+   Max difference between the results: 0
+   PASSED
+
+Try ``strategy=sfc`` and more ranks. On a GPU, the time of a kernel on a
+small box is mostly launch overhead, so the costs only differ for large
+boxes and heavy kernels, e.g. ``n_cell=256 max_grid_size=64
+work_ratio=5000``.
 
 .. _base-parser:
 
