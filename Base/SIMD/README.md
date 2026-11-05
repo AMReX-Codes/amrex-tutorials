@@ -42,10 +42,11 @@ kernels with `BL_PROFILE` (see [HeatEquation](../HeatEquation#profiling)).
   `(p > c) ? p - c : c - p` keeps the loop scalar; `-fno-trapping-math`
   (also part of `-ffast-math`) lifts this restriction. Clang speculates by
   default.
-- Loops whose iterations are not independent, e.g. scatter-style updates
-  into the same cells, must use `amrex::For`, which has the `n`- and
-  `Box`-based signatures of `ParallelFor` but no SIMD pragma on CPU, or
-  `amrex::Loop` inside an `MFIter` loop.
+- `amrex::For` has the `n`- and `Box`-based signatures of `ParallelFor`
+  and runs on GPUs the same way; the only difference is that on CPU it
+  makes no promise that the iterations are independent. Use it when they
+  are not. Iterations that write to the same cell, e.g. a scatter, need
+  atomics on GPU with either function.
 - Build for the CPU at hand. The default x86-64 code uses 2-wide
   double-precision vectors; `-DCMAKE_CXX_FLAGS="-march=native"` uses the
   full vector width.

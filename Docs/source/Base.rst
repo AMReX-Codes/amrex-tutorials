@@ -788,14 +788,14 @@ SIMD
 
 Vectorization on CPUs. On CPU, ``ParallelFor`` marks its innermost loop
 with ``AMREX_PRAGMA_SIMD``, a promise to the compiler that the iterations
-are independent (``#pragma GCC ivdep`` with GCC; clang gets none).
-Loops that are not independent, e.g. scatter-style updates, must use
-``amrex::For`` or ``amrex::Loop``. Whether the loop is vectorized depends
-on the
-kernel. The first part writes the same function twice: with a call to a
-function that is not inlined and has a branch inside, which stops the
-vectorizer and is shown for illustration only, and in the recommended
-way, inlined and branch-free:
+are independent. ``amrex::For`` has the ``n``- and ``Box``-based
+signatures of ``ParallelFor`` and runs on GPUs the same way; on CPU it
+makes no promise that the iterations are independent, so use it when they
+are not. Whether the loop is vectorized depends on the kernel. The first
+part writes the same function twice: with a call to a function that is
+not inlined and has a branch inside, which stops the vectorizer and is
+shown for illustration only, and in the recommended way, inlined and
+branch-free:
 
 .. literalinclude:: ../../Base/SIMD/main.cpp
    :language: cpp
@@ -804,10 +804,9 @@ way, inlined and branch-free:
 
 The rules behind it: keep kernels inlinable; compute every quantity
 unconditionally and pick with ``?:``, ``amrex::min``, ``amrex::max`` or
-``std::abs``, on arguments that are safe in every lane; and know that
-GCC's default ``-ftrapping-math`` does not speculate arithmetic inside
-the arms of a ``?:`` (``-fno-trapping-math`` lifts this), while clang
-does. Inactive lanes, and the compiler's own speculation, raise
+``std::abs``, on arguments that are safe in every lane; and with GCC,
+add ``-fno-trapping-math`` if arithmetic inside the arms of a ``?:`` is
+to vectorize. Inactive lanes, and the compiler's own speculation, raise
 floating-point exceptions where the source code does not; the result is
 correct, but the traps ``amrex.fpe_trap_*`` would stop the program, so
 they are a debugging aid for scalar runs and the tests do not enable
