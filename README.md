@@ -78,6 +78,7 @@ complete code to copy as the starting point of an application.
 | [HeatEquation](Base/HeatEquation) | ★ | Explicit heat equation on a periodic domain |
 | [Communication](Base/Communication) | ★★ | `FillBoundary`, `ParallelCopy`, `ParallelAdd` and `SumBoundary` |
 | [BoundaryConditions](Base/BoundaryConditions) | ★★ | Physical boundary conditions with `BCRec` and `PhysBCFunct` |
+| [StaggeredGrids](Base/StaggeredGrids) | ★★ | Face- and node-centered data: `convert`, `nodaltilebox`, divergence and averaging |
 | [CheckpointRestart](Base/CheckpointRestart) | ★★ | Checkpoint, restart, and reading plotfiles back |
 | [Reductions](Base/Reductions) | ★★ | `ReduceOps`, `ParReduce`, `Reducer`, MultiFab norms, MPI reductions |
 | [GpuContainers](Base/GpuContainers) | ★★ | Device/pinned vectors, async copies, prefix sums, random numbers, arenas |

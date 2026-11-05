@@ -1,0 +1,3 @@
+n_cell = 32           # cells in each direction
+max_grid_size = 16
+write_plotfile = 1    # write plt_staggered
