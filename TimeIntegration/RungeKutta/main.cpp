@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <iomanip>
+#include <limits>
 #include <string>
 
 using namespace amrex;
@@ -183,7 +184,10 @@ int main (int argc, char* argv[])
         if (order > 0) {
             amrex::Print() << "\nExpected order of accuracy: " << order << "\n";
         }
-        if (order == 0 || rate >= order - 0.2_rt) {
+        // Once the error reaches round-off (e.g., RK4 in single precision),
+        // the rate is meaningless and is not checked.
+        Real const roundoff = 1000 * std::numeric_limits<Real>::epsilon();
+        if (order == 0 || err_prev < roundoff || rate >= order - 0.2_rt) {
             amrex::Print() << "PASSED\n";
         } else {
             amrex::Print() << "FAILED\n";
