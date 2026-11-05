@@ -144,15 +144,14 @@ For example:
 
    mpiexec -n 2 ./HeatEquation inputs amrex.fpe_trap_invalid=1 amrex.fpe_trap_zero=1 amrex.fpe_trap_overflow=1
 
-Trapping works on CPUs only; GPU kernels do not trap. Compiler
-optimizations may generate code that raises floating-point exceptions even
-where the source code does not. To avoid this, build with
-``-DAMReX_FPE=ON`` or ``-DAMReX_TESTING=ON`` (CMake), or ``TEST=TRUE``
-(GNU Make). This may affect performance, so use it for debugging and
-testing only. With either CMake option, the CTest tests of CPU builds with
-GCC or Clang run with all three traps on. With an installed AMReX built
-without ``AMReX_FPE``, also configure the tutorials with
-``-DAMReX_TESTING=ON``.
+Trapping works on CPUs only; GPU kernels do not trap. Vectorized code
+raises floating-point exceptions in inactive SIMD lanes, where the source
+code does not (see :ref:`base-simd`), so the traps are a debugging aid for
+scalar runs and the CTest tests do not enable them. With clang,
+``-DAMReX_TESTING=ON`` or ``-DAMReX_FPE=ON`` (CMake superbuild) or
+``TEST=TRUE`` (GNU Make) compiles AMReX and the tutorials so that the
+compiler avoids such exceptions where it can, at a cost in performance;
+GCC gets no such flag.
 
 Signals and backtraces
 ^^^^^^^^^^^^^^^^^^^^^^

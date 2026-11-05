@@ -35,9 +35,9 @@ Useful options:
 | `-DAMReX_OMP=ON`, `-DAMReX_MPI=OFF` | OpenMP on, MPI off |
 | `-DFETCHCONTENT_SOURCE_DIR_AMREX=/path/to/amrex` | Use a local AMReX source tree |
 | `-DAMReX_ROOT=/path/to/install` | Use an installed AMReX |
-| `-DAMReX_TESTING=ON` | Trap floating-point exceptions in the tests (CPU, GCC or Clang) |
 | `-DAMReX_TINY_PROFILE=ON` | Build with TinyProfiler (see [Base/HeatEquation](Base/HeatEquation)) |
 | `-DAMReX_SUNDIALS=ON` | Build the SUNDIALS tutorial (SUNDIALS is downloaded) |
+| `-DAMReX_SIMD=ON` | Enable AMReX's `ParallelForSIMD` on CPUs (vir-simd is downloaded); see [Base/SIMD](Base/SIMD) |
 | `-DAMReX_FORTRAN_INTERFACES=ON` | Build the Fortran tutorials (needs a Fortran compiler) |
 | `-DAMReXTutorials_PYTHON=ON` | Test the pyAMReX tutorials |
 | `-DAMReXTutorials_TORCH=ON` | Build the PyTorch tutorial (needs LibTorch) |
@@ -87,6 +87,7 @@ complete code to copy as the starting point of an application.
 | [CompileTimeOptions](Base/CompileTimeOptions) | ★★★ | Specialized kernels from runtime options |
 | [TagParallelFor](Base/TagParallelFor) | ★★★ | One launch for many small boxes with `TagVector` |
 | [SharedMemory](Base/SharedMemory) | ★★★ | A hand-written GPU kernel with shared memory, and its CPU counterpart |
+| [SIMD](Base/SIMD) | ★★ | Vectorization of `ParallelFor` kernels on CPUs, and explicit SIMD with `ParallelForSIMD` |
 | [ExternalMPI](Base/ExternalMPI) | ★★ | AMReX on a communicator owned by the application |
 
 ### AMR: adaptive mesh refinement with `AmrCore` and `AmrLevel`

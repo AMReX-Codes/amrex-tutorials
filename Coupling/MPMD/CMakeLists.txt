@@ -11,8 +11,6 @@ configure_file(agent.py ${CMAKE_CURRENT_BINARY_DIR}/agent.py COPYONLY)
 
 set(_main ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
     $<TARGET_FILE:Coupling_MPMD_Main> ${MPIEXEC_POSTFLAGS} inputs)
-list(APPEND _main ${AMReXTutorials_TEST_ARGS})
-set(_agent_args inputs ${AMReXTutorials_TEST_ARGS})
 
 # If a multi-program launch fails, run the tests with the PMIx "ompi" plugin
 # disabled when that makes the launch work. The result is cached, so the
@@ -39,7 +37,7 @@ set(_test_env ${AMReXTutorials_MPMD_TEST_ENV})
 # mpiexec -n 2 MPMD_Main inputs : -n 2 MPMD_Agent inputs
 add_test(NAME Coupling_MPMD
     COMMAND ${_main} : ${MPIEXEC_NUMPROC_FLAG} 2 $<TARGET_FILE:Coupling_MPMD_Agent>
-            ${MPIEXEC_POSTFLAGS} ${_agent_args}
+            ${MPIEXEC_POSTFLAGS} inputs
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 if(_test_env)
     set_tests_properties(Coupling_MPMD PROPERTIES ENVIRONMENT "${_test_env}")
