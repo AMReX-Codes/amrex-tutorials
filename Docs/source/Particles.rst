@@ -5,12 +5,12 @@ Particles
 
 These tutorials use AMReX particle containers: pure struct-of-arrays (SoA)
 particle data distributed over the same grids as mesh data, particle-mesh
-deposition and gather, tracer particles around an embedded boundary,
-sorting and filtering within tiles, neighbor lists, and a complete
-particle-in-cell code. All of them require AMReX built with particles
-(``AMReX_PARTICLES``, on by default); EBTracers also needs EB and the
-linear solvers, and ElectrostaticPIC the linear solvers. EBTracers,
-NeighborList and ElectrostaticPIC run in 2D and 3D only.
+deposition and gather, particles on an AMR hierarchy, tracer particles
+around an embedded boundary, sorting and filtering within tiles, neighbor
+lists, and a complete particle-in-cell code. All of them require AMReX
+built with particles (``AMReX_PARTICLES``, on by default); EBTracers also
+needs EB and the linear solvers, and ElectrostaticPIC the linear solvers.
+EBTracers, NeighborList and ElectrostaticPIC run in 2D and 3D only.
 Build only this topic with ``-DAMReXTutorials_TOPICS=Particles``; see
 :doc:`GettingStarted`.
 
@@ -134,6 +134,72 @@ Run (from the top of the repository, see :doc:`GettingStarted`):
    mpiexec -n 2 ./ParticleMesh inputs
 
 The plotfile ``plt00000`` holds the density ``rho``, the field, and the
+particles.
+
+.. _particles-multilevel:
+
+MultiLevel
+----------
+
+:Level: ★★★
+:Source: `Particles/MultiLevel <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Particles/MultiLevel>`__
+:Key APIs: ``ParticleContainerPureSoA(geom, dmap, ba, rr)``,
+   ``NumberOfParticlesAtLevel``, ``ReduceSum(pc, lev, f)``,
+   ``Redistribute``, ``ParIter(pc, lev)``, multi-level ``ParticleToMesh``,
+   ``SetParticleBoxArray``, ``SetParticleDistributionMap``,
+   ``WriteMultiLevelPlotfile``, ``WritePlotFile``
+
+Particles on an AMR hierarchy. A container defined on several levels keeps
+each particle on the finest level that covers it. On a fixed two-level
+hierarchy (level 1 refines the middle half of the periodic domain in each
+direction), the
+program initializes random particles, deposits their weights on both
+levels, moves the particles across the coarse/fine boundary, and regrids
+level 1, which is what an ``AmrCore`` code does when its grids change.
+
+The container takes the ``Geometry``, ``DistributionMapping`` and
+``BoxArray`` of every level and the refinement ratios; a code built on
+``AmrCore`` uses ``AmrParticleContainer``, which takes them from the
+``AmrCore``. ``InitRandom`` and ``Redistribute`` place each particle on the
+finest level whose grids cover it, which the program checks on every
+level:
+
+.. literalinclude:: ../../Particles/MultiLevel/main.cpp
+   :language: cpp
+   :start-at: // Every particle must be on the finest level
+   :end-before: // Deposit the particle weights
+
+The multi-level ``ParticleToMesh`` deposits on every level and takes care
+of the coarse/fine boundaries, so that the integral of the level-0 density
+is the total weight. The callable receives the ``plo`` and ``dxi`` of the
+level it deposits on:
+
+.. literalinclude:: ../../Particles/MultiLevel/main.cpp
+   :language: cpp
+   :start-at: void deposit
+   :end-before: int main
+
+Particles are moved level by level, and ``Redistribute`` then handles the
+periodic boundaries, the grids, the MPI ranks and the levels at once.
+Regridding a level means giving the container the new grids and calling
+``Redistribute``; a container built from an ``AmrCore`` takes the new grids
+from it and only needs the ``Redistribute`` after ``regrid``:
+
+.. literalinclude:: ../../Particles/MultiLevel/main.cpp
+   :language: cpp
+   :start-at: region.shift(0, n_cell/4);
+   :end-at: pc.Redistribute();
+   :dedent:
+
+Run (from the top of the repository, see :doc:`GettingStarted`):
+
+.. code-block:: console
+
+   cmake --build build --target Particles_MultiLevel -j 8
+   cd build/Particles/MultiLevel
+   mpiexec -n 2 ./MultiLevel inputs
+
+The plotfile ``plt_multilevel`` holds the density on both levels and the
 particles.
 
 .. _particles-ebtracers:
