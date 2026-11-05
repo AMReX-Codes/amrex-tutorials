@@ -68,13 +68,15 @@ Options
      - Use a local AMReX source tree instead of downloading it
    * - ``-DAMReX_ROOT=/path/to/install``
      - Use an installed AMReX
-   * - ``-DAMReX_TESTING=ON``
-     - Trap floating-point exceptions in the tests (CPU, GCC or Clang)
    * - ``-DAMReX_TINY_PROFILE=ON``
      - Build with TinyProfiler; see :ref:`profiling`
    * - ``-DAMReX_SUNDIALS=ON``
      - Build the :ref:`SUNDIALS <timeintegration-sundials>` tutorial
        (SUNDIALS is downloaded unless ``SUNDIALS_ROOT`` is given)
+   * - ``-DAMReX_SIMD=ON``
+     - Enable AMReX's ``ParallelForSIMD`` on CPUs, see :ref:`base-simd`
+       (the header-only vir-simd library is downloaded unless it is
+       installed)
    * - ``-DAMReX_FORTRAN_INTERFACES=ON``
      - Build the :doc:`Fortran` tutorials (needs a Fortran compiler)
    * - ``-DAMReXTutorials_PYTHON=ON``
@@ -96,11 +98,9 @@ Each tutorial is registered as a CTest test that runs it with its
 ``inputs`` file, on 2 MPI ranks in MPI builds (the MPMD test needs 4;
 with Open MPI, add ``-DMPIEXEC_PREFLAGS=--oversubscribe`` if needed).
 Tutorials with an exact or reference answer check it and return a non-zero
-exit code if the error is too large. With GCC or Clang on CPUs, the tests
-trap floating-point exceptions (``amrex.fpe_trap_invalid=1
-amrex.fpe_trap_zero=1 amrex.fpe_trap_overflow=1``) when the tutorials are
-configured with ``-DAMReX_TESTING=ON`` or AMReX is built with
-``-DAMReX_FPE=ON``.
+exit code if the error is too large. The tests do not trap floating-point
+exceptions (``amrex.fpe_trap_*``, see :doc:`VisualizationAndDebugging`):
+vectorized code raises them in inactive SIMD lanes, see :ref:`base-simd`.
 
 .. code-block:: console
 

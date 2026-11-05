@@ -52,6 +52,12 @@ include(FetchContent)
 if(AMReX_SUNDIALS AND NOT _amrex_find_args)
     include(DependencySUNDIALS)
 endif()
+if(AMReX_SIMD AND NOT _amrex_find_args)
+    if(NOT AMReX_GPU_BACKEND STREQUAL "NONE")
+        message(FATAL_ERROR "AMReX_SIMD is for CPU builds; turn it off with a GPU backend.")
+    endif()
+    include(DependencySIMD)
+endif()
 
 FetchContent_Declare(AMReX
     GIT_REPOSITORY ${AMReXTutorials_AMReX_REPO}

@@ -9,8 +9,9 @@
 #   installed:      -DAMReX_ROOT=/path/to/install
 #
 # Optional dependencies: -DAMReX_SUNDIALS=ON (SUNDIALS is fetched unless
-# SUNDIALS_ROOT is given), -DAMReX_FORTRAN_INTERFACES=ON (needs a Fortran
-# compiler), -DAMReXTutorials_PYTHON=ON, -DAMReXTutorials_TORCH=ON.
+# SUNDIALS_ROOT is given), -DAMReX_SIMD=ON (vir-simd is fetched unless
+# installed), -DAMReX_FORTRAN_INTERFACES=ON (needs a Fortran compiler),
+# -DAMReXTutorials_PYTHON=ON, -DAMReXTutorials_TORCH=ON.
 cmake_minimum_required(VERSION 3.25)
 
 project(AMReXTutorials

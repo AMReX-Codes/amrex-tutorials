@@ -12,6 +12,8 @@ concurrency:
 
 env:
   CXXFLAGS_STRICT: "-Werror -Wall -Wextra -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names"
+  # vir-simd (AMReX_SIMD=ON) uses the alternative tokens `and` and `or`, which -fno-operator-names rejects.
+  CXXFLAGS_STRICT_SIMD: "-Werror -Wall -Wextra -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code"
   # GCC -Wmaybe-uninitialized gives false positives at -O3, including from AMReX headers.
   # Clang does not know this option and rejects it under -Werror.
   CXXFLAGS_GCC: "-Wno-maybe-uninitialized"
@@ -74,6 +76,25 @@ jobs:
             -DAMReX_SPACEDIM=1              \
             -DAMReX_EB=OFF                  \
             -DAMReX_FFT=OFF                 \
+            -DMPIEXEC_PREFLAGS=--oversubscribe
+        cmake --build build -j 4
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
+  gcc_simd:
+    name: GCC SIMD
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v7
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: Build
+      run: |
+        cmake -S . -B build                 \
+            -DAMReX_TESTING=ON              \
+            -DCMAKE_CXX_FLAGS="-march=native ${CXXFLAGS_STRICT_SIMD} ${CXXFLAGS_GCC}" \
+            -DAMReX_SIMD=ON                 \
+            -DAMReXTutorials_TOPICS=Base    \
             -DMPIEXEC_PREFLAGS=--oversubscribe
         cmake --build build -j 4
     - name: Test

@@ -8,8 +8,9 @@ parameters, the mesh data structures (``Box``, ``BoxArray``,
 ``DistributionMapping``, ``Geometry``, ``MultiFab``), GPU-portable kernels
 with ``ParallelFor``, ghost cells and boundary conditions, reductions, GPU
 containers, and I/O. They need no optional AMReX components; ExternalMPI
-requires MPI, and StaggeredGrids runs in 2D and 3D only. Build only this
-topic with ``-DAMReXTutorials_TOPICS=Base``
+requires MPI, StaggeredGrids runs in 2D and 3D only, and the explicit
+part of SIMD needs ``-DAMReX_SIMD=ON``. Build only this topic with
+``-DAMReXTutorials_TOPICS=Base``
 (add ``-DAMReX_FFT=OFF`` if FFTW is not installed); see :doc:`GettingStarted`.
 
 Start with HelloWorld, MultiFab and HeatEquation, in that order.
@@ -772,6 +773,91 @@ For timings, build with TinyProfiler on and use a GPU build with e.g.
 ``n_cell=128 max_grid_size=128 nbins=64 nrepeat=5
 tiny_profiler.print_threshold=0``. The fewer the bins, the more the global
 atomics collide, and the larger the speedup of the shared-memory version.
+
+.. _base-simd:
+
+SIMD
+----
+
+:Level: ★★
+:Source: `Base/SIMD <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Base/SIMD>`__
+:Key APIs: ``AMREX_FORCE_INLINE``, ``AMREX_NO_INLINE``,
+           ``ParallelForSIMD``, ``SIMDindex``, ``simd::Vectorized``,
+           ``simd::load_1d``, ``simd::store_1d``,
+           ``simd::native_simd_size_real``, ``BL_PROFILE``
+
+Vectorization on CPUs. On CPU, ``ParallelFor`` marks its innermost loop
+with ``AMREX_PRAGMA_SIMD``, a promise to the compiler that the iterations
+are independent. ``amrex::For`` has the ``n``- and ``Box``-based
+signatures of ``ParallelFor`` and runs on GPUs the same way; on CPU it
+makes no promise that the iterations are independent, so use it when they
+are not. Whether the loop is vectorized depends on the kernel. The first
+part writes the same function twice: with a call to a function that is
+not inlined and has a branch inside, which stops the vectorizer and is
+shown for illustration only, and in the recommended way, inlined and
+branch-free:
+
+.. literalinclude:: ../../Base/SIMD/main.cpp
+   :language: cpp
+   :start-at: // For illustration only
+   :end-before: // Part 2:
+
+The rules behind it: keep kernels inlinable; compute every quantity
+unconditionally and pick with ``?:``, ``amrex::min``, ``amrex::max`` or
+``std::abs``, on arguments that are safe in every lane; and with GCC,
+add ``-fno-trapping-math`` if arithmetic inside the arms of a ``?:`` is
+to vectorize. Inactive lanes, and the compiler's own speculation, raise
+floating-point exceptions where the source code does not; the result is
+correct, but the traps ``amrex.fpe_trap_*`` would stop the program, so
+they are a debugging aid for scalar runs and the tests do not enable
+them. Build with
+``-march=native`` to use the full vector width, and look at the
+compiler's report
+(GCC ``-fopt-info-vec-optimized``/``-missed``, clang
+``-Rpass=loop-vectorize``) to see what happened.
+
+The second part is explicit SIMD. With ``-DAMReX_SIMD=ON`` (the
+header-only vir-simd library is downloaded; see :doc:`GettingStarted`),
+``ParallelForSIMD<Functor>`` hands the kernel a ``SIMDindex`` covering
+several consecutive elements, ``simd::load_1d`` returns them as a SIMD
+register and ``simd::store_1d`` writes the register back. The functor
+derives from ``simd::Vectorized<>`` and is generic over the value type,
+``amrex::Real`` or a register of ``Real``\ s. Without the option, and on
+GPUs, the same code runs one element at a time:
+
+.. literalinclude:: ../../Base/SIMD/main.cpp
+   :language: cpp
+   :start-at: struct Push
+   :end-before: int main
+
+.. literalinclude:: ../../Base/SIMD/main.cpp
+   :language: cpp
+   :start-at: amrex::ParallelForSIMD<Push>(n,
+   :end-at: });
+   :dedent:
+
+Both parts check their results against the scalar version and time the
+kernels with ``BL_PROFILE`` (see :ref:`profiling`). The scalar push is
+already vectorized by the compiler, so the explicit version is not faster
+here; explicit SIMD pays off for kernels the auto-vectorizer cannot
+handle, e.g. ``ParticleReduceSIMD`` in the `AMReX documentation
+<https://amrex-codes.github.io/amrex/docs_html/Particle.html>`__.
+
+Run:
+
+.. code-block:: console
+
+   cmake -S . -B build -DAMReXTutorials_TOPICS=Base -DAMReX_SIMD=ON -DCMAKE_CXX_FLAGS="-march=native"
+   cmake --build build --target Base_SIMD -j 8
+   cd build/Base/SIMD
+   ./SIMD inputs
+
+.. code-block:: text
+
+   Part 1: max difference between the two kernels = 0
+   Part 2: SIMD width 4 (AMReX_SIMD=ON)
+   Part 2: max difference between the SIMD and the scalar push = 0
+   PASSED
 
 .. _base-externalmpi:
 
