@@ -11,8 +11,7 @@ configure_file(agent.py ${CMAKE_CURRENT_BINARY_DIR}/agent.py COPYONLY)
 
 set(_main ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
     $<TARGET_FILE:Coupling_MPMD_Main> ${MPIEXEC_POSTFLAGS} inputs)
-list(APPEND _main ${AMReXTutorials_TEST_ARGS})
-set(_agent_args inputs ${AMReXTutorials_TEST_ARGS})
+set(_agent_args inputs)
 
 # If a multi-program launch fails, run the tests with the PMIx "ompi" plugin
 # disabled when that makes the launch work. The result is cached, so the

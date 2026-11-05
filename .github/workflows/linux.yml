@@ -12,6 +12,8 @@ concurrency:
 
 env:
   CXXFLAGS_STRICT: "-Werror -Wall -Wextra -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code -fno-operator-names"
+  # vir-simd (AMReX_SIMD=ON) uses the alternative tokens `and` and `or`, which -fno-operator-names rejects.
+  CXXFLAGS_STRICT_SIMD: "-Werror -Wall -Wextra -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code"
   # GCC -Wmaybe-uninitialized gives false positives at -O3, including from AMReX headers.
   # Clang does not know this option and rejects it under -Werror.
   CXXFLAGS_GCC: "-Wno-maybe-uninitialized"
@@ -29,7 +31,6 @@ jobs:
     - name: Build
       run: |
         cmake -S . -B build                 \
-            -DAMReX_TESTING=ON              \
             -DCMAKE_BUILD_TYPE=Debug        \
             -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT} ${CXXFLAGS_GCC}" \
             -DAMReX_OMP=ON                  \
@@ -50,7 +51,6 @@ jobs:
     - name: Build
       run: |
         cmake -S . -B build                 \
-            -DAMReX_TESTING=ON                     \
             -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT} ${CXXFLAGS_GCC}" \
             -DAMReX_SPACEDIM=2              \
             -DAMReX_FORTRAN_INTERFACES=ON   \
@@ -69,11 +69,28 @@ jobs:
     - name: Build
       run: |
         cmake -S . -B build                 \
-            -DAMReX_TESTING=ON                     \
             -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT} ${CXXFLAGS_GCC}" \
             -DAMReX_SPACEDIM=1              \
             -DAMReX_EB=OFF                  \
             -DAMReX_FFT=OFF                 \
+            -DMPIEXEC_PREFLAGS=--oversubscribe
+        cmake --build build -j 4
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
+  gcc_simd:
+    name: GCC SIMD
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v7
+    - name: Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: Build
+      run: |
+        cmake -S . -B build                 \
+            -DCMAKE_CXX_FLAGS="-march=native ${CXXFLAGS_STRICT_SIMD} ${CXXFLAGS_GCC}" \
+            -DAMReX_SIMD=ON                 \
+            -DAMReXTutorials_TOPICS=Base    \
             -DMPIEXEC_PREFLAGS=--oversubscribe
         cmake --build build -j 4
     - name: Test
@@ -187,7 +204,6 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/AMReX-Codes/amrex.git ${RUNNER_TEMP}/amrex
         cmake -S ${RUNNER_TEMP}/amrex -B ${RUNNER_TEMP}/amrex/build \
-            -DAMReX_TESTING=ON                                      \
             -DAMReX_SPACEDIM="2;3" -DAMReX_EB=ON -DAMReX_FFT=ON     \
             -DCMAKE_INSTALL_PREFIX=${RUNNER_TEMP}/amrex-install
         cmake --build ${RUNNER_TEMP}/amrex/build -j 4 --target install
@@ -198,7 +214,6 @@ jobs:
     - name: Tutorials with installed AMReX (2D)
       run: |
         cmake -S . -B build-tutorials                 \
-            -DAMReX_TESTING=ON                        \
             -DAMReX_ROOT=${RUNNER_TEMP}/amrex-install \
             -DAMReXTutorials_DIM=2                    \
             -DAMReXTutorials_TOPICS="Base;FFT;EB"     \
@@ -224,7 +239,6 @@ jobs:
     - name: Build
       run: |
         cmake -S . -B build                 \
-            -DAMReX_TESTING=ON                     \
             -DCMAKE_CXX_FLAGS="${CXXFLAGS_STRICT} ${CXXFLAGS_GCC}" \
             -DAMReX_SUNDIALS=ON             \
             -DAMReX_EB=OFF                  \
@@ -258,7 +272,6 @@ jobs:
     - name: Build
       run: |
         cmake -S . -B build                                       \
-            -DAMReX_TESTING=ON                                    \
             -DFETCHCONTENT_SOURCE_DIR_AMREX=${RUNNER_TEMP}/amrex  \
             -DAMReXTutorials_PYTHON=ON                            \
             -DAMReXTutorials_TOPICS="Python;Coupling"             \
@@ -282,7 +295,6 @@ jobs:
     - name: Build
       run: |
         cmake -S . -B build                 \
-            -DAMReX_TESTING=ON              \
             -DAMReXTutorials_TORCH=ON       \
             -DAMReXTutorials_TOPICS=ML      \
             -DAMReX_EB=OFF                  \

@@ -12,24 +12,8 @@
 # the parent directory, and registers a CTest test that runs it.  The tutorial
 # is skipped if a required feature or the current dimension is unavailable.
 
-# Extra arguments for the tests. On CPU, trap floating-point exceptions with
-# -DAMReX_TESTING=ON or AMReX_FPE (which an installed AMReX reports); the
-# tutorials are then compiled so that clang does not raise exceptions in
-# unused SIMD lanes. An installed AMReX should also be built with
-# AMReX_TESTING or AMReX_FPE for its own compiled code. Traps are only used
-# with GCC and Clang, the compilers AMReX sets this up for.
-set(AMReXTutorials_FPE_TRAPS OFF)
-if(AMReX_GPU_BACKEND STREQUAL "NONE" AND (AMReX_TESTING OR AMReX_FPE)
-   AND (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
-        OR (CMAKE_CXX_COMPILER_ID MATCHES "^(Apple)?Clang$"
-            AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")))
-    set(AMReXTutorials_FPE_TRAPS ON)
-endif()
-set(AMReXTutorials_TEST_ARGS)
-if(AMReXTutorials_FPE_TRAPS)
-    list(APPEND AMReXTutorials_TEST_ARGS
-         amrex.fpe_trap_invalid=1 amrex.fpe_trap_zero=1 amrex.fpe_trap_overflow=1)
-endif()
+# The tests do not trap floating-point exceptions (amrex.fpe_trap_*):
+# vectorized code raises them in inactive SIMD lanes, see Base/SIMD.
 
 # The MPI launcher for the tests (MPIEXEC_EXECUTABLE and friends)
 if(AMReX_MPI)
@@ -104,10 +88,6 @@ function(amrex_tutorial_add _name)
     if(AMReX_GPU_BACKEND STREQUAL "CUDA")
         setup_target_for_cuda_compilation(${_target})
     endif()
-    if(AMReXTutorials_FPE_TRAPS AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(${_target} PRIVATE
-            $<$<COMPILE_LANGUAGE:CXX>:-ffp-exception-behavior=maytrap>)
-    endif()
 
     # configure_file re-copies an input file when it changes.
     foreach(_input IN LISTS _arg_INPUTS)
@@ -125,7 +105,6 @@ function(amrex_tutorial_add _name)
         list(GET _arg_INPUTS 0 _first_input)
         cmake_path(GET _first_input FILENAME _test_args)
     endif()
-    list(APPEND _test_args ${AMReXTutorials_TEST_ARGS})
 
     set(_command $<TARGET_FILE:${_target}> ${_test_args})
     if(AMReX_MPI)

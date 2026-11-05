@@ -52,6 +52,9 @@ include(FetchContent)
 if(AMReX_SUNDIALS AND NOT _amrex_find_args)
     include(DependencySUNDIALS)
 endif()
+if(AMReX_SIMD AND NOT _amrex_find_args)
+    include(DependencySIMD)
+endif()
 
 FetchContent_Declare(AMReX
     GIT_REPOSITORY ${AMReXTutorials_AMReX_REPO}
