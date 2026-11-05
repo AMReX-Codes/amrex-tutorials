@@ -594,7 +594,9 @@ data. A code built on ``AmrCore`` calls ``SetDistributionMap`` and
 ``RemakeLevel`` (:ref:`amr-advectionamrcore` shows ``RemakeLevel``);
 ``Amr``/``AmrLevel``
 codes override ``AmrLevel::estimateWork`` and set
-``amr.loadbalance_with_workestimates = 1``.
+``amr.loadbalance_with_workestimates = 1``, which rebalances at every
+regrid, and on a single-level run every ``amr.loadbalance_level0_int``
+steps.
 
 Run:
 

@@ -26,9 +26,9 @@ it with `ParallelCopy`, and measures again.
   `broadcastToAll = false`, only the I/O rank gets the proposal, so a code
   can decide whether the gain is worth moving the data. The knapsack
   algorithm balances best; the space-filling curve keeps neighboring boxes
-  on the same rank, which reduces communication. With no more boxes than
-  ranks there is nothing to balance, and the proposed efficiency is
-  reported as 1.
+  on the same rank, which reduces communication. With too few boxes to
+  balance, AMReX falls back to round robin and reports a proposed
+  efficiency of 1.
 - A new `MultiFab` on the new mapping receives the data with
   `ParallelCopy`. The kernel's result does not depend on the mapping, which
   the program checks.
@@ -36,9 +36,10 @@ it with `ParallelCopy`, and measures again.
   mapping redone every `N` steps or after regridding. A code built on
   `AmrCore` calls `SetDistributionMap(lev, dm)` and `RemakeLevel`
   ([AdvectionAmrCore](../../AMR/AdvectionAmrCore) shows `RemakeLevel`);
-  `Amr`/`AmrLevel` codes
-  override `AmrLevel::estimateWork` and set
-  `amr.loadbalance_with_workestimates = 1` and `amr.loadbalance_level0_int`.
+  `Amr`/`AmrLevel` codes override `AmrLevel::estimateWork` and set
+  `amr.loadbalance_with_workestimates = 1`, which rebalances at every
+  regrid, and on a single-level run every `amr.loadbalance_level0_int`
+  steps.
 - With OpenMP, the boxes of a rank are timed by the threads working on
   them, so the cost of a rank is the sum of its box times, not the wall
   time.
