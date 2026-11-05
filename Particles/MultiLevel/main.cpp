@@ -153,7 +153,9 @@ int main (int argc, char* argv[])
         Real const vol0 = AMREX_D_TERM(geom[0].CellSize(0), *geom[0].CellSize(1), *geom[0].CellSize(2));
         Real const mass = rho[0].sum() * vol0;
         amrex::Print() << "Deposited mass on level 0 (fine data averaged down): " << mass << "\n";
-        constexpr Real tol = std::is_same_v<Real,float> ? 1.e-5_rt : 1.e-12_rt;
+        constexpr bool is_single = std::is_same_v<Real,float>
+                                || std::is_same_v<amrex::ParticleReal,float>;
+        constexpr Real tol = is_single ? 1.e-5_rt : 1.e-12_rt;
         ok = ok && std::abs(mass - 1.0_rt) < tol;
 
         // Move the particles with a uniform velocity. After each step,
@@ -172,7 +174,7 @@ int main (int argc, char* argv[])
                     amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept
                     {
                         for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-                            ptd.pos(d, i) += vel[d] * dt;
+                            ptd.pos(d, i) += static_cast<amrex::ParticleReal>(vel[d] * dt);
                         }
                     });
                 }
@@ -209,7 +211,13 @@ int main (int argc, char* argv[])
             amrex::WriteMultiLevelPlotfile("plt_multilevel", nlevs, amrex::GetVecOfConstPtrs(rho),
                                            {"rho"}, geom, Real(nsteps)*dt, {nsteps, nsteps},
                                            {ratio});
-            pc.WritePlotFile("plt_multilevel", "particles", {"w"}, {});
+            // Component names for I/O exclude the positions.
+            amrex::Vector<std::string> real_names;
+            auto const& names = pc.GetRealSoANames();
+            for (int n = AMREX_SPACEDIM; n < static_cast<int>(names.size()); ++n) {
+                real_names.push_back(names[n]);
+            }
+            pc.WritePlotFile("plt_multilevel", "particles", real_names, {});
         }
 
         if (ok) {

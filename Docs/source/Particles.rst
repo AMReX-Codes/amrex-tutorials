@@ -7,10 +7,10 @@ These tutorials use AMReX particle containers: pure struct-of-arrays (SoA)
 particle data distributed over the same grids as mesh data, particle-mesh
 deposition and gather, particles on an AMR hierarchy, tracer particles
 around an embedded boundary, sorting and filtering within tiles, neighbor
-lists, and a complete particle-in-cell code. All of them require AMReX built with particles
-(``AMReX_PARTICLES``, on by default); EBTracers also needs EB and the
-linear solvers, and ElectrostaticPIC the linear solvers. EBTracers,
-NeighborList and ElectrostaticPIC run in 2D and 3D only.
+lists, and a complete particle-in-cell code. All of them require AMReX
+built with particles (``AMReX_PARTICLES``, on by default); EBTracers also
+needs EB and the linear solvers, and ElectrostaticPIC the linear solvers.
+EBTracers, NeighborList and ElectrostaticPIC run in 2D and 3D only.
 Build only this topic with ``-DAMReXTutorials_TOPICS=Particles``; see
 :doc:`GettingStarted`.
 
