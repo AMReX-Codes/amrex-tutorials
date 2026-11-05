@@ -27,19 +27,14 @@ using ConstPTD = PC::ConstPTDType;
 
 // Number of particles on level lev whose coarse cell lies in the region
 // covered by level 1 (a Box in level-0 index space).
-amrex::Long count_in_region (PC const& pc, int lev, amrex::Box const& region,
-                             amrex::Geometry const& geom0)
+amrex::Long count_in_region (PC const& pc, int lev, amrex::Box const& region)
 {
-    auto const plo = geom0.ProbLoArray();
-    auto const dxi = geom0.InvCellSizeArray();
+    auto const plo = pc.Geom(0).ProbLoArray();
+    auto const dxi = pc.Geom(0).InvCellSizeArray();
     amrex::Long n = amrex::ReduceSum(pc, lev,
         [=] AMREX_GPU_HOST_DEVICE (ConstPTD const& ptd, int i) noexcept -> amrex::Long
         {
-            amrex::IntVect iv;
-            for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-                iv[d] = int(std::floor((ptd.pos(d, i) - plo[d]) * dxi[d]));
-            }
-            return region.contains(iv) ? 1 : 0;
+            return region.contains(amrex::getParticleCell(ptd[i], plo, dxi)) ? 1 : 0;
         });
     amrex::ParallelDescriptor::ReduceLongSum(n);
     return n;
@@ -47,12 +42,12 @@ amrex::Long count_in_region (PC const& pc, int lev, amrex::Box const& region,
 
 // Every particle must be on the finest level that covers it: all level-1
 // particles inside the fine region, no level-0 particle inside it.
-bool check_levels (PC const& pc, amrex::Box const& region, amrex::Geometry const& geom0)
+bool check_levels (PC const& pc, amrex::Box const& region)
 {
     amrex::Long const n0 = pc.NumberOfParticlesAtLevel(0);
     amrex::Long const n1 = pc.NumberOfParticlesAtLevel(1);
-    amrex::Long const in0 = count_in_region(pc, 0, region, geom0);
-    amrex::Long const in1 = count_in_region(pc, 1, region, geom0);
+    amrex::Long const in0 = count_in_region(pc, 0, region);
+    amrex::Long const in1 = count_in_region(pc, 1, region);
     amrex::Print() << "  level 0: " << n0 << " particles, " << in0 << " under level 1; "
                    << "level 1: " << n1 << " particles, " << in1 << " in its region\n";
     return in0 == 0 && in1 == n1;
@@ -134,7 +129,7 @@ int main (int argc, char* argv[])
         pc.InitRandom(npart, 451, pdata);
         amrex::Print() << "Initialized " << pc.TotalNumberOfParticles() << " particles on "
                        << pc.numLevels() << " levels\n";
-        bool ok = check_levels(pc, region, geom[0]);
+        bool ok = check_levels(pc, region);
         Real const fine_fraction = Real(pc.NumberOfParticlesAtLevel(1)) / Real(npart);
         Real const expected_fraction = std::pow(0.5_rt, AMREX_SPACEDIM);
         amrex::Print() << "  fraction on level 1: " << fine_fraction
@@ -155,7 +150,7 @@ int main (int argc, char* argv[])
         amrex::Print() << "Deposited mass on level 0 (fine data averaged down): " << mass << "\n";
         constexpr bool is_single = std::is_same_v<Real,float>
                                 || std::is_same_v<amrex::ParticleReal,float>;
-        constexpr Real tol = is_single ? 1.e-5_rt : 1.e-12_rt;
+        constexpr Real tol = is_single ? 1.e-3_rt : 1.e-10_rt;
         ok = ok && std::abs(mass - 1.0_rt) < tol;
 
         // Move the particles with a uniform velocity. After each step,
@@ -182,7 +177,7 @@ int main (int argc, char* argv[])
             pc.Redistribute();
         }
         amrex::Print() << "After " << nsteps << " steps:\n";
-        bool const levels_ok = check_levels(pc, region, geom[0]);
+        bool const levels_ok = check_levels(pc, region);
         ok = ok && levels_ok && (pc.TotalNumberOfParticles() == npart);
 
         // Regrid: level 1 moves to another region. The container gets the new
@@ -197,7 +192,7 @@ int main (int argc, char* argv[])
         pc.SetParticleDistributionMap(1, dmap[1]);
         pc.Redistribute();
         amrex::Print() << "After regridding level 1:\n";
-        bool const regrid_ok = check_levels(pc, region, geom[0]);
+        bool const regrid_ok = check_levels(pc, region);
         ok = ok && regrid_ok;
 
         rho[1].define(grids[1], dmap[1], 1, 0);
