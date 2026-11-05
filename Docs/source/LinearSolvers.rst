@@ -52,7 +52,7 @@ grids, and the error drops by a factor of four when the cell size is halved.
 .. literalinclude:: ../../LinearSolvers/CellPoisson/main.cpp
    :language: cpp
    :start-at: MLPoisson mlpoisson({geom}, {ba}, {dm});
-   :end-at: mlmg.solve({&phi}, {&rhs}, p.tol_rel, p.tol_abs);
+   :end-at: mlmg.solve({&phi}, {&rhs}, tol_rel, tol_abs);
    :dedent:
 
 Run (from the top of the repository, see :doc:`GettingStarted`):

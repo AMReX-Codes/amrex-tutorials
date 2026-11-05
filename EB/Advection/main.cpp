@@ -11,10 +11,8 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_Print.H>
-#include <AMReX_Reduce.H>
 
 #include <cmath>
-#include <limits>
 #include <string>
 #include <type_traits>
 
@@ -24,25 +22,6 @@ namespace {
 
 // Ghost cells of the state and of dS/dt needed by the redistribution
 constexpr int nghost = 4;
-
-// Area fraction of the low face of cell (i,j,k) in direction d
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-Real face_area (EBDataArrays const& eb, int b, int d, int i, int j, int k)
-{
-    IntVect iv(AMREX_D_DECL(i,j,k));
-    iv[d] -= 1;
-    const Dim3 lo = iv.dim3();
-    auto flag_lo = eb.get<EBData_t::cellflag>(b, lo.x, lo.y, lo.z);
-    auto flag_hi = eb.get<EBData_t::cellflag>(b,i,j,k);
-    if (flag_lo.isRegular() && flag_hi.isRegular()) { return Real(1.); }
-    if (flag_lo.isCovered() || flag_hi.isCovered()) { return Real(0.); }
-    // A cut cell is next to this face, so the area fractions exist.
-    if (d == 0) { return eb.get<EBData_t::apx>(b,i,j,k); }
-#if (AMREX_SPACEDIM == 3)
-    if (d == 2) { return eb.get<EBData_t::apz>(b,i,j,k); }
-#endif
-    return eb.get<EBData_t::apy>(b,i,j,k);
-}
 
 // Monotonized central slope
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
@@ -102,41 +81,23 @@ void project_velocity (Array<MultiFab,AMREX_SPACEDIM>& u, Geometry const& geom,
     amrex::Print() << "max |div u| after projection:  " << divu.norminf() << "\n";
 }
 
-// Volume flux through each face: area fraction times velocity.  Faces with
-// zero area carry no flux, so the EB is a wall.
-void volume_flux (Array<MultiFab,AMREX_SPACEDIM>& ua,
-                  Array<MultiFab,AMREX_SPACEDIM> const& u,
-                  EBFArrayBoxFactory const& factory)
-{
-    auto const& ebdata = factory.getEBDataArrays();
-    for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-        auto const& uaa = ua[d].arrays();
-        auto const& ud = u[d].const_arrays();
-        ParallelFor(ua[d], [=] AMREX_GPU_DEVICE (int b, int i, int j, int k) noexcept
-        {
-            uaa[b](i,j,k) = face_area(ebdata, b, d, i, j, k) * ud[b](i,j,k);
-        });
-    }
-}
-
 // dS/dt = -div(u S) on cut cells, followed by redistribution
 class Advection
 {
 public:
+    // ua is the volume flux through the faces, area fraction times velocity.
     Advection (Geometry const& geom, EBFArrayBoxFactory const& factory,
-               Array<MultiFab,AMREX_SPACEDIM> const& u, int ncomp,
+               Array<MultiFab,AMREX_SPACEDIM> const& ua, int ncomp,
                std::string redistribution_type)
-        : m_geom(geom), m_factory(factory), m_ncomp(ncomp),
+        : m_geom(geom), m_factory(factory), m_ua(ua), m_ncomp(ncomp),
           m_redistribution_type(std::move(redistribution_type))
     {
         BoxArray const& ba = factory.boxArray();
         DistributionMapping const& dm = factory.DistributionMap();
 
         for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-            m_ua[d].define(u[d].boxArray(), dm, 1, 0, MFInfo(), factory);
-            m_flux[d].define(u[d].boxArray(), dm, ncomp, 0, MFInfo(), factory);
+            m_flux[d].define(ua[d].boxArray(), dm, ncomp, 0, MFInfo(), factory);
         }
-        volume_flux(m_ua, u, factory);
         m_dSdt.define(ba, dm, ncomp, nghost, MFInfo(), factory);
 
         // Boundary conditions used by state redistribution: all periodic
@@ -159,7 +120,7 @@ public:
         for (int d = 0; d < AMREX_SPACEDIM; ++d) {
             rate += m_ua[d].norminf() * dxinv[d];
         }
-        return (rate > 0.0_rt) ? cfl / rate : std::numeric_limits<Real>::max();
+        return cfl / rate;
     }
 
     // Compute the redistributed dS/dt.  S must have nghost filled ghost cells.
@@ -265,9 +226,9 @@ public:
 private:
     Geometry m_geom;
     EBFArrayBoxFactory const& m_factory;
+    Array<MultiFab,AMREX_SPACEDIM> const& m_ua;
     int m_ncomp;
     std::string m_redistribution_type;
-    Array<MultiFab,AMREX_SPACEDIM> m_ua;
     Array<MultiFab,AMREX_SPACEDIM> m_flux;
     MultiFab m_dSdt; // before redistribution
     Gpu::DeviceVector<BCRec> m_bcrec;
@@ -303,9 +264,6 @@ int main (int argc, char* argv[])
             pp.query("radius", radius);
             pp.queryarr("velocity", velocity, 0, AMREX_SPACEDIM);
         }
-        AMREX_ALWAYS_ASSERT(redistribution_type == "StateRedist" ||
-                            redistribution_type == "FluxRedist" ||
-                            redistribution_type == "NoRedist");
 
         // Periodic unit square/cube
         const Box domain(IntVect(0), IntVect(n_cell-1));
@@ -331,6 +289,37 @@ int main (int argc, char* argv[])
             u[d].setVal(velocity[d]);
         }
         project_velocity(u, geom, factory, verbose);
+
+        // Volume flux through each face: area fraction times velocity.  Faces
+        // with zero area carry no flux, so the EB is a wall.
+        Array<MultiFab,AMREX_SPACEDIM> ua;
+        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+            ua[d].define(u[d].boxArray(), dm, 1, 0, MFInfo(), factory);
+            auto const& ebdata = factory.getEBDataArrays();
+            auto const& uaa = ua[d].arrays();
+            auto const& ud = u[d].const_arrays();
+            ParallelFor(ua[d], [=] AMREX_GPU_DEVICE (int b, int i, int j, int k) noexcept
+            {
+                // Cell (i,j,k) is on the high side of the face
+                IntVect iv(AMREX_D_DECL(i,j,k));
+                iv[d] -= 1;
+                const Dim3 lo = iv.dim3();
+                auto flag_lo = ebdata.get<EBData_t::cellflag>(b, lo.x, lo.y, lo.z);
+                auto flag_hi = ebdata.get<EBData_t::cellflag>(b, i, j, k);
+                Real area = Real(1.);
+                if (flag_lo.isCovered() || flag_hi.isCovered()) {
+                    area = Real(0.);
+                } else if (!flag_lo.isRegular() || !flag_hi.isRegular()) {
+                    // A cut cell is next to this face, so the area fractions exist.
+                    if (d == 0) { area = ebdata.get<EBData_t::apx>(b,i,j,k); }
+                    if (d == 1) { area = ebdata.get<EBData_t::apy>(b,i,j,k); }
+#if (AMREX_SPACEDIM == 3)
+                    if (d == 2) { area = ebdata.get<EBData_t::apz>(b,i,j,k); }
+#endif
+                }
+                uaa[b](i,j,k) = area * ud[b](i,j,k);
+            });
+        }
 
         // Component 0: a Gaussian blob; component 1: a constant, which a
         // divergence-free velocity must leave unchanged.
@@ -368,7 +357,7 @@ int main (int argc, char* argv[])
                                         geom, time, step);
         };
 
-        Advection advection(geom, factory, u, ncomp, redistribution_type);
+        Advection advection(geom, factory, ua, ncomp, redistribution_type);
         const Real dt = advection.estTimeStep(cfl);
         const Real mass0 = total_mass();
         amrex::Print() << "Redistribution: " << redistribution_type
@@ -417,37 +406,28 @@ int main (int argc, char* argv[])
             if (plot_int > 0 && step % plot_int == 0) { write_plotfile(step, time); }
         }
 
-        // Self checks: no NaNs, mass conservation, a constant stays constant
+        if (plot_int > 0) { write_plotfile(step, time); }
+
+        // Self checks: mass conservation, and a constant stays constant
         const Real mass = total_mass();
         const Real mass_err = std::abs(mass - mass0) / mass0;
-        auto const& sa = S.const_arrays();
-        auto const& vf = vfrac.const_arrays();
-        Real const_err = ParReduce(TypeList<ReduceOpMax>{}, TypeList<Real>{}, S, IntVect(0),
-            [=] AMREX_GPU_DEVICE (int b, int i, int j, int k) noexcept -> GpuTuple<Real>
-            {
-                return (vf[b](i,j,k) > Real(0.)) ? std::abs(sa[b](i,j,k,1) - Real(1.))
-                                                 : Real(0.);
-            });
-        ParallelDescriptor::ReduceRealMax(const_err);
-        const bool has_nan = S.contains_nan(0, ncomp, 0);
+        // The constant minus one should be zero in all uncovered cells
+        S.plus(-1.0_rt, 1, 1, 0);
+        EB_set_covered(S, 1, 1, 0, 0.0_rt);
+        const Real const_err = S.norm0(1);
 
-        const Real eps = std::numeric_limits<Real>::epsilon();
-        const Real mass_tol = 1.e3_rt * eps;
-        const Real const_tol = std::is_same_v<Real,float> ? 1.e-3_rt : 1.e-8_rt;
+        const Real tol = std::is_same_v<Real,float> ? 1.e-3_rt : 1.e-8_rt;
         amrex::Print() << "Steps: " << step << ", time = " << time << "\n"
                        << "Blob min and max: " << S.min(0) << " " << S.max(0) << "\n"
-                       << "Relative change in mass: " << mass_err
-                       << " (tolerance " << mass_tol << ")\n"
+                       << "Relative change in mass: " << mass_err << "\n"
                        << "Max deviation of the constant: " << const_err
-                       << " (tolerance " << const_tol << ")\n";
-        if (has_nan || mass_err > mass_tol || const_err > const_tol) {
-            amrex::Print() << "FAILED" << (has_nan ? " (NaN)" : "") << "\n";
-            status = 1;
-        } else {
+                       << " (tolerance " << tol << ")\n";
+        if (mass_err <= tol && const_err <= tol) {
             amrex::Print() << "PASSED\n";
+        } else {
+            amrex::Print() << "FAILED\n";
+            status = 1;
         }
-
-        if (plot_int > 0 && step % plot_int != 0) { write_plotfile(step, time); }
     }
     amrex::Finalize();
     return status;

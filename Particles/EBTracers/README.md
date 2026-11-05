@@ -25,21 +25,15 @@ scalar on the mesh.
    `ParticleToMesh`.
 
 The particles move forward to `stop_time` and then back with the velocity
-reversed. The program checks that
-
-- the deposited weight equals the total particle weight (to roundoff),
-- no particle is more than 0.2 cells inside the sphere after any step,
-  measured with the exact sphere (the reflection uses the interpolated
-  signed distance, which is accurate to a fraction of a cell), and
-- the particles that were never reflected return to their initial
-  positions: the flow is steady, so they retrace their paths up to the
-  time stepping error. The mean distance must be below 0.001 cells. The
-  maximum is printed too; it is larger, because the error grows for the
-  few particles that pass close to the stagnation points of the flow.
+reversed. The program checks that the deposited weight equals the total
+particle weight, and that the particles that were never reflected return
+to their initial positions: the flow is steady, so they retrace their paths
+up to the time stepping error, and the mean distance must be below 0.001
+cells.
 
 **Key APIs:** `ParticleContainerPureSoA`, `mac_interpolate`,
 `FillSignedDistance`, `ParticleToMesh`, `ParticleInterpolator::Linear`,
-`ReduceSum`/`ReduceMax` over particles, `MLEBABecLap`, `MLMG::getFluxes`,
+`ReduceSum` over particles, `MLEBABecLap`, `MLMG::getFluxes`,
 `EB_WriteSingleLevelPlotfile`
 
 ## Build and run
@@ -70,8 +64,7 @@ velocity and the particles. Other options are `n_cell`, `nppc`, `radius`,
 32 steps forward and back with dt = 0.009375
 Back at t = 0:
   particles reflected off the EB: 210
-  max depth inside the sphere after any step: 0.07412058333 cells
-  distance of the other particles from their start: mean 3.902734996e-05, max 0.0415392124 cells
+  mean distance of the other particles from their start: 3.902734996e-05 cells
   relative error of the deposited weight: 2.526048763e-14
 PASSED
 ```

@@ -3,8 +3,8 @@
 Read runtime parameters from an inputs file and the command line with
 `amrex::ParmParse`: scalars, strings, arrays, math expressions, enums, 2D
 tables, TOML-like `[section]` headers, and detection of unused (often
-misspelled) inputs. The program checks that the shipped `inputs` (or the
-built-in defaults) give the documented values.
+misspelled) inputs. The program prints what it read and checks two of the
+values the shipped `inputs` gives.
 
 **Key APIs:** `ParmParse::query`, `get`, `queryarr`, `queryAdd`,
 `queryWithParser`, `querytable`, `query_enum_case_insensitive`, `AMREX_ENUM`,

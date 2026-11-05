@@ -38,24 +38,20 @@ int main (int argc, char* argv[])
     amrex::Initialize(argc, argv);
     int status = 0;
     {
-        int max_step = -1;
-        Real stop_time = -1;
+        int max_step = 100000;
+        Real stop_time = 1.0;
         {
             ParmParse pp;
             pp.query("max_step", max_step);
             pp.query("stop_time", stop_time);
-        }
-        if (max_step < 0 && stop_time < 0) {
-            amrex::Abort("Set max_step or stop_time.");
         }
 
         LevelBldWave level_bld;
         auto amr = std::make_unique<Amr>(&level_bld);
         amr->init(0.0, stop_time);
 
-        while ( amr->okToContinue() &&
-                (amr->levelSteps(0) < max_step || max_step < 0) &&
-                (amr->cumTime() < stop_time || stop_time < 0) )
+        while (amr->okToContinue() && amr->levelSteps(0) < max_step
+               && amr->cumTime() < stop_time)
         {
             amr->coarseTimeStep(stop_time);
         }

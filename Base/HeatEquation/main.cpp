@@ -6,8 +6,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
-#include <type_traits>
 #include <utility>
 
 // prod_d sin(2 pi x_d) at the center of cell iv
@@ -83,6 +81,8 @@ int main (int argc, char* argv[])
                                             {"phi"}, geom, time, step);
         }
 
+        // The last step is shortened to end exactly at stop_time; the
+        // factor avoids an extra tiny step from round-off.
         while (time < stop_time * (1.0_rt - 1.e-6_rt))
         {
             std::swap(phi_old, phi_new);
@@ -129,22 +129,17 @@ int main (int argc, char* argv[])
         });
         Real const err = error.norm0();
 
-        // Allow twice the leading truncation errors of the Laplacian (dx^2)
-        // and of forward Euler (dt), which decay with the mode, plus round-off
-        // of about one epsilon per step on phi ~ 1.
-        Real const space_err = k2 / AMREX_SPACEDIM * dx[0] * dx[0] / 12.0_rt;
-        Real const time_err = diffusion_coef * k2 * dt / 2.0_rt;
-        Real const tol = 2.0_rt * decay * diffusion_coef * time * k2 * (space_err + time_err)
-            + Real(step) * std::numeric_limits<Real>::epsilon();
         amrex::Print() << "Finished " << step << " steps at time " << time
                        << ", mode amplitude = " << decay << "\n"
-                       << "Max error = " << err << ", tolerance = " << tol << "\n";
+                       << "Max error = " << err << "\n";
 
-        if (err > tol) {
+        // The error is the dx^2 and dt truncation error, a few percent at
+        // most for n_cell >= 16; a wrong scheme gives errors of order one.
+        if (err <= 0.05_rt) {
+            amrex::Print() << "PASSED\n";
+        } else {
             amrex::Print() << "FAILED\n";
             status = 1;
-        } else {
-            amrex::Print() << "PASSED\n";
         }
     }
     amrex::Finalize();

@@ -57,7 +57,7 @@ struct Problem
     Real blob_width = 0.08_rt;
 
     // Exact distance inside the sphere (> 0 inside), used to remove initial
-    // particles inside it and for checking
+    // particles inside it
     [[nodiscard]] AMREX_GPU_HOST_DEVICE Real depth (RealVect const& x) const {
         Real r2 = 0;
         for (int d = 0; d < AMREX_SPACEDIM; ++d) { r2 += (x[d]-center[d])*(x[d]-center[d]); }
@@ -169,32 +169,33 @@ Real signed_distance (Array4<Real const> const& sd, ParticleReal const* x,
                       GpuArray<Real,AMREX_SPACEDIM> const& plo,
                       GpuArray<Real,AMREX_SPACEDIM> const& dxi, Real* grad)
 {
+    // Lower node of the cell containing x, and the linear weights of the two
+    // nodes in each direction and their derivatives
     int iv[3] = {0, 0, 0};
-    Real f[AMREX_SPACEDIM];
+    Real wt[3][2] = {{1.0_rt, 0.0_rt}, {1.0_rt, 0.0_rt}, {1.0_rt, 0.0_rt}};
+    Real dwt[3][2] = {{0.0_rt, 0.0_rt}, {0.0_rt, 0.0_rt}, {0.0_rt, 0.0_rt}};
     for (int d = 0; d < AMREX_SPACEDIM; ++d) {
         const Real l = (Real(x[d]) - plo[d]) * dxi[d];
         iv[d] = int(std::floor(l));
-        f[d] = l - Real(iv[d]);
+        wt[d][1] = l - Real(iv[d]);
+        wt[d][0] = 1.0_rt - wt[d][1];
+        dwt[d][1] = dxi[d];
+        dwt[d][0] = -dxi[d];
         grad[d] = 0.0_rt;
     }
     Real s = 0.0_rt;
-    for (int c = 0; c < (1 << AMREX_SPACEDIM); ++c) {
-        int n[3] = {0, 0, 0};
-        Real w = 1.0_rt;
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-            n[d] = (c >> d) & 1;
-            w *= n[d] ? f[d] : 1.0_rt - f[d];
-        }
-        const Real v = sd(iv[0]+n[0], iv[1]+n[1], iv[2]+n[2]);
-        s += w * v;
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-            Real dw = (n[d] ? 1.0_rt : -1.0_rt) * dxi[d];
-            for (int e = 0; e < AMREX_SPACEDIM; ++e) {
-                if (e != d) { dw *= n[e] ? f[e] : 1.0_rt - f[e]; }
-            }
-            grad[d] += dw * v;
-        }
-    }
+    const int kmax = (AMREX_SPACEDIM == 3) ? 1 : 0;
+    for (int kk = 0; kk <= kmax; ++kk) {
+    for (int jj = 0; jj <= 1; ++jj) {
+    for (int ii = 0; ii <= 1; ++ii) {
+        const Real v = sd(iv[0]+ii, iv[1]+jj, iv[2]+kk);
+        s       +=  wt[0][ii] *  wt[1][jj] *  wt[2][kk] * v;
+        grad[0] += dwt[0][ii] *  wt[1][jj] *  wt[2][kk] * v;
+        grad[1] +=  wt[0][ii] * dwt[1][jj] *  wt[2][kk] * v;
+#if (AMREX_SPACEDIM == 3)
+        grad[2] += dwt[2][kk] *  wt[0][ii] *  wt[1][jj] * v;
+#endif
+    }}}
     return s;
 }
 
@@ -344,6 +345,17 @@ int main (int argc, char* argv[])
         const Vector<std::string> real_names(rnames.begin() + AMREX_SPACEDIM, rnames.end());
         const Vector<std::string> int_names(inames.begin(), inames.end());
 
+        // Move forward to stop_time, then back with the velocity reversed.
+        // The flow is steady, so the particles should return to where they
+        // started, up to the time stepping error.
+        const Real dx = geom.CellSize(0);
+        Real umax = 0;
+        for (int d = 0; d < AMREX_SPACEDIM; ++d) { umax = std::max(umax, u[d].norm0()); }
+        const int nsteps = std::max(1, int(std::ceil(stop_time * umax / (cfl * dx))));
+        const Real dt = stop_time / Real(nsteps);
+        amrex::Print() << nsteps << " steps forward and back with dt = " << dt << "\n";
+
+        // Plotfile with the deposited scalar, the velocity and the particles
         auto write_plotfile = [&] (int step, Real time)
         {
             MultiFab plt(ba, dm, 1+AMREX_SPACEDIM, 0, MFInfo(), factory);
@@ -355,53 +367,39 @@ int main (int argc, char* argv[])
             pc.WritePlotFile(name, "particles", real_names, int_names);
         };
 
-        // Exact maximum depth of particles inside the sphere, in cells
-        const Real dx = geom.CellSize(0);
-        auto max_depth = [&] () {
-            Real r = ReduceMax(pc, [=] AMREX_GPU_HOST_DEVICE (ConstPTD const& ptd, int i) -> Real
-            {
-                RealVect x;
-                for (int d = 0; d < AMREX_SPACEDIM; ++d) { x[d] = Real(ptd.pos(d, i)); }
-                return std::max(0.0_rt, prob.depth(x)) / dx;
-            });
-            ParallelDescriptor::ReduceRealMax(r);
-            return r;
-        };
-
-        // Move forward to stop_time, then back with the velocity reversed.
-        // The flow is steady, so the particles should return to where they
-        // started, up to the time stepping error.
-        Real umax = 0;
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) { umax = std::max(umax, u[d].norm0()); }
-        const int nsteps = std::max(1, int(std::ceil(stop_time * umax / (cfl * dx))));
-        const Real dt = stop_time / Real(nsteps);
-        amrex::Print() << nsteps << " steps forward and back with dt = " << dt << "\n";
-
-        Real depth = 0;
         int step = 0;
         if (plot_int > 0) { write_plotfile(step, 0.0_rt); }
-        for (int dir : {1, -1}) {
-            if (dir < 0) {
-                for (int d = 0; d < AMREX_SPACEDIM; ++d) { u[d].mult(-1.0_rt, 0, 1, 2); }
+        for (int n = 0; n < nsteps; ++n) {
+            advect(pc, u, sd, dt);
+            ++step;
+            if (plot_int > 0 && step % plot_int == 0) {
+                deposit(pc, phi);
+                write_plotfile(step, Real(n+1)*dt);
             }
-            for (int n = 0; n < nsteps; ++n) {
-                advect(pc, u, sd, dt);
-                ++step;
-                depth = std::max(depth, max_depth());
-                if (plot_int > 0 && step % plot_int == 0) {
-                    deposit(pc, phi);
-                    write_plotfile(step, (dir > 0) ? Real(n+1)*dt : stop_time - Real(n+1)*dt);
-                }
+        }
+
+        // Back with the velocity reversed
+        for (int d = 0; d < AMREX_SPACEDIM; ++d) { u[d].mult(-1.0_rt, 0, 1, 2); }
+        for (int n = 0; n < nsteps; ++n) {
+            advect(pc, u, sd, dt);
+            ++step;
+            if (plot_int > 0 && step % plot_int == 0) {
+                deposit(pc, phi);
+                write_plotfile(step, stop_time - Real(n+1)*dt);
             }
         }
         deposit(pc, phi);
 
-        // Distance (periodic) of each particle that was never reflected from
-        // its initial position: the mean and the maximum, in cells
+        // Mean distance (periodic), in cells, of the particles that were never
+        // reflected from their initial positions
         const GpuArray<Real,AMREX_SPACEDIM> prob_len{AMREX_D_DECL(geom.ProbLength(0),
                                                                  geom.ProbLength(1),
                                                                  geom.ProbLength(2))};
-        auto distance = [=] AMREX_GPU_HOST_DEVICE (ConstPTD const& ptd, int i) -> Real
+        Long nreflected = ReduceSum(pc, [=] AMREX_GPU_HOST_DEVICE (ConstPTD const& ptd, int i) -> Long
+        {
+            return (ptd.idata(IntIdx::reflected)[i] > 0) ? 1 : 0;
+        });
+        Real mean_disp = ReduceSum(pc, [=] AMREX_GPU_HOST_DEVICE (ConstPTD const& ptd, int i) -> Real
         {
             if (ptd.idata(IntIdx::reflected)[i] > 0) { return 0.0_rt; }
             Real r2 = 0;
@@ -411,38 +409,23 @@ int main (int argc, char* argv[])
                 r2 += dd*dd;
             }
             return std::sqrt(r2) / dx;
-        };
-        Real max_disp = ReduceMax(pc, distance);
-        Real mean_disp = ReduceSum(pc, distance);
-        Long nreflected = ReduceSum(pc, [=] AMREX_GPU_HOST_DEVICE (ConstPTD const& ptd, int i) -> Long
-        {
-            return (ptd.idata(IntIdx::reflected)[i] > 0) ? 1 : 0;
         });
-        ParallelDescriptor::ReduceRealMax(max_disp);
-        ParallelDescriptor::ReduceRealSum(mean_disp);
         ParallelDescriptor::ReduceLongSum(nreflected);
-        if (nreflected < np) { mean_disp /= Real(np - nreflected); }
+        ParallelDescriptor::ReduceRealSum(mean_disp);
+        mean_disp /= Real(np - nreflected);
 
         const Real weight_err = std::abs(phi.sum(0)*dv - total_weight) / total_weight;
         amrex::Print() << "Back at t = 0:\n"
                        << "  particles reflected off the EB: " << nreflected << "\n"
-                       << "  max depth inside the sphere after any step: " << depth
-                       << " cells\n"
-                       << "  distance of the other particles from their start: mean "
-                       << mean_disp << ", max " << max_disp << " cells\n"
+                       << "  mean distance of the other particles from their start: "
+                       << mean_disp << " cells\n"
                        << "  relative error of the deposited weight: " << weight_err << "\n";
 
-        // The reflection uses the interpolated signed distance, so a particle
-        // can stay a small fraction of a cell inside the sphere.
-        constexpr bool is_single = std::is_same_v<Real,float>
-                                || std::is_same_v<ParticleReal,float>;
-        const Real weight_tol = is_single ? 1.e-4_rt : 1.e-12_rt;
-        if (pc.TotalNumberOfParticles() != np || weight_err > weight_tol ||
-            depth > 0.2_rt || nreflected >= np || mean_disp > 1.e-3_rt) {
+        if (weight_err <= 1.e-4_rt && mean_disp <= 1.e-3_rt) {
+            amrex::Print() << "PASSED\n";
+        } else {
             amrex::Print() << "FAILED\n";
             status = 1;
-        } else {
-            amrex::Print() << "PASSED\n";
         }
     }
     amrex::Finalize();

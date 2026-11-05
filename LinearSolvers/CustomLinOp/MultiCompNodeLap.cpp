@@ -7,8 +7,10 @@ using namespace amrex;
 
 namespace {
 
-// Invert the n x n row-major matrix a with Gauss-Jordan elimination.
-template <int N>
+constexpr int N = MultiCompNodeLap::max_ncomp;
+
+// Invert the n x n row-major matrix a (stored in the first n*n entries)
+// with Gauss-Jordan elimination.
 GpuArray<Real,N*N> invert (GpuArray<Real,N*N> a, int n)
 {
     GpuArray<Real,N*N> inv{};
@@ -18,7 +20,6 @@ GpuArray<Real,N*N> invert (GpuArray<Real,N*N> a, int n)
         for (int r = col+1; r < n; ++r) {
             if (std::abs(a[r*n+col]) > std::abs(a[piv*n+col])) { piv = r; }
         }
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(a[piv*n+col] != 0, "MultiCompNodeLap: singular C");
         for (int c = 0; c < n; ++c) {
             std::swap(a[col*n+c], a[piv*n+c]);
             std::swap(inv[col*n+c], inv[piv*n+c]);
@@ -45,12 +46,12 @@ MultiCompNodeLap::MultiCompNodeLap (Vector<Geometry> const& a_geom,
                                     Vector<Real> const& a_coeff,
                                     LPInfo const& a_info)
 {
-    m_ncomp = static_cast<int>(std::lround(std::sqrt(Real(a_coeff.size()))));
+    m_ncomp = int(std::sqrt(a_coeff.size()));
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_ncomp >= 1 && m_ncomp <= max_ncomp &&
-                                     m_ncomp*m_ncomp == static_cast<int>(a_coeff.size()),
+                                     m_ncomp*m_ncomp == int(a_coeff.size()),
                                      "MultiCompNodeLap: coeff must have N*N entries, N <= 4");
     for (int i = 0; i < m_ncomp*m_ncomp; ++i) { m_coeff[i] = a_coeff[i]; }
-    m_coeff_inv = invert<max_ncomp>(m_coeff, m_ncomp);
+    m_coeff_inv = invert(m_coeff, m_ncomp);
 
     // getNComp() must be valid before define, which allocates internal data.
     MLNodeLinOp::define(a_geom, a_grids, a_dmap, a_info);
@@ -197,15 +198,15 @@ MultiCompNodeLap::interpolation (int amrlev, int fmglev, MultiFab& fine, MultiFa
     auto const& msk_a = m_dirichlet_mask[amrlev][fmglev]->const_arrays();
 
     // A fine node coincides with a coarse node, or lies between 2, 4 or 8 of
-    // them.  i>>1 and (i+1)>>1 are equal for even i and are the two
+    // them.  coarsen(i,2) and coarsen(i+1,2) are equal for even i and are the two
     // neighbors for odd i, so averaging over them handles all cases.
     ParallelFor(fine, IntVect(0), m_ncomp,
     [=] AMREX_GPU_DEVICE (int b, int i, int j, int k, int n)
     {
         if (msk_a[b](i,j,k)) { return; }
-        int const ic[2] = {i>>1, (i+1)>>1};
-        int const jc[2] = {j>>1, (j+1)>>1};
-        int const kc[2] = {k>>1, (k+1)>>1};
+        int const ic[2] = {amrex::coarsen(i,2), amrex::coarsen(i+1,2)};
+        int const jc[2] = {amrex::coarsen(j,2), amrex::coarsen(j+1,2)};
+        int const kc[2] = {amrex::coarsen(k,2), amrex::coarsen(k+1,2)};
         Real r = 0;
         for (int kk = 0; kk < 2; ++kk) {
         for (int jj = 0; jj < 2; ++jj) {

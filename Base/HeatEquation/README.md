@@ -53,6 +53,6 @@ down, so it is not recommended for production runs.
 Step 10, time = 0.00146484375
 ...
 Finished 69 steps at time 0.01, mode amplitude = 0.3059442057
-Max error = 0.001952850866, tolerance = 0.008614567486
+Max error = 0.001952850866
 PASSED
 ```

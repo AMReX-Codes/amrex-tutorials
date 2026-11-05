@@ -1,7 +1,6 @@
 #include <AMReX.H>
 #include <AMReX_FFT.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_ParReduce.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
@@ -44,35 +43,6 @@ Real dhigh_dx (AMREX_D_DECL(Real x, Real y, Real z))
     return -ahigh * tk * AMREX_D_TERM(std::sin(tk*x), *std::sin(tk*y), *std::cos(tk*z));
 }
 
-// Fill mf with f(x,y,z) evaluated at cell centers.
-template <typename F>
-void fill (MultiFab& mf, Geometry const& geom, F const& f)
-{
-    auto const problo = geom.ProbLoArray();
-    auto const dx = geom.CellSizeArray();
-    auto const& ma = mf.arrays();
-    ParallelFor(mf, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
-    {
-        AMREX_D_TERM(Real x = problo[0] + (Real(i)+Real(0.5))*dx[0];,
-                     Real y = problo[1] + (Real(j)+Real(0.5))*dx[1];,
-                     Real z = problo[2] + (Real(k)+Real(0.5))*dx[2];)
-        ma[b](i,j,k) = f(AMREX_D_DECL(x,y,z));
-    });
-}
-
-Real max_diff (MultiFab const& a, MultiFab const& b)
-{
-    auto const& ma = a.const_arrays();
-    auto const& mb = b.const_arrays();
-    Real r = ParReduce(TypeList<ReduceOpMax>{}, TypeList<Real>{}, a, IntVect(0),
-        [=] AMREX_GPU_DEVICE (int box_no, int i, int j, int k) -> GpuTuple<Real>
-        {
-            return { std::abs(ma[box_no](i,j,k) - mb[box_no](i,j,k)) };
-        });
-    ParallelDescriptor::ReduceRealMax(r);
-    return r;
-}
-
 }
 
 int main (int argc, char* argv[])
@@ -89,7 +59,6 @@ int main (int argc, char* argv[])
             pp.query("max_grid_size", max_grid_size);
             pp.query("kcut", kcut);
         }
-        AMREX_ALWAYS_ASSERT(2*khigh < n_cell && kcut < khigh);
 
         // Periodic unit domain [0,1)^D
         Box domain(IntVect(0), IntVect(n_cell-1));
@@ -100,11 +69,27 @@ int main (int argc, char* argv[])
         ba.maxSize(max_grid_size);
         DistributionMapping dm(ba);
 
+        // The test field, its x-derivative and its low-wavenumber part at
+        // the cell centers.
         MultiFab phi(ba, dm, 1, 0);
-        fill(phi, geom, [=] AMREX_GPU_DEVICE (AMREX_D_DECL(Real x, Real y, Real z))
+        MultiFab dphi_exact(ba, dm, 1, 0);
+        MultiFab phi_low_exact(ba, dm, 1, 0);
         {
-            return low_part(AMREX_D_DECL(x,y,z)) + high_part(AMREX_D_DECL(x,y,z));
-        });
+            auto const problo = geom.ProbLoArray();
+            auto const dx = geom.CellSizeArray();
+            auto const& phi_a = phi.arrays();
+            auto const& dphi_a = dphi_exact.arrays();
+            auto const& low_a = phi_low_exact.arrays();
+            ParallelFor(phi, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+            {
+                AMREX_D_TERM(Real x = problo[0] + (Real(i)+Real(0.5))*dx[0];,
+                             Real y = problo[1] + (Real(j)+Real(0.5))*dx[1];,
+                             Real z = problo[2] + (Real(k)+Real(0.5))*dx[2];)
+                phi_a[b](i,j,k) = low_part(AMREX_D_DECL(x,y,z)) + high_part(AMREX_D_DECL(x,y,z));
+                dphi_a[b](i,j,k) = dlow_dx(AMREX_D_DECL(x,y,z)) + dhigh_dx(AMREX_D_DECL(x,y,z));
+                low_a[b](i,j,k) = low_part(AMREX_D_DECL(x,y,z));
+            });
+        }
 
         // R2C does the expensive setup (plans, communication patterns) once;
         // keep it around and reuse it.
@@ -123,7 +108,8 @@ int main (int argc, char* argv[])
         r2c.forward(phi, phi_hat);
         r2c.backward(phi_hat, phi2);
         phi2.mult(r2c.scalingFactor()); // 1/(nx*ny*nz)
-        Real err_roundtrip = max_diff(phi, phi2);
+        MultiFab::Subtract(phi2, phi, 0, 0, 1, 0);
+        Real err_roundtrip = phi2.norm0();
         amrex::Print() << "Round trip error:        " << err_roundtrip << "\n";
 
         int const nx = n_cell;
@@ -142,13 +128,9 @@ int main (int argc, char* argv[])
                 Real kx = (2*i == nx) ? Real(0) : Real(2)*Math::pi<Real>()*Real(i);
                 sp *= GpuComplex<Real>(Real(0), kx*scale);
             });
-
-        MultiFab dphi_exact(ba, dm, 1, 0);
-        fill(dphi_exact, geom, [=] AMREX_GPU_DEVICE (AMREX_D_DECL(Real x, Real y, Real z))
-        {
-            return dlow_dx(AMREX_D_DECL(x,y,z)) + dhigh_dx(AMREX_D_DECL(x,y,z));
-        });
-        Real err_deriv = max_diff(dphi, dphi_exact) / dphi_exact.norm0();
+        Real const dphi_max = dphi_exact.norm0();
+        MultiFab::Subtract(dphi_exact, dphi, 0, 0, 1, 0);
+        Real err_deriv = dphi_exact.norm0() / dphi_max;
         amrex::Print() << "Spectral d/dx rel. error: " << err_deriv << "\n";
 
         // 3. Low-pass filter: zero all modes with |k| > kcut. In y and z, indices
@@ -162,13 +144,8 @@ int main (int argc, char* argv[])
                 int k2 = i*i + ky*ky + kz*kz;
                 sp *= (k2 > kcut*kcut) ? Real(0) : scale;
             });
-
-        MultiFab phi_low_exact(ba, dm, 1, 0);
-        fill(phi_low_exact, geom, [=] AMREX_GPU_DEVICE (AMREX_D_DECL(Real x, Real y, Real z))
-        {
-            return low_part(AMREX_D_DECL(x,y,z));
-        });
-        Real err_filter = max_diff(phi_low, phi_low_exact);
+        MultiFab::Subtract(phi_low_exact, phi_low, 0, 0, 1, 0);
+        Real err_filter = phi_low_exact.norm0();
         amrex::Print() << "Low-pass filter error:   " << err_filter << "\n";
 
         Real const tol = std::is_same_v<Real,float> ? Real(1.e-4) : Real(1.e-10);

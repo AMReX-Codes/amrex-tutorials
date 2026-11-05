@@ -96,7 +96,6 @@ int main (int argc, char* argv[])
             pp.query("diff_coef", diff_coef);
             pp.query("cfl", cfl);
         }
-        AMREX_ALWAYS_ASSERT(n_cell % 4 == 0);
 
         // Two levels on the unit square/cube with non-periodic walls.
         constexpr int nlevs = 2;
@@ -182,13 +181,17 @@ int main (int argc, char* argv[])
             if (do_reflux) {
                 // Register holds dt * area * (sum of fine fluxes - coarse flux) on
                 // the coarse faces of the coarse/fine boundary.
-                for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-                    Real const area_c = AMREX_D_TERM(1.0_rt, *geom[0].CellSize((d+1)%AMREX_SPACEDIM),
-                                                             *geom[0].CellSize((d+2)%AMREX_SPACEDIM));
-                    Real const area_f = AMREX_D_TERM(1.0_rt, *geom[1].CellSize((d+1)%AMREX_SPACEDIM),
-                                                             *geom[1].CellSize((d+2)%AMREX_SPACEDIM));
-                    flux_reg.CrseInit(flux[0][d], d, 0, 0, 1, -dt*area_c);
-                    flux_reg.FineAdd (flux[1][d], d, 0, 0, 1,  dt*area_f);
+                for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                    Real area_c = 1.0_rt;
+                    Real area_f = 1.0_rt;
+                    for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+                        if (d != idim) {
+                            area_c *= geom[0].CellSize(d);
+                            area_f *= geom[1].CellSize(d);
+                        }
+                    }
+                    flux_reg.CrseInit(flux[0][idim], idim, 0, 0, 1, -dt*area_c);
+                    flux_reg.FineAdd (flux[1][idim], idim, 0, 0, 1,  dt*area_f);
                 }
                 // Correct the coarse cells next to the fine level.
                 flux_reg.Reflux(phi[0], 1.0_rt, 0, 0, 1, geom[0]);

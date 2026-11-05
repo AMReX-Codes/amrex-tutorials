@@ -19,9 +19,9 @@ Choose `redistribution_type = StateRedist` (default), `FluxRedist`, or
 `NoRedist`. In 3D, `NoRedist` is unstable with the default time step.
 
 The state has two components: a Gaussian blob and a constant. The program
-checks that there are no NaNs, that the total mass (sum of volume fraction
-times state) is conserved to roundoff, and that the constant stays
-constant. That last check holds only if the velocity is divergence free.
+checks that the total mass (sum of volume fraction times state) is
+conserved to roundoff, and that the constant stays constant. That last
+check holds only if the velocity is divergence free.
 
 **Key APIs:** `EBFArrayBoxFactory`, `EBDataArrays`, `EB_computeDivergence`,
 `MLEBABecLap`, `MLMG::getFluxes`, `ApplyRedistribution`, `EB_set_covered`,
@@ -51,11 +51,11 @@ The CI run is short. To watch the blob go around the obstacle, run with
 
 ```
 max |div u| before projection: 881.403378
-max |div u| after projection:  1.707217148e-11
+max |div u| after projection:  1.714490745e-11
 Redistribution: StateRedist, dt = 0.006040948875, initial mass = 0.007724640317
 Steps: 17, time = 0.1
-...
-Relative change in mass: 3.817692201e-15 (tolerance 2.220446049e-13)
-Max deviation of the constant: 1.914024494e-13 (tolerance 1e-08)
+Blob min and max: 1.12862394e-36 0.8986989435
+Relative change in mass: 4.491402589e-16
+Max deviation of the constant: 1.916244941e-13 (tolerance 1e-08)
 PASSED
 ```

@@ -344,13 +344,14 @@ finite-volume flux needs it. In an ``MFIter`` loop over the cell-centered
 data, ``mfi.nodaltilebox(d)`` is the box of the tile's faces in direction
 ``d``; the face boxes of different tiles do not overlap, so the faces can
 be written in the same loop as the cells, and ``ParallelFor`` takes one
-box and one function per direction in a single launch, here a functor
+box and one function per direction in a single launch, here a lambda
 that sets one velocity component:
 
 .. literalinclude:: ../../Base/StaggeredGrids/main.cpp
    :language: cpp
-   :start-at: struct FaceVelocity
-   :end-at: };
+   :start-at: for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU())
+   :end-before: // A face on a box boundary
+   :dedent:
 
 A face on the boundary between two boxes is stored in both boxes, and
 ``OverrideSync`` copies the value of one box to the others so that the
@@ -741,7 +742,7 @@ the face. The tags are built on the host:
 .. literalinclude:: ../../Base/TagParallelFor/main.cpp
    :language: cpp
    :start-at: // One tag per (local box, domain face it touches)
-   :end-before: // Largest difference
+   :end-before: int main
 
 The kernel receives ``(i, j, k, n, tag)``. ``ParallelFor`` over a
 ``Vector`` of tags copies the tags to the device and synchronizes the
@@ -750,7 +751,7 @@ stream on every call, so for repeated use the ``TagVector`` is built once:
 .. literalinclude:: ../../Base/TagParallelFor/main.cpp
    :language: cpp
    :start-at: // 3. The TagVector is built once
-   :end-before: // Expected result
+   :end-before: amrex::Long ntags = tags.size();
    :dedent:
 
 On CPU, the launch is a loop over the tags that opens its own OpenMP

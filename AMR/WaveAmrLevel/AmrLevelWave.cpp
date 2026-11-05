@@ -4,9 +4,7 @@
 #include <AMReX_ParmParse.H>
 
 #include <algorithm>
-#include <functional>
 #include <limits>
-#include <numeric>
 
 using namespace amrex;
 using namespace amrex::literals;
@@ -201,14 +199,17 @@ AmrLevelWave::computeInitialDt (int finest_level, int /*sub_cycle*/,
 
     // Number of steps of each level in one level-0 step
     Vector<int> nsteps(n_cycle.size());
-    std::partial_sum(n_cycle.begin(), n_cycle.end(), nsteps.begin(),
-                     std::multiplies<>());
+    nsteps[0] = n_cycle[0];
+    for (int ilev = 1; ilev <= finest_level; ++ilev) {
+        nsteps[ilev] = nsteps[ilev-1] * n_cycle[ilev];
+    }
 
     // The wave speed is 1, so dt = cfl * dx on each level.
     Real dt_0 = std::numeric_limits<Real>::max();
     for (int ilev = 0; ilev <= finest_level; ++ilev) {
         const auto dx = parent->Geom(ilev).CellSizeArray();
-        Real const dtlev = cfl * std::min({AMREX_D_DECL(dx[0],dx[1],dx[2])});
+        Real dtlev = cfl * dx[0];
+        for (int d = 1; d < AMREX_SPACEDIM; ++d) { dtlev = std::min(dtlev, cfl * dx[d]); }
         dt_0 = std::min(dt_0, Real(nsteps[ilev]) * dtlev);
     }
 
@@ -296,5 +297,4 @@ AmrLevelWave::read_params ()
     ParmParse pp("wave");
     pp.query("rk_order", rk_order); // 3 or 4
     pp.query("cfl", cfl);
-    AMREX_ALWAYS_ASSERT(rk_order == 3 || rk_order == 4);
 }

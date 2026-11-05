@@ -35,11 +35,8 @@ agree and times them with `BL_PROFILE` (see
   atomics on the shared memory take the `local_space` address space.
 - Atomic adds to the same global address are serialized, so the time of
   the `ParallelFor` version grows as the bins get fewer. The private sums
-  in shared memory are `int`, with a check that a block cannot overflow
-  them, and leave one `Long` atomic per bin and block. Older AMReX
-  versions implemented `Gpu::Atomic::Add` on `Long` as a compare-and-swap
-  loop on CUDA and HIP, which under contention made the global version
-  slower by another factor of a hundred or more.
+  in shared memory are `int`, which a block cannot overflow with the values
+  used here, and leave one `Long` atomic per bin and block.
 - There is no CPU version of this launch. The CPU code is a separate path
   selected with `#ifdef AMREX_USE_GPU`; here it is an `MFIter` loop with
   tiling and a vector of private sums per OpenMP thread, merged after the

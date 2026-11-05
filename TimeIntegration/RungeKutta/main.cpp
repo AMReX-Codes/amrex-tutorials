@@ -7,7 +7,6 @@
 
 #include <cmath>
 #include <iomanip>
-#include <limits>
 #include <string>
 
 using namespace amrex;
@@ -95,11 +94,9 @@ int main (int argc, char* argv[])
             pp.query("dt", dt);
             pp.query("nruns", nruns);
             pp.query("kappa", prob.kappa);
-            Vector<Real> vel;
-            if (pp.queryarr("velocity", vel)) {
-                AMREX_ALWAYS_ASSERT(vel.size() >= AMREX_SPACEDIM);
-                for (int d = 0; d < AMREX_SPACEDIM; ++d) { prob.vel[d] = vel[d]; }
-            }
+            Vector<Real> vel(prob.vel.begin(), prob.vel.end());
+            pp.queryarr("velocity", vel, 0, AMREX_SPACEDIM);
+            for (int d = 0; d < AMREX_SPACEDIM; ++d) { prob.vel[d] = vel[d]; }
         }
 
         // The TimeIntegrator reads its method from ParmParse:
@@ -114,9 +111,9 @@ int main (int argc, char* argv[])
 
         // Formal order of accuracy of the selected method (0: unknown)
         int order = 0;
-        if (int_type == "ForwardEuler" || int_type == "0") {
+        if (int_type == "ForwardEuler") {
             order = 1;
-        } else if ((int_type == "RungeKutta" || int_type == "1") && rk_type >= 1 && rk_type <= 4) {
+        } else if (int_type == "RungeKutta" && rk_type >= 1 && rk_type <= 4) {
             order = rk_type;
         }
 
@@ -133,16 +130,16 @@ int main (int argc, char* argv[])
         exact_solution(exact, geom, prob, stop_time);
 
         amrex::Print() << "integration.type = " << int_type;
-        if (int_type == "RungeKutta" || int_type == "1") {
+        if (int_type == "RungeKutta") {
             amrex::Print() << ", integration.rk.type = " << rk_type;
         }
         amrex::Print() << "\n\n        dt     steps  RHS evals      max error   rate\n";
 
+        Real dt_run = dt;
         Real err_prev = 0;
+        Real rate = 0;
         for (int irun = 0; irun < nruns; ++irun)
         {
-            Real const dt_run = dt / Real(1 << irun);
-
             Real time = 0;
             exact_solution(phi, geom, prob, time);
 
@@ -171,34 +168,26 @@ int main (int argc, char* argv[])
             MultiFab::Subtract(phi, exact, 0, 0, 1, 0);
             Real const err = phi.norm0();
 
-            Real rate = 0;
-            if (irun > 0) {
-                rate = std::log2(err_prev/err);
-                // Skip the check once round-off dominates the error.
-                if (order > 0 && err > 1000*std::numeric_limits<Real>::epsilon()
-                    && rate < order - 0.2_rt) {
-                    status = 1;
-                }
-            }
-
             amrex::Print() << std::scientific << std::setprecision(3)
                            << "  " << dt_run << "  " << std::setw(6) << nsteps
                            << "  " << std::setw(9) << nrhs << "  " << err;
             if (irun > 0) {
+                rate = std::log2(err_prev/err);
                 amrex::Print() << std::fixed << std::setprecision(2) << "  " << std::setw(5) << rate;
             }
             amrex::Print() << "\n";
             err_prev = err;
+            dt_run *= 0.5_rt;
         }
 
         if (order > 0) {
             amrex::Print() << "\nExpected order of accuracy: " << order << "\n";
         }
-        if (!(err_prev < 0.1_rt)) { status = 1; }  // also catches NaN
-        if (status != 0) {
-            amrex::Print() << "FAILED\n";
-        } else {
+        if (order == 0 || rate >= order - 0.2_rt) {
             amrex::Print() << "PASSED\n";
+        } else {
+            amrex::Print() << "FAILED\n";
+            status = 1;
         }
     }
     amrex::Finalize();

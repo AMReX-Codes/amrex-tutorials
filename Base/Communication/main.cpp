@@ -1,6 +1,5 @@
 #include <AMReX.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_ParReduce.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
@@ -11,24 +10,11 @@
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real cell_id (int i, int j, int k, int n)
 {
-    auto wrap = [n] (int m) { return ((m % n) + n) % n; };
-    return amrex::Real(wrap(i) + n * (wrap(j) + n * wrap(k)));
-}
-
-// Max over valid and the first ng ghost cells of |mf - f(i,j,k)|
-template <typename F>
-amrex::Real max_error (amrex::MultiFab const& mf, int ng, F const& f)
-{
-    auto const& ma = mf.const_arrays();
-    amrex::Real r = amrex::ParReduce(amrex::TypeList<amrex::ReduceOpMax>{},
-                                     amrex::TypeList<amrex::Real>{},
-                                     mf, amrex::IntVect(ng),
-        [=] AMREX_GPU_DEVICE (int b, int i, int j, int k) -> amrex::GpuTuple<amrex::Real>
-        {
-            return { std::abs(ma[b](i,j,k) - f(i,j,k)) };
-        });
-    amrex::ParallelDescriptor::ReduceRealMax(r);
-    return r;
+    // ((m % n) + n) % n maps m into [0, n) also for negative m
+    i = ((i % n) + n) % n;
+    j = ((j % n) + n) % n;
+    k = ((k % n) + n) % n;
+    return amrex::Real(i + n * (j + n * k));
 }
 
 int main (int argc, char* argv[])
@@ -59,13 +45,6 @@ int main (int argc, char* argv[])
                              amrex::CoordSys::cartesian, {AMREX_D_DECL(1, 1, 1)});
 
         int const n = n_cell;
-        auto id = [=] AMREX_GPU_DEVICE (int i, int j, int k) { return cell_id(i,j,k,n); };
-        auto twice_id = [=] AMREX_GPU_DEVICE (int i, int j, int k) { return 2*cell_id(i,j,k,n); };
-        bool passed = true;
-        auto report = [&] (char const* what, Real err) {
-            amrex::Print() << what << ": max error = " << err << "\n";
-            passed = passed && (err == 0.0_rt);
-        };
 
         // FillBoundary: copy valid data into ghost cells, from neighboring
         // boxes and, with geom.periodicity(), across periodic boundaries.
@@ -77,13 +56,20 @@ int main (int argc, char* argv[])
             aa[b](i,j,k) = cell_id(i,j,k,n);
         });
 
+        // The expected result: cell_id in the valid and all ghost cells.
+        amrex::MultiFab ref(ba, dm, 1, 2);
+        auto const& ra = ref.arrays();
+        amrex::ParallelFor(ref, ref.nGrowVect(), [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+        {
+            ra[b](i,j,k) = cell_id(i,j,k,n);
+        });
+        amrex::MultiFab err(ba, dm, 1, 2);
+
         // Fill only the first of the two ghost layers.
         a.FillBoundary(amrex::IntVect(1), geom.periodicity());
-        report("FillBoundary, first ghost layer", max_error(a, 1, id));
-        bool const untouched = a.min(0, 2) == -1.0_rt; // the second layer still has -1
-        amrex::Print() << "FillBoundary, second ghost layer untouched: "
-                       << (untouched ? "yes" : "no") << "\n";
-        passed = passed && untouched;
+        amrex::MultiFab::Copy(err, a, 0, 0, 1, 2);
+        amrex::MultiFab::Subtract(err, ref, 0, 0, 1, 2);
+        amrex::Print() << "FillBoundary, first ghost layer: max error = " << err.norm0(0, 1) << "\n";
 
         // The non-blocking version starts the communication and returns.
         // Work that does not need the ghost cells of a can be done before
@@ -100,7 +86,10 @@ int main (int argc, char* argv[])
         dst.setVal(-1.0_rt);
 
         a.FillBoundary_finish();
-        report("FillBoundary, both ghost layers", max_error(a, 2, id));
+        amrex::MultiFab::Copy(err, a, 0, 0, 1, 2);
+        amrex::MultiFab::Subtract(err, ref, 0, 0, 1, 2);
+        Real const err_fillboundary = err.norm0(0, 2);
+        amrex::Print() << "FillBoundary, both ghost layers: max error = " << err_fillboundary << "\n";
 
         // ParallelCopy: copy between MultiFabs with different BoxArrays and
         // DistributionMappings, e.g., after regridding. Here the source is
@@ -108,11 +97,24 @@ int main (int argc, char* argv[])
         // valid and 1 ghost cell of dst. With geom.periodicity(), cells
         // outside the domain are filled from their periodic images.
         dst.ParallelCopy(a, 0, 0, 1, amrex::IntVect(0), amrex::IntVect(1), geom.periodicity());
-        report("ParallelCopy", max_error(dst, 1, id));
 
-        // ParallelAdd adds instead of copying.
+        amrex::MultiFab ref_dst(ba_dst, dm_dst, 1, 1);
+        auto const& rda = ref_dst.arrays();
+        amrex::ParallelFor(ref_dst, ref_dst.nGrowVect(), [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+        {
+            rda[b](i,j,k) = cell_id(i,j,k,n);
+        });
+        amrex::MultiFab err_dst(ba_dst, dm_dst, 1, 1);
+        amrex::MultiFab::Copy(err_dst, dst, 0, 0, 1, 1);
+        amrex::MultiFab::Subtract(err_dst, ref_dst, 0, 0, 1, 1);
+        amrex::Print() << "ParallelCopy: max error = " << err_dst.norm0(0, 1) << "\n";
+
+        // ParallelAdd adds instead of copying, so dst is now 2*cell_id.
         dst.ParallelAdd(a, 0, 0, 1, amrex::IntVect(0), amrex::IntVect(1), geom.periodicity());
-        report("ParallelAdd", max_error(dst, 1, twice_id));
+        amrex::MultiFab::Copy(err_dst, dst, 0, 0, 1, 1);
+        amrex::MultiFab::Subtract(err_dst, ref_dst, 0, 0, 1, 1);
+        amrex::MultiFab::Subtract(err_dst, ref_dst, 0, 0, 1, 1);
+        amrex::Print() << "ParallelAdd: max error = " << err_dst.norm0(0, 1) << "\n";
 
         // SumBoundary is the reverse of FillBoundary: values in ghost cells
         // are added to the valid cells they overlap. This is what deposition
@@ -144,9 +146,10 @@ int main (int argc, char* argv[])
         // Now every valid cell has received 1 from each of its neighbors.
         // The ghost cells are not updated; call FillBoundary if needed.
         Real const expected = AMREX_D_TERM(3.0_rt, *3.0_rt, *3.0_rt);
-        report("SumBoundary", std::max(c.max(0) - expected, expected - c.min(0)));
+        Real const err_sumboundary = std::max(c.max(0) - expected, expected - c.min(0));
+        amrex::Print() << "SumBoundary: max error = " << err_sumboundary << "\n";
 
-        if (passed) {
+        if (err_fillboundary == 0.0_rt && err_sumboundary == 0.0_rt) {
             amrex::Print() << "PASSED\n";
         } else {
             amrex::Print() << "FAILED\n";

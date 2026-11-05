@@ -11,18 +11,19 @@ ranks:
 - `SumBoundary` is the reverse of `FillBoundary`: it adds values in ghost
   cells to the valid cells they overlap, as needed for deposition.
 
-Each valid cell holds a unique number, so every result can be checked
-exactly.
+Each valid cell holds a unique number, so every result is compared exactly
+with a reference `MultiFab`; the program checks the full `FillBoundary` and
+`SumBoundary` results.
 
 **Key APIs:** `FillBoundary`, `FillBoundary_nowait`, `FillBoundary_finish`,
 `ParallelCopy`, `ParallelAdd`, `SumBoundary`, `Geometry::periodicity`,
-`MultiFab::setVal`, `MultiFab::norm0`
+`MultiFab::setVal`, `MultiFab::Copy`, `MultiFab::Subtract`, `MultiFab::norm0`
 
 ## What it does
 
 1. **FillBoundary.** A `MultiFab` with two ghost cells first fills only the
-   first ghost layer (`FillBoundary(IntVect(1), period)`), and the second
-   layer is checked to be untouched. Then all ghost cells are filled with
+   first ghost layer (`FillBoundary(IntVect(1), period)`), leaving the
+   second layer untouched. Then all ghost cells are filled with
    the non-blocking `FillBoundary_nowait` and `FillBoundary_finish`; work
    that does not need the ghost cells can be done in between, overlapping
    it with the communication.
@@ -59,7 +60,6 @@ Try different numbers of MPI ranks and box sizes, e.g.,
 
 ```
 FillBoundary, first ghost layer: max error = 0
-FillBoundary, second ghost layer untouched: yes
 FillBoundary, both ghost layers: max error = 0
 ParallelCopy: max error = 0
 ParallelAdd: max error = 0

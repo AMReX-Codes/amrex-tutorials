@@ -125,39 +125,49 @@ MDDiagnostics
 MDParticleContainer::diagnostics () const
 {
     using ConstPTD = ConstPTDType;
-    // Sums of kinetic energy, potential energy, momentum and |momentum|.
-    constexpr int ncomp = 3 + AMREX_SPACEDIM;
-    amrex::ReduceOps<AMREX_D_DECL(amrex::ReduceOpSum, amrex::ReduceOpSum, amrex::ReduceOpSum),
-                     amrex::ReduceOpSum, amrex::ReduceOpSum, amrex::ReduceOpSum,
-                     amrex::ReduceOpMax> reduce_ops;
-    using RD = amrex::ReduceData<AMREX_D_DECL(amrex::Real, amrex::Real, amrex::Real),
-                                 amrex::Real, amrex::Real, amrex::Real, amrex::Real>;
-    auto r = amrex::ParticleReduce<RD>(*this,
-        [=] AMREX_GPU_DEVICE (const ConstPTD& ptd, int i) noexcept -> RD::Type
-        {
-            AMREX_D_TERM(const amrex::Real vx = ptd.rdata(RealIdx::vx)[i];,
-                         const amrex::Real vy = ptd.rdata(RealIdx::vy)[i];,
-                         const amrex::Real vz = ptd.rdata(RealIdx::vz)[i];)
-            const amrex::Real v2 = AMREX_D_TERM(vx*vx, + vy*vy, + vz*vz);
-            return {AMREX_D_DECL(vx, vy, vz),
-                    0.5_rt*v2, amrex::Real(ptd.rdata(RealIdx::pe)[i]),
-                    AMREX_D_TERM(std::abs(vx), + std::abs(vy), + std::abs(vz)),
-                    std::sqrt(v2)};
-        }, reduce_ops);
-
-    auto const rv = amrex::tupleToArray(r);
-    amrex::Real sums[ncomp];
-    for (int n = 0; n < ncomp; ++n) { sums[n] = rv[n]; }
-    amrex::ParallelDescriptor::ReduceRealSum(sums, ncomp);
-    amrex::Real max_speed = rv[ncomp];
-    amrex::ParallelDescriptor::ReduceRealMax(max_speed);
-
+    // One pass over the particles per quantity for clarity; ParticleReduce
+    // can do several in one pass.
     MDDiagnostics diag;
     diag.np = TotalNumberOfParticles();
-    for (int d = 0; d < AMREX_SPACEDIM; ++d) { diag.momentum[d] = sums[d]; }
-    diag.kinetic = sums[AMREX_SPACEDIM];
-    diag.potential = sums[AMREX_SPACEDIM+1];
-    diag.abs_momentum = sums[AMREX_SPACEDIM+2];
-    diag.max_speed = max_speed;
+
+    diag.kinetic = amrex::ReduceSum(*this,
+        [=] AMREX_GPU_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
+        {
+            amrex::Real v2 = 0;
+            for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+                v2 += ptd.rdata(RealIdx::vx+d)[i] * ptd.rdata(RealIdx::vx+d)[i];
+            }
+            return 0.5_rt * v2;
+        });
+
+    diag.potential = amrex::ReduceSum(*this,
+        [=] AMREX_GPU_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
+        {
+            return ptd.rdata(RealIdx::pe)[i];
+        });
+
+    for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+        diag.momentum[d] = amrex::ReduceSum(*this,
+            [=] AMREX_GPU_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
+            {
+                return ptd.rdata(RealIdx::vx+d)[i];
+            });
+    }
+
+    diag.max_speed = amrex::ReduceMax(*this,
+        [=] AMREX_GPU_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
+        {
+            amrex::Real v2 = 0;
+            for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+                v2 += ptd.rdata(RealIdx::vx+d)[i] * ptd.rdata(RealIdx::vx+d)[i];
+            }
+            return std::sqrt(v2);
+        });
+
+    // The reductions above are local to this process.
+    amrex::ParallelDescriptor::ReduceRealSum(diag.kinetic);
+    amrex::ParallelDescriptor::ReduceRealSum(diag.potential);
+    amrex::ParallelDescriptor::ReduceRealSum(diag.momentum.data(), AMREX_SPACEDIM);
+    amrex::ParallelDescriptor::ReduceRealMax(diag.max_speed);
     return diag;
 }

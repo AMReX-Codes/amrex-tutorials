@@ -7,9 +7,6 @@
 #include <AMReX_Random.H>
 #include <AMReX_Scan.H>
 
-#include <algorithm>
-#include <iterator>
-#include <numeric>
 #include <vector>
 
 using amrex::Real;
@@ -65,9 +62,13 @@ int main (int argc, char* argv[])
 
         // Reference compaction on the host
         std::vector<Real> ref;
-        std::copy_if(h_values.begin(), h_values.end(), std::back_inserter(ref),
-                     [=] (Real v) { return v > threshold; });
-        bool const compaction_ok = std::equal(ref.begin(), ref.end(), h_kept.begin(), h_kept.end());
+        for (int i = 0; i < n; ++i) {
+            if (h_values[i] > threshold) { ref.push_back(h_values[i]); }
+        }
+        bool compaction_ok = (ref.size() == std::size_t(nkept));
+        for (int i = 0; compaction_ok && i < nkept; ++i) {
+            compaction_ok = (ref[i] == h_kept[i]);
+        }
         amrex::Print() << "Compaction matches the host result: "
                        << (compaction_ok ? "yes" : "no") << "\n";
 
@@ -86,10 +87,14 @@ int main (int argc, char* argv[])
         amrex::Gpu::streamSynchronize();
         amrex::The_Async_Arena()->free(offsets);
 
-        std::vector<int> ref_offsets(n);
-        std::exclusive_scan(h_counts.begin(), h_counts.end(), ref_offsets.begin(), 0);
-        bool const scan_ok = std::equal(ref_offsets.begin(), ref_offsets.end(), h_offsets.begin())
-            && total == std::accumulate(h_counts.begin(), h_counts.end(), 0);
+        // Reference exclusive scan on the host
+        bool scan_ok = true;
+        int running = 0;
+        for (int i = 0; i < n; ++i) {
+            if (h_offsets[i] != running) { scan_ok = false; }
+            running += h_counts[i];
+        }
+        scan_ok = scan_ok && (total == running);
         amrex::Print() << "ExclusiveSum total = " << total << ", matches the host result: "
                        << (scan_ok ? "yes" : "no") << "\n";
 

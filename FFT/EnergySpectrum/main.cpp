@@ -27,7 +27,6 @@ int main (int argc, char* argv[])
             pp.query("max_grid_size", max_grid_size);
             pp.query("outfile", outfile);
         }
-        AMREX_ALWAYS_ASSERT(n_cell > 16);
 
         // Periodic unit domain [0,1)^D. Wavenumbers are integers in units of 2*pi.
         Box domain(IntVect(0), IntVect(n_cell-1));

@@ -109,10 +109,8 @@ int main (int argc, char* argv[])
         bcs[0].setLo(2, amrex::BCType::int_dir);
         bcs[0].setHi(2, amrex::BCType::int_dir);
 #endif
-        amrex::Array<int,AMREX_SPACEDIM> is_periodic{};
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-            is_periodic[d] = (bcs[0].lo(d) == amrex::BCType::int_dir) ? 1 : 0;
-        }
+        // z periodic, must match the BCRec
+        amrex::Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(0, 0, 1)};
 
         amrex::Box domain(amrex::IntVect(0), amrex::IntVect(n_cell-1));
         amrex::BoxArray ba(domain);

@@ -52,6 +52,9 @@ builds, to change its options; the tolerances and verbosity come from the
 MLMG bottom-solver settings. Use `geometric` when it converges, since it is
 cheaper, and `hybrid` when the coefficients may be difficult.
 
+The standalone solve and the `algebraic` variant are checked against the
+exact solution; the other variants only print their iteration counts.
+
 ## Build and run
 
 CMake, from the repository root:
@@ -82,7 +85,7 @@ AlgMG standalone: 7 levels, 9 iterations, relative residual 8.6e-11, max error 7
 ...
 MLMG geometric: did not converge after 88 iterations
 MLMG geometric + AlgMG bottom: did not converge after 88 iterations
-MLMG algebraic: 3 iterations, max error 6.6e-11
-MLMG hybrid: 9 iterations, max error 9.8e-10, switched to AlgMG
+MLMG algebraic: 3 iterations, max error 6.4e-11
+MLMG hybrid: 9 iterations, max error 9.7e-10, switched to AlgMG
 PASSED
 ```

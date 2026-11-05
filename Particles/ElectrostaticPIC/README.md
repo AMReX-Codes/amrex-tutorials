@@ -25,8 +25,8 @@ The problem is a Langmuir (plasma) oscillation. In normalized units
 displaced by `xi0 sin(kx)`. Linear theory gives
 `E_x = -q n0 xi0 / epsilon0 sin(kx) cos(omega_p t)`. The code measures the
 frequency from the zero crossings of the `sin(kx)` mode of `E_x`. It
-checks that the frequency and the initial amplitude agree with theory to
-2%, and that the total (field plus kinetic) energy changes by less than 2%.
+checks that the frequency agrees with theory to 2% and that the total
+(field plus kinetic) energy changes by less than 2%.
 
 **Key APIs:** `amrex::ParticleContainerPureSoA`, `amrex::ParticleToMesh`,
 `amrex::MeshToParticle`, `amrex::ParticleInterpolator::Linear`,
@@ -62,7 +62,7 @@ Step 0, t = 0: E mode 0.009936866131, field energy 0.0003827000414, total energy
 ...
 Initial E mode amplitude: 0.009936866131 (linear theory 0.01)
 Measured frequency: 0.9956005796 (plasma frequency 1)
-Relative errors: frequency 0.004399420394, amplitude 0.006313386911, max energy change 0.001909800398
+Relative errors: frequency 0.0043994204, max energy change 0.001909799947
 PASSED
 ```
 

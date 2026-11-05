@@ -15,7 +15,7 @@ The tutorial runs in 2D and 3D.
 `MFIter::nodaltilebox`, `ParallelFor(box1, box2, box3, f1, f2, f3)`,
 `OverrideSync`, `computeDivergence`, `average_face_to_cellcenter`,
 `average_cellcenter_to_face`, `average_node_to_cellcenter`,
-`GetArrOfPtrs`, `GetArrOfConstPtrs`, `ParReduce`
+`GetArrOfPtrs`, `GetArrOfConstPtrs`, `MultiFab::Subtract`, `MultiFab::norm0`
 
 ## Notes
 

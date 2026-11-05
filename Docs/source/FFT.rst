@@ -51,7 +51,7 @@ The spectral derivative multiplies by :math:`i k_x`:
 .. literalinclude:: ../../FFT/Basic/main.cpp
    :language: cpp
    :start-at: // 2. Spectral derivative d/dx
-   :end-before: MultiFab dphi_exact
+   :end-before: Real const dphi_max
    :dedent:
 
 The low-pass filter maps the indices :math:`j` and :math:`k` to signed
@@ -60,7 +60,7 @@ wavenumbers:
 .. literalinclude:: ../../FFT/Basic/main.cpp
    :language: cpp
    :start-at: // 3. Low-pass filter
-   :end-before: MultiFab phi_low_exact
+   :end-before: MultiFab::Subtract(phi_low_exact
    :dedent:
 
 Run (from the top of the repository, see :doc:`GettingStarted`):

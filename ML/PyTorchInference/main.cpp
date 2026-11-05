@@ -158,11 +158,11 @@ int main (int argc, char* argv[])
                        << phi_out.min(1) << ", " << phi_out.max(1) << "]\n"
                        << "Max error vs. tanh(W x + b): " << max_error << "\n";
 
-        if (!(max_error < 1000*std::numeric_limits<Real>::epsilon())) {
+        if (max_error <= 1000*std::numeric_limits<Real>::epsilon()) {
+            amrex::Print() << "PASSED\n";
+        } else {
             amrex::Print() << "FAILED\n";
             status = 1;
-        } else {
-            amrex::Print() << "PASSED\n";
         }
     }
     amrex::Finalize();

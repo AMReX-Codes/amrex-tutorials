@@ -69,7 +69,7 @@ tiny launches.
 
 ```
 512 boxes, 384 boundary faces
-Max difference from the expected result: per-face launches 0, tags rebuilt 0, tags cached 0
+Max difference from the per-face launches: tags rebuilt 0, tags cached 0
 PASSED
 ```
 

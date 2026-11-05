@@ -6,4 +6,5 @@ chk_int = 10          # write a checkpoint every chk_int steps if > 0
 chk_file = chk        # checkpoint name prefix, e.g., chk00010
 
 # restart = chk00010  # restart from this checkpoint
-# test_restart = 1    # restart from the first checkpoint and compare
+# test_restart = 1    # restart from the first checkpoint and compare;
+                      # needs chk_int less than nsteps
