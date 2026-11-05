@@ -799,7 +799,7 @@ way, inlined and branch-free:
 
 .. literalinclude:: ../../Base/SIMD/main.cpp
    :language: cpp
-   :start-at: AMREX_GPU_HOST_DEVICE AMREX_NO_INLINE
+   :start-at: // For illustration only
    :end-before: // Part 2:
 
 The rules behind it: keep kernels inlinable; compute every quantity

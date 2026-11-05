@@ -31,9 +31,7 @@ Real f_branch (Real p, Real c)
 
 // Inlined and without branches, the loop vectorizes. The arithmetic is done
 // unconditionally, on an argument made safe for every lane (abs), and ?:
-// only picks one of the computed values. Arithmetic inside the arms of ?:
-// is not evaluated speculatively by GCC with its default -ftrapping-math,
-// and the loop would stay scalar; see the README.
+// only picks one of the computed values.
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 Real f_select (Real p, Real c)
 {
@@ -174,10 +172,10 @@ int main (int argc, char* argv[])
         amrex::Print() << "Part 2: max difference between the SIMD and the scalar push = "
                        << diff2 << "\n";
 
-        // The push rounds the same way in every lane, up to fused
-        // multiply-adds the compiler may use in one version only.
-        Real const tol = Real(nrepeat) * 4.0_rt * std::numeric_limits<Real>::epsilon();
-        if (diff1 == 0.0_rt && diff2 <= tol) {
+        // Both pairs of kernels round the same way, up to fused multiply-adds
+        // or a fast-math sqrt the compiler may use in one version only.
+        Real const eps = std::numeric_limits<Real>::epsilon();
+        if (diff1 <= 4.0_rt * eps && diff2 <= Real(nrepeat) * 4.0_rt * eps) {
             amrex::Print() << "PASSED\n";
         } else {
             amrex::Print() << "FAILED\n";

@@ -74,8 +74,9 @@ Options
      - Build the :ref:`SUNDIALS <timeintegration-sundials>` tutorial
        (SUNDIALS is downloaded unless ``SUNDIALS_ROOT`` is given)
    * - ``-DAMReX_SIMD=ON``
-     - Enable AMReX's ``ParallelForSIMD``, see :ref:`base-simd` (the
-       header-only vir-simd library is downloaded unless it is installed)
+     - Enable AMReX's ``ParallelForSIMD`` on CPUs, see :ref:`base-simd`
+       (the header-only vir-simd library is downloaded unless it is
+       installed)
    * - ``-DAMReX_FORTRAN_INTERFACES=ON``
      - Build the :doc:`Fortran` tutorials (needs a Fortran compiler)
    * - ``-DAMReXTutorials_PYTHON=ON``

@@ -37,7 +37,7 @@ Useful options:
 | `-DAMReX_ROOT=/path/to/install` | Use an installed AMReX |
 | `-DAMReX_TINY_PROFILE=ON` | Build with TinyProfiler (see [Base/HeatEquation](Base/HeatEquation)) |
 | `-DAMReX_SUNDIALS=ON` | Build the SUNDIALS tutorial (SUNDIALS is downloaded) |
-| `-DAMReX_SIMD=ON` | Enable AMReX's `ParallelForSIMD` (vir-simd is downloaded); see [Base/SIMD](Base/SIMD) |
+| `-DAMReX_SIMD=ON` | Enable AMReX's `ParallelForSIMD` on CPUs (vir-simd is downloaded); see [Base/SIMD](Base/SIMD) |
 | `-DAMReX_FORTRAN_INTERFACES=ON` | Build the Fortran tutorials (needs a Fortran compiler) |
 | `-DAMReXTutorials_PYTHON=ON` | Test the pyAMReX tutorials |
 | `-DAMReXTutorials_TORCH=ON` | Build the PyTorch tutorial (needs LibTorch) |
