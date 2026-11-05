@@ -45,6 +45,7 @@ int main (int argc, char* argv[])
         const amrex::Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1, 1, 1)};
         const amrex::Geometry geom(domain, real_box, amrex::CoordSys::cartesian, is_periodic);
         params.r_list = geom.CellSize(0);
+        AMREX_ALWAYS_ASSERT(params.sigma < params.r_list); // the list must reach the cutoff
 
         amrex::BoxArray ba(domain);
         ba.maxSize(max_grid_size);
@@ -69,6 +70,7 @@ int main (int argc, char* argv[])
         // Assuming speeds stay near that, the relative motion of a pair between
         // rebuilds must stay below the skin r_list - sigma.
         const amrex::Real dt = cfl * params.sigma / d0.max_speed;
+        AMREX_ALWAYS_ASSERT(2*num_rebuild*cfl*params.sigma < params.r_list - params.sigma);
         amrex::Print() << "Number of particles: " << d0.np << ", dt = " << dt << "\n";
 
         // Velocity Verlet time stepping.

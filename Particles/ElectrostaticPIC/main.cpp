@@ -182,6 +182,8 @@ int main (int argc, char* argv[])
         amrex::Print() << "Initial E mode amplitude: " << mode_history[0]
                        << " (linear theory " << expected_amplitude << ")\n";
 
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(crossings.size() >= 2,
+                                         "Not enough zero crossings; increase nsteps");
         const amrex::Real half_period = (crossings.back() - crossings.front())
             / amrex::Real(crossings.size() - 1);
         const amrex::Real omega = amrex::Math::pi<amrex::Real>() / half_period;
@@ -192,11 +194,11 @@ int main (int argc, char* argv[])
                        << ", max energy change " << max_energy_error << "\n";
 
         // Finite grid and time step effects are below one percent here.
-        if (frequency_error > 0.02_rt || max_energy_error > 0.02_rt) {
+        if (frequency_error <= 0.02_rt && max_energy_error <= 0.02_rt) {
+            amrex::Print() << "PASSED\n";
+        } else {
             amrex::Print() << "FAILED\n";
             status = 1;
-        } else {
-            amrex::Print() << "PASSED\n";
         }
     }
     amrex::Finalize();

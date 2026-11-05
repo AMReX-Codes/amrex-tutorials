@@ -55,7 +55,7 @@ max |div u| after projection:  1.714490745e-11
 Redistribution: StateRedist, dt = 0.006040948875, initial mass = 0.007724640317
 Steps: 17, time = 0.1
 Blob min and max: 1.12862394e-36 0.8986989435
-Relative change in mass: 4.491402589e-16
+Relative change in mass: 4.491402589e-16 (tolerance 2.220446049e-13)
 Max deviation of the constant: 1.916244941e-13 (tolerance 1e-08)
 PASSED
 ```

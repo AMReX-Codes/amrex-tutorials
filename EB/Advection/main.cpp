@@ -13,6 +13,7 @@
 #include <AMReX_Print.H>
 
 #include <cmath>
+#include <limits>
 #include <string>
 #include <type_traits>
 
@@ -416,13 +417,17 @@ int main (int argc, char* argv[])
         EB_set_covered(S, 1, 1, 0, 0.0_rt);
         const Real const_err = S.norm0(1);
 
-        const Real tol = std::is_same_v<Real,float> ? 1.e-3_rt : 1.e-8_rt;
+        // Mass is conserved to round-off; the constant only up to the
+        // tolerance of the velocity projection.
+        const Real mass_tol = 1000 * std::numeric_limits<Real>::epsilon();
+        const Real const_tol = std::is_same_v<Real,float> ? 1.e-3_rt : 1.e-8_rt;
         amrex::Print() << "Steps: " << step << ", time = " << time << "\n"
                        << "Blob min and max: " << S.min(0) << " " << S.max(0) << "\n"
-                       << "Relative change in mass: " << mass_err << "\n"
+                       << "Relative change in mass: " << mass_err
+                       << " (tolerance " << mass_tol << ")\n"
                        << "Max deviation of the constant: " << const_err
-                       << " (tolerance " << tol << ")\n";
-        if (mass_err <= tol && const_err <= tol) {
+                       << " (tolerance " << const_tol << ")\n";
+        if (mass_err <= mass_tol && const_err <= const_tol) {
             amrex::Print() << "PASSED\n";
         } else {
             amrex::Print() << "FAILED\n";

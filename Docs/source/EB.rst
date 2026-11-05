@@ -57,8 +57,7 @@ geometry from the ``eb2.*`` parameters (e.g., ``eb2.geom_type = stl``):
    :dedent:
 
 For each geometry, the program counts regular, cut and covered cells, and
-sums the fluid volume, the EB surface area, and the fluid area of the plane
-:math:`x = 0`. The EB data (cell flags, volume and area fractions,
+sums the fluid volume and the EB surface area. The EB data (cell flags, volume and area fractions,
 centroids, ...) are accessed in a kernel through the factory's
 ``EBDataArrays``:
 
@@ -68,11 +67,8 @@ centroids, ...) are accessed in a kernel through the factory's
    :end-at: });
    :dedent:
 
-The volume is compared with the exact value when one is known (not for a
-user-supplied ``parser.function`` or another ``eb2.*`` geometry), and for the
-sphere also the EB area and the area at :math:`x = 0`. The program fails if a
-relative error exceeds 2% at ``n_cell = 32`` (the tolerance scales with
-:math:`\Delta x^2`). It writes a plotfile ``plt_<geometry>`` with the cell
+For the sphere, the volume and the EB area are compared with the exact
+values, and the program fails if a relative error exceeds 5%. It writes a plotfile ``plt_<geometry>`` with the cell
 type and the volume fraction, and in 3D the EB surface of
 ``surface_geometry`` to ``eb.pvtp`` for ParaView.
 
@@ -215,7 +211,7 @@ Redistribution is applied box by box where the box has cut cells:
    :dedent:
 
 The state has two components, a Gaussian blob and a constant. The program
-checks that there are no NaNs, that the total mass
+checks that the total mass
 (:math:`\sum \kappa S\,\Delta V`) is conserved to round-off, and that the
 constant stays constant, which holds only if the velocity is divergence
 free.
@@ -236,10 +232,10 @@ stop_time=1 plot_int=10``.
 .. code-block:: text
 
    max |div u| before projection: 881.403378
-   max |div u| after projection:  1.707217148e-11
+   max |div u| after projection:  1.714490745e-11
    Redistribution: StateRedist, dt = 0.006040948875, initial mass = 0.007724640317
    Steps: 17, time = 0.1
-   ...
-   Relative change in mass: 3.817692201e-15 (tolerance 2.220446049e-13)
-   Max deviation of the constant: 1.914024494e-13 (tolerance 1e-08)
+   Blob min and max: 1.12862394e-36 0.8986989435
+   Relative change in mass: 4.491402589e-16 (tolerance 2.220446049e-13)
+   Max deviation of the constant: 1.916244941e-13 (tolerance 1e-08)
    PASSED

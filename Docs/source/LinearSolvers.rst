@@ -370,8 +370,8 @@ Run:
    AlgMG standalone: 7 levels, 9 iterations, relative residual 8.6e-11, max error 7.3e-10
    MLMG geometric: did not converge after 88 iterations
    MLMG geometric + AlgMG bottom: did not converge after 88 iterations
-   MLMG algebraic: 3 iterations, max error 6.6e-11
-   MLMG hybrid: 9 iterations, max error 9.8e-10, switched to AlgMG
+   MLMG algebraic: 3 iterations, max error 6.4e-11
+   MLMG hybrid: 9 iterations, max error 9.7e-10, switched to AlgMG
    PASSED
 
 Runtime parameters: ``n_cell``, ``max_grid_size``, ``block``, ``jump``,

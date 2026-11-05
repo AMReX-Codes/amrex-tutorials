@@ -184,10 +184,13 @@ int main (int argc, char* argv[])
         if (order > 0) {
             amrex::Print() << "\nExpected order of accuracy: " << order << "\n";
         }
-        // Once the error reaches round-off (e.g., RK4 in single precision),
-        // the rate is meaningless and is not checked.
+        // The error must be small for any method. The rate needs two runs and
+        // is meaningless once the error reaches round-off (e.g., RK4 in single
+        // precision), so it is checked only otherwise.
         Real const roundoff = 1000 * std::numeric_limits<Real>::epsilon();
-        if (order == 0 || err_prev < roundoff || rate >= order - 0.2_rt) {
+        bool const rate_ok = order == 0 || nruns < 2 || err_prev < roundoff
+                          || rate >= order - 0.2_rt;
+        if (err_prev < 0.1_rt && rate_ok) {
             amrex::Print() << "PASSED\n";
         } else {
             amrex::Print() << "FAILED\n";

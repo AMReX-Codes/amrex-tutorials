@@ -82,8 +82,8 @@ Poisson
 :Source: `FFT/Poisson <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/FFT/Poisson>`__
 :Key APIs: ``FFT::Poisson``, ``FFT::PoissonHybrid``, ``FFT::Boundary``
 
-Solve :math:`\nabla^2\phi = f` with FFT-based direct solvers and check the
-result against a manufactured solution:
+Solve :math:`\nabla^2\phi = f` with FFT-based direct solvers for a
+manufactured solution:
 
 #. ``FFT::Poisson`` with periodic boundaries.
 #. ``FFT::Poisson`` with homogeneous Dirichlet (``FFT::Boundary::odd``, sine

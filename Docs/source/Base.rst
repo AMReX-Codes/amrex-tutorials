@@ -204,8 +204,9 @@ Communication
            ``SumBoundary``, ``Geometry::periodicity``
 
 The three basic ways to exchange ``MultiFab`` data between boxes and MPI
-ranks. Each valid cell holds a unique number, so every result is checked
-exactly.
+ranks. Each valid cell holds a unique number, so every result is compared
+exactly with a reference ``MultiFab``; the program checks the full
+``FillBoundary`` and ``SumBoundary`` results.
 
 ``FillBoundary`` copies valid data into the ghost cells of neighboring
 boxes, and with ``geom.periodicity()`` also across periodic boundaries. It
@@ -324,7 +325,7 @@ StaggeredGrids
            ``computeDivergence``,
            ``average_face_to_cellcenter``, ``average_cellcenter_to_face``,
            ``average_node_to_cellcenter``, ``GetArrOfPtrs``,
-           ``GetArrOfConstPtrs``, ``ParReduce``
+           ``GetArrOfConstPtrs``, ``MultiFab::Subtract``, ``MultiFab::norm0``
 
 Data on cell centers, faces and nodes of the same grids. The ``BoxArray``
 of a ``MultiFab`` carries the index type, and ``convert`` turns the
@@ -454,7 +455,8 @@ Reductions
 
 Computes sums, minima, maxima and counts over a ``MultiFab`` and a device
 vector, on CPU and GPU, and combines them across MPI ranks. The data,
-:math:`\phi = i + j + k`, has simple exact answers that the program checks.
+:math:`\phi = i + j + k`, has a simple exact sum and maximum; the program
+prints them next to the computed values and checks the two sums.
 
 - ``MultiFab`` member functions (``sum``, ``norm0``, ...) compute common
   norms and already include the MPI reduction.
