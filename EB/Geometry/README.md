@@ -14,7 +14,7 @@ program builds each geometry listed in `geometries` on `[-1,1]^D` (default
 
 For each geometry, the program counts regular, cut and covered cells and
 sums the fluid volume and the EB surface area. For the sphere it compares
-both with the exact values and fails if a relative error is larger than 2%.
+both with the exact values and fails if a relative error is larger than 5%.
 It writes a plotfile `plt_<geometry>` with the cell type and the volume
 fraction, and in 3D the EB surface of `surface_geometry` to `eb.pvtp` for
 ParaView.

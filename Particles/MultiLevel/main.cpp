@@ -91,6 +91,8 @@ int main (int argc, char* argv[])
             pp.query("nsteps", nsteps);
             pp.query("write_plotfile", write_plotfile);
         }
+        // The fine grids must be coarsenable by 2 for the deposition.
+        AMREX_ALWAYS_ASSERT(n_cell % 4 == 0 && max_grid_size % 2 == 0);
 
         // Two levels on the periodic unit domain: level 1 refines the middle
         // half of level 0 by 2.

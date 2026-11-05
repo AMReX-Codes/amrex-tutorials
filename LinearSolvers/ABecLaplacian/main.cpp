@@ -19,7 +19,7 @@ namespace {
 // on the unit square/cube.  beta is about beta_in inside a sphere of
 // radius r0 and 1 outside, with a smooth but steep transition.  The fine
 // level covers the sphere.
-constexpr Real k = Real(2)*Math::pi<Real>();
+constexpr Real kwave = Real(2)*Math::pi<Real>();
 constexpr Real q = Real(0.25)*Math::pi<Real>();
 constexpr Real r0 = Real(0.15);
 constexpr Real steepness = Real(20);
@@ -29,7 +29,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 Real exact_phi (GpuArray<Real,AMREX_SPACEDIM> const& x)
 {
     Real r = 1;
-    for (int d = 0; d < AMREX_SPACEDIM; ++d) { r *= std::sin(k*x[d] + q); }
+    for (int d = 0; d < AMREX_SPACEDIM; ++d) { r *= std::sin(kwave*x[d] + q); }
     return r;
 }
 
@@ -39,7 +39,7 @@ Real dphi (GpuArray<Real,AMREX_SPACEDIM> const& x, int dir)
 {
     Real r = 1;
     for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-        r *= (d == dir) ? k*std::cos(k*x[d] + q) : std::sin(k*x[d] + q);
+        r *= (d == dir) ? kwave*std::cos(kwave*x[d] + q) : std::sin(kwave*x[d] + q);
     }
     return r;
 }
@@ -47,7 +47,7 @@ Real dphi (GpuArray<Real,AMREX_SPACEDIM> const& x, int dir)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 Real alpha (GpuArray<Real,AMREX_SPACEDIM> const& x)
 {
-    return Real(1) + Real(0.5)*std::sin(k*x[0]);
+    return Real(1) + Real(0.5)*std::sin(kwave*x[0]);
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -75,7 +75,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 Real exact_rhs (GpuArray<Real,AMREX_SPACEDIM> const& x, Real a, Real b, Real beta_in)
 {
     // div(beta grad phi) = beta*lap(phi) + grad(beta).grad(phi)
-    Real div = -Real(AMREX_SPACEDIM)*k*k*beta(x,beta_in)*exact_phi(x);
+    Real div = -Real(AMREX_SPACEDIM)*kwave*kwave*beta(x,beta_in)*exact_phi(x);
     for (int d = 0; d < AMREX_SPACEDIM; ++d) { div += dbeta(x,d,beta_in)*dphi(x,d); }
     return a*alpha(x)*exact_phi(x) - b*div;
 }

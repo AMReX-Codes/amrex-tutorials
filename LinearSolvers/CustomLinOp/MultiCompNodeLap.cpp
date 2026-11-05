@@ -20,6 +20,7 @@ GpuArray<Real,N*N> invert (GpuArray<Real,N*N> a, int n)
         for (int r = col+1; r < n; ++r) {
             if (std::abs(a[r*n+col]) > std::abs(a[piv*n+col])) { piv = r; }
         }
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(a[piv*n+col] != 0, "MultiCompNodeLap: singular C");
         for (int c = 0; c < n; ++c) {
             std::swap(a[col*n+c], a[piv*n+c]);
             std::swap(inv[col*n+c], inv[piv*n+c]);
