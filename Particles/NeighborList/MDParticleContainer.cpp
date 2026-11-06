@@ -131,7 +131,7 @@ MDParticleContainer::diagnostics () const
     diag.np = TotalNumberOfParticles();
 
     diag.kinetic = amrex::ReduceSum(*this,
-        [=] AMREX_GPU_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
+        [=] AMREX_GPU_HOST_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
         {
             amrex::Real v2 = 0;
             for (int d = 0; d < AMREX_SPACEDIM; ++d) {
@@ -141,21 +141,21 @@ MDParticleContainer::diagnostics () const
         });
 
     diag.potential = amrex::ReduceSum(*this,
-        [=] AMREX_GPU_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
+        [=] AMREX_GPU_HOST_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
         {
             return ptd.rdata(RealIdx::pe)[i];
         });
 
     for (int d = 0; d < AMREX_SPACEDIM; ++d) {
         diag.momentum[d] = amrex::ReduceSum(*this,
-            [=] AMREX_GPU_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
+            [=] AMREX_GPU_HOST_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
             {
                 return ptd.rdata(RealIdx::vx+d)[i];
             });
     }
 
     diag.max_speed = amrex::ReduceMax(*this,
-        [=] AMREX_GPU_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
+        [=] AMREX_GPU_HOST_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
         {
             amrex::Real v2 = 0;
             for (int d = 0; d < AMREX_SPACEDIM; ++d) {

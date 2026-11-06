@@ -42,13 +42,13 @@ Stats computeStats (PC const& pc)
     using ConstPTD = PC::ConstPTDType;
 
     amrex::Real weight = amrex::ReduceSum(pc,
-        [=] AMREX_GPU_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
+        [=] AMREX_GPU_HOST_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
         {
             return ptd.rdata(RealIdx::w)[i];
         });
 
     amrex::Real energy = amrex::ReduceSum(pc,
-        [=] AMREX_GPU_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
+        [=] AMREX_GPU_HOST_DEVICE (const ConstPTD& ptd, int i) noexcept -> amrex::Real
         {
             amrex::Real v2 = 0;
             for (int d = 0; d < AMREX_SPACEDIM; ++d) {
