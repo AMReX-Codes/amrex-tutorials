@@ -1,7 +1,7 @@
 # Poisson ★★
 
-Solve `lap(phi) = rhs` with FFT-based direct solvers and check the result
-against a manufactured solution:
+Solve `lap(phi) = rhs` with FFT-based direct solvers for a manufactured
+solution:
 
 1. `FFT::Poisson` with periodic boundaries.
 2. `FFT::Poisson` with homogeneous Dirichlet (`FFT::Boundary::odd`, sine
@@ -13,10 +13,10 @@ against a manufactured solution:
    Neumann, and `z` may have a non-uniform cell size.
 
 The solvers invert the standard second-order Laplacian exactly, so the
-relative residual of the discrete equations is at round-off level, while the
-error against the exact solution is `O(dx^2)`. If `phi` has ghost cells, the
-solver fills one layer from the boundary conditions; we use them to compute
-the residual. Works in 2D and 3D.
+relative residual of the discrete equations is at round-off level; each case
+checks that. The error against the exact solution is `O(dx^2)` and is only
+printed. If `phi` has ghost cells, the solver fills one layer from the
+boundary conditions; we use them to compute the residual. Works in 2D and 3D.
 
 With all boundaries periodic or Neumann, the solution is unique only up to a
 constant and `rhs` must have zero mean.

@@ -73,7 +73,8 @@ AmrCoreAdv::ReadParameters ()
 
         // Refine where phi > phierr[lev]. The last value is used for finer levels.
         Vector<Real> phierr{0.01_rt, 0.1_rt, 0.5_rt};
-        if (Vector<Real> v; pp.queryarr("phierr", v)) { phierr = v; } // replace all
+        Vector<Real> phierr_in;
+        if (pp.queryarr("phierr", phierr_in)) { phierr = phierr_in; } // replace all
         error_tags.emplace_back(phierr, AMRErrorTag::GREATER, "phi");
     }
 }

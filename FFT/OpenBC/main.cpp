@@ -2,7 +2,6 @@
 #include <AMReX_FFT.H>
 #include <AMReX_FFT_Poisson.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_ParReduce.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
@@ -57,19 +56,6 @@ Real exact_potential (Real r, Real sigma)
     Real x = r*r/two_sigma2;
     return (std::log(two_sigma2) + E1_plus_log(x)) / (Real(4)*Math::pi<Real>());
 #endif
-}
-
-Real rel_error (MultiFab const& phi, MultiFab const& phi_exact)
-{
-    auto const& ma = phi.const_arrays();
-    auto const& me = phi_exact.const_arrays();
-    Real r = ParReduce(TypeList<ReduceOpMax>{}, TypeList<Real>{}, phi, IntVect(0),
-        [=] AMREX_GPU_DEVICE (int box_no, int i, int j, int k) -> GpuTuple<Real>
-        {
-            return { std::abs(ma[box_no](i,j,k) - me[box_no](i,j,k)) };
-        });
-    ParallelDescriptor::ReduceRealMax(r);
-    return r / phi_exact.norm0();
 }
 
 }
@@ -129,40 +115,40 @@ int main (int argc, char* argv[])
         FFT::OpenBCSolver<Real> solver(geom.Domain());
         {
             auto const lo = geom.Domain().smallEnd();
-            Real const gfac = Real(1)/std::sqrt(Real(12));
+            Real const gfac = Real(1)/std::sqrt(Real(12)); // Gauss points at +/- gfac
 #if (AMREX_SPACEDIM == 3)
-            Real const fac = -dx[0]*dx[1]*dx[2] / (Real(8) * Real(4)*Math::pi<Real>());
-#else
-            Real const fac = dx[0]*dx[1] / (Real(4) * Real(2)*Math::pi<Real>());
-#endif
+            // G = -1/(4 pi r), averaged over the 8 Gauss points of a cell.
             // (i,j,k) - lo is the separation between two cells in cell units.
+            Real const fac = -dx[0]*dx[1]*dx[2] / (Real(8) * Real(4)*Math::pi<Real>());
             solver.setGreensFunction([=] AMREX_GPU_DEVICE (int i, int j, int k) -> Real
             {
-                amrex::ignore_unused(k); // unused in 2D
-                IntVect const iv(AMREX_D_DECL(i,j,k));
                 Real r = 0;
-#if (AMREX_SPACEDIM == 3)
                 for (int gz = -1; gz <= 1; gz += 2) {
-#endif
                 for (int gy = -1; gy <= 1; gy += 2) {
                 for (int gx = -1; gx <= 1; gx += 2) {
-                    IntVect const g(AMREX_D_DECL(gx,gy,gz));
-                    Real d2 = 0;
-                    for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-                        Real xg = (Real(iv[d]-lo[d]) + Real(g[d])*gfac) * dx[d];
-                        d2 += xg*xg;
-                    }
-#if (AMREX_SPACEDIM == 3)
-                    r += Real(1)/std::sqrt(d2);   // G = -1/(4 pi r)
-#else
-                    r += Real(0.5)*std::log(d2);  // G = ln(r)/(2 pi)
-#endif
-                }}
-#if (AMREX_SPACEDIM == 3)
-                }
-#endif
+                    Real x = (Real(i-lo[0]) + Real(gx)*gfac) * dx[0];
+                    Real y = (Real(j-lo[1]) + Real(gy)*gfac) * dx[1];
+                    Real z = (Real(k-lo[2]) + Real(gz)*gfac) * dx[2];
+                    r += Real(1)/std::sqrt(x*x + y*y + z*z);
+                }}}
                 return fac * r;
             });
+#else
+            // G = ln(r)/(2 pi), averaged over the 4 Gauss points of a cell.
+            // (i,j) - lo is the separation between two cells in cell units.
+            Real const fac = dx[0]*dx[1] / (Real(4) * Real(2)*Math::pi<Real>());
+            solver.setGreensFunction([=] AMREX_GPU_DEVICE (int i, int j, int) -> Real
+            {
+                Real r = 0;
+                for (int gy = -1; gy <= 1; gy += 2) {
+                for (int gx = -1; gx <= 1; gx += 2) {
+                    Real x = (Real(i-lo[0]) + Real(gx)*gfac) * dx[0];
+                    Real y = (Real(j-lo[1]) + Real(gy)*gfac) * dx[1];
+                    r += Real(0.5)*std::log(x*x + y*y);
+                }}
+                return fac * r;
+            });
+#endif
         }
 
         MultiFab phi(ba, dm, 1, 0);
@@ -170,7 +156,9 @@ int main (int argc, char* argv[])
 
         // Second-order accurate: the error scales with (dx/sigma)^2.
         Real const tol = Real(0.15) * (dx[0]/sigma) * (dx[0]/sigma);
-        Real err = rel_error(phi, phi_exact);
+        Real const exact_max = phi_exact.norm0();
+        MultiFab::Subtract(phi, phi_exact, 0, 0, 1, 0);
+        Real err = phi.norm0() / exact_max;
         amrex::Print() << "FFT::OpenBCSolver   relative error: " << err << "\n";
         bool pass = err < tol;
 
@@ -180,7 +168,8 @@ int main (int argc, char* argv[])
         FFT::PoissonOpenBC<MultiFab> poisson(geom);
         MultiFab phi2(ba, dm, 1, 0);
         poisson.solve(phi2, rho);
-        Real err2 = rel_error(phi2, phi_exact);
+        MultiFab::Subtract(phi2, phi_exact, 0, 0, 1, 0);
+        Real err2 = phi2.norm0() / exact_max;
         amrex::Print() << "FFT::PoissonOpenBC  relative error: " << err2 << "\n";
         pass = pass && err2 < tol;
 #endif

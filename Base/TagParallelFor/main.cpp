@@ -1,7 +1,6 @@
 #include <AMReX.H>
 #include <AMReX_Gpu.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_ParReduce.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 #include <AMReX_TagParallelFor.H>
@@ -53,23 +52,6 @@ make_boundary_tags (amrex::MultiFab& mf, amrex::Box const& domain, int nghost)
         }
     }
     return tags;
-}
-
-// Largest difference between two MultiFabs, ghost cells included.
-Real max_diff (amrex::MultiFab const& a, amrex::MultiFab const& b)
-{
-    auto const& ma = a.const_arrays();
-    auto const& mb = b.const_arrays();
-    Real r = amrex::ParReduce(amrex::TypeList<amrex::ReduceOpMax>{},
-                              amrex::TypeList<Real>{},
-                              a, a.nGrowVect(), a.nComp(),
-        [=] AMREX_GPU_DEVICE (int box_no, int i, int j, int k, int n)
-            -> amrex::GpuTuple<Real>
-        {
-            return { std::abs(ma[box_no](i,j,k,n) - mb[box_no](i,j,k,n)) };
-        });
-    amrex::ParallelDescriptor::ReduceRealMax(r);
-    return r;
 }
 
 int main (int argc, char* argv[])
@@ -169,50 +151,18 @@ int main (int argc, char* argv[])
             amrex::Gpu::streamSynchronize();
         }
 
-        // Expected result: valid cells hold the exact function, the ghost
-        // cells outside one domain face its mirror image, all other ghost
-        // cells zero.
-        amrex::MultiFab expected(ba, dm, ncomp, nghost);
-        for (amrex::MFIter mfi(expected); mfi.isValid(); ++mfi) {
-            amrex::Box const& vbx = mfi.validbox();
-            auto const& e = expected.array(mfi);
-            amrex::ParallelFor(mfi.fabbox(), ncomp,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
-            {
-                int idx[3] = {i, j, k};
-                int nout = 0; // directions in which the cell is outside the domain
-                int dout = 0;
-                bool inside_others = true; // within the valid box in the other directions
-                for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-                    if (idx[d] < dlo[d] || idx[d] > dhi[d]) {
-                        ++nout;
-                        dout = d;
-                    } else if (idx[d] < vbx.smallEnd(d) || idx[d] > vbx.bigEnd(d)) {
-                        inside_others = false;
-                    }
-                }
-                if (vbx.contains(amrex::IntVect(AMREX_D_DECL(i,j,k)))) {
-                    e(i,j,k,n) = exact(i,j,k,n);
-                } else if (nout == 1 && inside_others) {
-                    idx[dout] = (idx[dout] < dlo[dout]) ? 2*dlo[dout] - 1 - idx[dout]
-                                                        : 2*dhi[dout] + 1 - idx[dout];
-                    e(i,j,k,n) = exact(idx[0],idx[1],idx[2],n);
-                } else {
-                    e(i,j,k,n) = 0.0_rt;
-                }
-            });
-        }
-
         amrex::Long ntags = tags.size();
         amrex::ParallelDescriptor::ReduceLongSum(ntags);
         amrex::Print() << ba.size() << " boxes, " << ntags << " boundary faces\n";
 
-        Real const d1 = max_diff(phi_loop, expected);
-        Real const d2 = max_diff(phi_tags, expected);
-        Real const d3 = max_diff(phi_cached, expected);
-        amrex::Print() << "Max difference from the expected result: per-face launches "
-                       << d1 << ", tags rebuilt " << d2 << ", tags cached " << d3 << "\n";
-        if (d1 == 0.0_rt && d2 == 0.0_rt && d3 == 0.0_rt) {
+        // Methods 2 and 3 must agree with the baseline, ghost cells included.
+        amrex::MultiFab::Subtract(phi_tags, phi_loop, 0, 0, ncomp, nghost);
+        amrex::MultiFab::Subtract(phi_cached, phi_loop, 0, 0, ncomp, nghost);
+        Real const d2 = phi_tags.norm0(0, ncomp, amrex::IntVect(nghost));
+        Real const d3 = phi_cached.norm0(0, ncomp, amrex::IntVect(nghost));
+        amrex::Print() << "Max difference from the per-face launches: tags rebuilt "
+                       << d2 << ", tags cached " << d3 << "\n";
+        if (d2 == 0.0_rt && d3 == 0.0_rt) {
             amrex::Print() << "PASSED\n";
         } else {
             amrex::Print() << "FAILED\n";

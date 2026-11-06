@@ -50,7 +50,6 @@ struct MDDiagnostics
     amrex::Real kinetic = 0;
     amrex::Real potential = 0;
     std::array<amrex::Real,AMREX_SPACEDIM> momentum{};
-    amrex::Real abs_momentum = 0;   // sum of |p| over particles and directions
     amrex::Real max_speed = 0;
 };
 

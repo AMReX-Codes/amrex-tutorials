@@ -22,7 +22,7 @@ the relative change in total energy is below 1%.
 
 **Key APIs:** `amrex::NeighborParticleContainerPureSoA`, `fillNeighbors`,
 `updateNeighbors`, `buildNeighborList`, `NeighborList::data`,
-`getNeighbors`, `Redistribute`, `amrex::ParticleReduce`,
+`getNeighbors`, `Redistribute`, `amrex::ReduceSum`, `amrex::ReduceMax`,
 `amrex::RandomNormal`
 
 ## Build and run
@@ -53,7 +53,7 @@ Number of particles: 4096, dt = 0.004380251835
 Step 20: kinetic 5710.24762, potential 436.2572452, total 6146.504865
 ...
 Step 100: kinetic 5223.101324, potential 923.2618196, total 6146.363143
-Relative momentum change: 2.895367347e-18
-Relative energy change:   5.024214763e-05
+Max momentum change:    1.136868377e-13
+Relative energy change: 5.024214763e-05
 PASSED
 ```

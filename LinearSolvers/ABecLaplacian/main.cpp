@@ -15,125 +15,69 @@ AMREX_ENUM(BCKind, dirichlet, neumann, periodic);
 
 namespace {
 
-using RealVect_t = GpuArray<Real,AMREX_SPACEDIM>;
-
 // Manufactured problem for  a*alpha*phi - b*div(beta*grad(phi)) = rhs
 // on the unit square/cube.  beta is about beta_in inside a sphere of
-// radius 0.15 and 1 outside, with a smooth but steep transition.  The fine
+// radius r0 and 1 outside, with a smooth but steep transition.  The fine
 // level covers the sphere.
-struct Problem
-{
-    Real a = 1;
-    Real b = 1;
-    Real beta_in = 10;
-    Real steepness = 20;
+constexpr Real kwave = Real(2)*Math::pi<Real>();
+constexpr Real q = Real(0.25)*Math::pi<Real>();
+constexpr Real r0 = Real(0.15);
+constexpr Real steepness = Real(20);
 
-    static constexpr Real r0 = Real(0.15);
-
-    // phi = prod_d sin(2 pi x_d + pi/4)
-    [[nodiscard]] AMREX_GPU_HOST_DEVICE Real phi (RealVect_t const& x) const
-    {
-        Real r = 1;
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) { r *= std::sin(k()*x[d] + q()); }
-        return r;
-    }
-
-    // d(phi)/d(x_dir)
-    [[nodiscard]] AMREX_GPU_HOST_DEVICE Real dphi (RealVect_t const& x, int dir) const
-    {
-        Real r = 1;
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-            r *= (d == dir) ? k()*std::cos(k()*x[d] + q()) : std::sin(k()*x[d] + q());
-        }
-        return r;
-    }
-
-    [[nodiscard]] AMREX_GPU_HOST_DEVICE Real alpha (RealVect_t const& x) const
-    {
-        return Real(1) + Real(0.5)*std::sin(k()*x[0]);
-    }
-
-    [[nodiscard]] AMREX_GPU_HOST_DEVICE Real radius (RealVect_t const& x) const
-    {
-        Real r2 = 0;
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) { r2 += (x[d]-Real(0.5))*(x[d]-Real(0.5)); }
-        return std::sqrt(r2);
-    }
-
-    [[nodiscard]] AMREX_GPU_HOST_DEVICE Real beta (RealVect_t const& x) const
-    {
-        return Real(1) + Real(0.5)*(beta_in-Real(1))
-            * (Real(1) - std::tanh(steepness*(radius(x)-r0)));
-    }
-
-    [[nodiscard]] AMREX_GPU_HOST_DEVICE Real dbeta (RealVect_t const& x, int dir) const
-    {
-        Real const r = radius(x);
-        if (r == Real(0)) { return Real(0); }
-        Real const c = std::cosh(steepness*(r-r0));
-        return -Real(0.5)*(beta_in-Real(1)) * steepness / (c*c) * (x[dir]-Real(0.5)) / r;
-    }
-
-    [[nodiscard]] AMREX_GPU_HOST_DEVICE Real rhs (RealVect_t const& x) const
-    {
-        // div(beta grad phi) = beta*lap(phi) + grad(beta).grad(phi)
-        Real div = -Real(AMREX_SPACEDIM)*k()*k()*beta(x)*phi(x);
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) { div += dbeta(x,d)*dphi(x,d); }
-        return a*alpha(x)*phi(x) - b*div;
-    }
-
-private:
-    [[nodiscard]] AMREX_GPU_HOST_DEVICE static Real k () { return Real(2)*Math::pi<Real>(); }
-    [[nodiscard]] AMREX_GPU_HOST_DEVICE static Real q () { return Real(0.25)*Math::pi<Real>(); }
-};
-
-// Physical location of index iv for a MultiFab of the given index type.
+// phi = prod_d sin(2 pi x_d + pi/4)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-RealVect_t location (IntVect const& iv, IndexType const& ixt,
-                     RealVect_t const& problo, RealVect_t const& dx)
+Real exact_phi (GpuArray<Real,AMREX_SPACEDIM> const& x)
 {
-    RealVect_t x;
-    for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-        Real const offset = ixt.cellCentered(d) ? Real(0.5) : Real(0);
-        x[d] = problo[d] + (Real(iv[d]) + offset) * dx[d];
-    }
-    return x;
+    Real r = 1;
+    for (int d = 0; d < AMREX_SPACEDIM; ++d) { r *= std::sin(kwave*x[d] + q); }
+    return r;
 }
 
-// Set phi to zero in valid cells (the initial guess) and store the boundary
-// data in the ghost cells outside the domain: the value of phi on the face
-// for Dirichlet, and d(phi)/dx_d on the face for Neumann.
-void set_boundary_data (MultiFab& phi, Geometry const& geom, Problem const& prob,
-                        Array<BCKind,AMREX_SPACEDIM> const& bc)
+// d(phi)/d(x_dir)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+Real dphi (GpuArray<Real,AMREX_SPACEDIM> const& x, int dir)
 {
-    Box const domain = geom.Domain();
-    auto const problo = geom.ProbLoArray();
-    auto const probhi = geom.ProbHiArray();
-    auto const dx = geom.CellSizeArray();
-    GpuArray<int,AMREX_SPACEDIM> is_neumann{};
-    for (int d = 0; d < AMREX_SPACEDIM; ++d) { is_neumann[d] = (bc[d] == BCKind::neumann); }
+    Real r = 1;
+    for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+        r *= (d == dir) ? kwave*std::cos(kwave*x[d] + q) : std::sin(kwave*x[d] + q);
+    }
+    return r;
+}
 
-    auto const& phi_a = phi.arrays();
-    ParallelFor(phi, phi.nGrowVect(), [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
-    {
-        IntVect const iv(AMREX_D_DECL(i,j,k));
-        RealVect_t x = location(iv, IndexType::TheCellType(), problo, dx);
-        int nout = 0, dir = 0;
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-            if (iv[d] < domain.smallEnd(d)) {
-                x[d] = problo[d];
-                ++nout; dir = d;
-            } else if (iv[d] > domain.bigEnd(d)) {
-                x[d] = probhi[d];
-                ++nout; dir = d;
-            }
-        }
-        if (nout == 1) {
-            phi_a[b](i,j,k) = is_neumann[dir] ? prob.dphi(x,dir) : prob.phi(x);
-        } else {
-            phi_a[b](i,j,k) = Real(0);
-        }
-    });
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+Real alpha (GpuArray<Real,AMREX_SPACEDIM> const& x)
+{
+    return Real(1) + Real(0.5)*std::sin(kwave*x[0]);
+}
+
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+Real beta (GpuArray<Real,AMREX_SPACEDIM> const& x, Real beta_in)
+{
+    Real r2 = 0;
+    for (int d = 0; d < AMREX_SPACEDIM; ++d) { r2 += (x[d]-Real(0.5))*(x[d]-Real(0.5)); }
+    Real const r = std::sqrt(r2);
+    return Real(1) + Real(0.5)*(beta_in-Real(1)) * (Real(1) - std::tanh(steepness*(r-r0)));
+}
+
+// d(beta)/d(x_dir)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+Real dbeta (GpuArray<Real,AMREX_SPACEDIM> const& x, int dir, Real beta_in)
+{
+    Real r2 = 0;
+    for (int d = 0; d < AMREX_SPACEDIM; ++d) { r2 += (x[d]-Real(0.5))*(x[d]-Real(0.5)); }
+    Real const r = std::sqrt(r2);
+    if (r == Real(0)) { return Real(0); }
+    Real const c = std::cosh(steepness*(r-r0));
+    return -Real(0.5)*(beta_in-Real(1)) * steepness / (c*c) * (x[dir]-Real(0.5)) / r;
+}
+
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+Real exact_rhs (GpuArray<Real,AMREX_SPACEDIM> const& x, Real a, Real b, Real beta_in)
+{
+    // div(beta grad phi) = beta*lap(phi) + grad(beta).grad(phi)
+    Real div = -Real(AMREX_SPACEDIM)*kwave*kwave*beta(x,beta_in)*exact_phi(x);
+    for (int d = 0; d < AMREX_SPACEDIM; ++d) { div += dbeta(x,d,beta_in)*dphi(x,d); }
+    return a*alpha(x)*exact_phi(x) - b*div;
 }
 
 }
@@ -149,7 +93,9 @@ int main (int argc, char* argv[])
         Array<BCKind,AMREX_SPACEDIM> bc{AMREX_D_DECL(BCKind::dirichlet,
                                                      BCKind::dirichlet,
                                                      BCKind::dirichlet)};
-        Problem prob;
+        Real a = 1;
+        Real b = 1;
+        Real beta_in = 10;
         int verbose = 1;
         int max_iter = 100;
         int linop_maxorder = 2;
@@ -162,9 +108,9 @@ int main (int argc, char* argv[])
             for (int d = 0; d < AMREX_SPACEDIM; ++d) {
                 pp.query_enum_case_insensitive("bc", bc[d], d);
             }
-            pp.query("a", prob.a);
-            pp.query("b", prob.b);
-            pp.query("beta_in", prob.beta_in);
+            pp.query("a", a);
+            pp.query("b", b);
+            pp.query("beta_in", beta_in);
 
             ParmParse ppm("mlmg");
             ppm.query("verbose", verbose);
@@ -183,7 +129,11 @@ int main (int argc, char* argv[])
 
         RealBox real_box({AMREX_D_DECL(0._rt,0._rt,0._rt)}, {AMREX_D_DECL(1._rt,1._rt,1._rt)});
         Array<int,AMREX_SPACEDIM> is_periodic{};
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) { is_periodic[d] = (bc[d] == BCKind::periodic); }
+        GpuArray<int,AMREX_SPACEDIM> is_neumann{};
+        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+            is_periodic[d] = (bc[d] == BCKind::periodic);
+            is_neumann[d] = (bc[d] == BCKind::neumann);
+        }
 
         Box domain(IntVect(0), IntVect(n_cell-1));
         Box fine_region = domain;
@@ -207,33 +157,69 @@ int main (int argc, char* argv[])
             acoef[lev].define(grids[lev], dmap[lev], 1, 0);
 
             auto const problo = geom[lev].ProbLoArray();
+            auto const probhi = geom[lev].ProbHiArray();
             auto const dx = geom[lev].CellSizeArray();
+            Box const domain_lev = geom[lev].Domain();
 
             auto const& rhs_a = rhs[lev].arrays();
             auto const& exact_a = exact[lev].arrays();
             auto const& acoef_a = acoef[lev].arrays();
-            ParallelFor(rhs[lev], [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+            ParallelFor(rhs[lev], [=] AMREX_GPU_DEVICE (int bx, int i, int j, int k)
             {
-                auto x = location(IntVect(AMREX_D_DECL(i,j,k)), IndexType::TheCellType(),
-                                  problo, dx);
-                rhs_a  [b](i,j,k) = prob.rhs(x);
-                exact_a[b](i,j,k) = prob.phi(x);
-                acoef_a[b](i,j,k) = prob.alpha(x);
+                IntVect const iv(AMREX_D_DECL(i,j,k));
+                GpuArray<Real,AMREX_SPACEDIM> x;
+                for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+                    x[d] = problo[d] + (Real(iv[d]) + Real(0.5)) * dx[d];
+                }
+                rhs_a  [bx](i,j,k) = exact_rhs(x, a, b, beta_in);
+                exact_a[bx](i,j,k) = exact_phi(x);
+                acoef_a[bx](i,j,k) = alpha(x);
             });
 
-            for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-                bcoef[lev][d].define(amrex::convert(grids[lev], IntVect::TheDimensionVector(d)),
-                                     dmap[lev], 1, 0);
-                IndexType const ixt = bcoef[lev][d].ixType();
-                auto const& bcoef_a = bcoef[lev][d].arrays();
-                ParallelFor(bcoef[lev][d], [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+            // beta on the faces normal to direction dir: no half-cell offset
+            // in that direction.
+            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+                bcoef[lev][dir].define(amrex::convert(grids[lev], IntVect::TheDimensionVector(dir)),
+                                       dmap[lev], 1, 0);
+                auto const& bcoef_a = bcoef[lev][dir].arrays();
+                ParallelFor(bcoef[lev][dir], [=] AMREX_GPU_DEVICE (int bx, int i, int j, int k)
                 {
-                    bcoef_a[b](i,j,k) = prob.beta(location(IntVect(AMREX_D_DECL(i,j,k)), ixt,
-                                                           problo, dx));
+                    IntVect const iv(AMREX_D_DECL(i,j,k));
+                    GpuArray<Real,AMREX_SPACEDIM> x;
+                    for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+                        Real const offset = (d == dir) ? Real(0) : Real(0.5);
+                        x[d] = problo[d] + (Real(iv[d]) + offset) * dx[d];
+                    }
+                    bcoef_a[bx](i,j,k) = beta(x, beta_in);
                 });
             }
 
-            set_boundary_data(phi[lev], geom[lev], prob, bc);
+            // Set phi to zero in valid cells (the initial guess) and store the
+            // boundary data in the ghost cells outside the domain: the value
+            // of phi on the face for Dirichlet, and d(phi)/dx_d on the face
+            // for Neumann.
+            auto const& phi_a = phi[lev].arrays();
+            ParallelFor(phi[lev], phi[lev].nGrowVect(), [=] AMREX_GPU_DEVICE (int bx, int i, int j, int k)
+            {
+                IntVect const iv(AMREX_D_DECL(i,j,k));
+                GpuArray<Real,AMREX_SPACEDIM> x;
+                int nout = 0, dir = 0;
+                for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+                    x[d] = problo[d] + (Real(iv[d]) + Real(0.5)) * dx[d];
+                    if (iv[d] < domain_lev.smallEnd(d)) {
+                        x[d] = problo[d];
+                        ++nout; dir = d;
+                    } else if (iv[d] > domain_lev.bigEnd(d)) {
+                        x[d] = probhi[d];
+                        ++nout; dir = d;
+                    }
+                }
+                if (nout == 1) {
+                    phi_a[bx](i,j,k) = is_neumann[dir] ? dphi(x,dir) : exact_phi(x);
+                } else {
+                    phi_a[bx](i,j,k) = Real(0);
+                }
+            });
         }
 
         // The operator for all levels of the composite solve.
@@ -257,7 +243,7 @@ int main (int argc, char* argv[])
             mlabec.setLevelBC(lev, &phi[lev]);
         }
 
-        mlabec.setScalars(prob.a, prob.b);
+        mlabec.setScalars(a, b);
         for (int lev = 0; lev < nlevels; ++lev) {
             mlabec.setACoeffs(lev, acoef[lev]);
             mlabec.setBCoeffs(lev, GetArrOfConstPtrs(bcoef[lev]));

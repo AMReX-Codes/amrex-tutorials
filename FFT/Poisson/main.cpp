@@ -4,108 +4,11 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
-#include <string>
+#include <cmath>
 #include <type_traits>
 #include <utility>
 
 using namespace amrex;
-
-namespace {
-
-using BCPair = std::pair<FFT::Boundary,FFT::Boundary>;
-
-// Manufactured solution phi = prod_d f_d(pi*c_d*x_d), with f_d = sin or cos.
-// Then lap(phi) = -pi^2 * sum_d c_d^2 * phi.
-struct Exact
-{
-    GpuArray<Real,AMREX_SPACEDIM> c;
-    GpuArray<int,AMREX_SPACEDIM> use_cos;
-
-    [[nodiscard]] AMREX_GPU_HOST_DEVICE
-    Real operator() (GpuArray<Real,AMREX_SPACEDIM> const& x) const
-    {
-        Real r = 1;
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-            Real a = Math::pi<Real>() * c[d] * x[d];
-            r *= use_cos[d] ? std::cos(a) : std::sin(a);
-        }
-        return r;
-    }
-
-    [[nodiscard]] AMREX_GPU_HOST_DEVICE
-    Real laplacian (GpuArray<Real,AMREX_SPACEDIM> const& x) const
-    {
-        Real c2 = 0;
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) { c2 += c[d]*c[d]; }
-        return -Math::pi<Real>()*Math::pi<Real>() * c2 * (*this)(x);
-    }
-};
-
-// Solve lap(phi) = rhs with the given solver and check the result.
-template <typename Solver>
-bool run_case (std::string const& name, Solver& solver, Geometry const& geom,
-               BoxArray const& ba, DistributionMapping const& dm, Exact const& exact)
-{
-    auto const problo = geom.ProbLoArray();
-    auto const dx = geom.CellSizeArray();
-
-    MultiFab rhs(ba, dm, 1, 0);
-    MultiFab phi_exact(ba, dm, 1, 0);
-    {
-        auto const& rhs_a = rhs.arrays();
-        auto const& exact_a = phi_exact.arrays();
-        ParallelFor(rhs, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
-        {
-            IntVect iv(AMREX_D_DECL(i,j,k));
-            GpuArray<Real,AMREX_SPACEDIM> x;
-            for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-                x[d] = problo[d] + (Real(iv[d])+Real(0.5))*dx[d];
-            }
-            rhs_a[b](i,j,k) = exact.laplacian(x);
-            exact_a[b](i,j,k) = exact(x);
-        });
-    }
-
-    // One ghost cell: the solver fills it from the boundary conditions,
-    // so that we can apply the discrete Laplacian below.
-    MultiFab phi(ba, dm, 1, 1);
-    solver.solve(phi, rhs);
-
-    // The FFT solvers invert the standard second-order (2*D+1)-point
-    // Laplacian exactly, so the discrete residual is at round-off level.
-    MultiFab resid(ba, dm, 1, 0);
-    {
-        auto const& resid_a = resid.arrays();
-        auto const& phi_a = phi.const_arrays();
-        auto const& rhs_a = rhs.const_arrays();
-        ParallelFor(resid, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
-        {
-            auto const& p = phi_a[b];
-            Real lap = AMREX_D_TERM(
-                (p(i-1,j,k) - Real(2)*p(i,j,k) + p(i+1,j,k)) / (dx[0]*dx[0]),
-              + (p(i,j-1,k) - Real(2)*p(i,j,k) + p(i,j+1,k)) / (dx[1]*dx[1]),
-              + (p(i,j,k-1) - Real(2)*p(i,j,k) + p(i,j,k+1)) / (dx[2]*dx[2]));
-            resid_a[b](i,j,k) = lap - rhs_a[b](i,j,k);
-        });
-    }
-    Real res = resid.norm0() / rhs.norm0();
-
-    // Compared with the continuous solution, the error is O(dx^2).
-    MultiFab::Subtract(phi_exact, phi, 0, 0, 1, 0);
-    Real err = phi_exact.norm0();
-
-    Real h = geom.CellSize(0);
-    for (int d = 1; d < AMREX_SPACEDIM; ++d) { h = std::max(h, Real(geom.CellSize(d))); }
-    Real const res_tol = std::is_same_v<Real,float> ? Real(1.e-3) : Real(1.e-10);
-    Real const err_tol = Real(10) * h * h;
-
-    amrex::Print() << name << "\n"
-                   << "    relative residual " << res << "\n"
-                   << "    max error         " << err << "\n";
-    return res <= res_tol && err <= err_tol;
-}
-
-}
 
 int main (int argc, char* argv[])
 {
@@ -128,7 +31,12 @@ int main (int argc, char* argv[])
         ba.maxSize(max_grid_size);
         DistributionMapping dm(ba);
 
-        bool pass = true;
+        Real const pi = Math::pi<Real>();
+
+        // The FFT solvers invert the standard second-order (2*D+1)-point
+        // Laplacian exactly, so the discrete residual is at round-off level.
+        // Compared with the continuous solution, the error is O(dx^2).
+        Real const res_tol = std::is_same_v<Real,float> ? Real(1.e-3) : Real(1.e-10);
 
         // 1. Periodic in all directions. The solution is unique up to a constant,
         //    and the right-hand side must have zero mean. The solver sets the
@@ -136,25 +44,103 @@ int main (int argc, char* argv[])
         {
             Geometry geom(domain, rb, CoordSys::cartesian, {AMREX_D_DECL(1,1,1)});
             FFT::Poisson<MultiFab> solver(geom);
-            Exact exact{{AMREX_D_DECL(Real(2),Real(2),Real(2))},
-                        {AMREX_D_DECL(0,0,0)}};
-            pass = run_case("Periodic (FFT::Poisson)", solver, geom, ba, dm, exact) && pass;
+            auto const problo = geom.ProbLoArray();
+            auto const dx = geom.CellSizeArray();
+
+            // phi = prod_d sin(2 pi x_d), lap(phi) = -D (2 pi)^2 phi
+            MultiFab rhs(ba, dm, 1, 0);
+            MultiFab phi_exact(ba, dm, 1, 0);
+            auto const& rhs_a = rhs.arrays();
+            auto const& exact_a = phi_exact.arrays();
+            ParallelFor(rhs, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+            {
+                Real const AMREX_D_DECL(x = problo[0] + (Real(i)+Real(0.5))*dx[0],
+                                        y = problo[1] + (Real(j)+Real(0.5))*dx[1],
+                                        z = problo[2] + (Real(k)+Real(0.5))*dx[2]);
+                Real const p = AMREX_D_TERM(std::sin(2*pi*x), * std::sin(2*pi*y), * std::sin(2*pi*z));
+                exact_a[b](i,j,k) = p;
+                rhs_a[b](i,j,k) = -AMREX_SPACEDIM * 4*pi*pi * p;
+            });
+
+            // One ghost cell: the solver fills it from the boundary conditions,
+            // so that we can apply the discrete Laplacian below.
+            MultiFab phi(ba, dm, 1, 1);
+            solver.solve(phi, rhs);
+
+            MultiFab resid(ba, dm, 1, 0);
+            auto const& resid_a = resid.arrays();
+            auto const& phi_a = phi.const_arrays();
+            ParallelFor(resid, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+            {
+                auto const& p = phi_a[b];
+                Real lap = AMREX_D_TERM(
+                    (p(i-1,j,k) - Real(2)*p(i,j,k) + p(i+1,j,k)) / (dx[0]*dx[0]),
+                  + (p(i,j-1,k) - Real(2)*p(i,j,k) + p(i,j+1,k)) / (dx[1]*dx[1]),
+                  + (p(i,j,k-1) - Real(2)*p(i,j,k) + p(i,j,k+1)) / (dx[2]*dx[2]));
+                resid_a[b](i,j,k) = lap - rhs_a[b](i,j,k);
+            });
+            Real const res = resid.norm0() / rhs.norm0();
+            MultiFab::Subtract(phi_exact, phi, 0, 0, 1, 0);
+            Real const err = phi_exact.norm0();
+
+            amrex::Print() << "Periodic (FFT::Poisson)\n"
+                           << "    relative residual " << res << "\n"
+                           << "    max error         " << err << "\n";
+            if (res > res_tol) { status = 1; }
         }
 
         // 2. Homogeneous Dirichlet (odd) and Neumann (even) boundaries, using
-        //    sine and cosine transforms: x Dirichlet on both sides, y Neumann on
-        //    both sides, z Dirichlet at zlo and Neumann at zhi.
+        //    sine and cosine transforms.
         {
-            Array<BCPair,AMREX_SPACEDIM> bc{AMREX_D_DECL(
-                std::make_pair(FFT::Boundary::odd,  FFT::Boundary::odd),
-                std::make_pair(FFT::Boundary::even, FFT::Boundary::even),
-                std::make_pair(FFT::Boundary::odd,  FFT::Boundary::even))};
+            Array<std::pair<FFT::Boundary,FFT::Boundary>,AMREX_SPACEDIM> bc;
+            bc[0] = {FFT::Boundary::odd,  FFT::Boundary::odd};  // Dirichlet on both sides
+            bc[1] = {FFT::Boundary::even, FFT::Boundary::even}; // Neumann on both sides
+#if (AMREX_SPACEDIM == 3)
+            bc[2] = {FFT::Boundary::odd,  FFT::Boundary::even}; // Dirichlet at zlo, Neumann at zhi
+#endif
             Geometry geom(domain, rb, CoordSys::cartesian, {AMREX_D_DECL(0,0,0)});
             FFT::Poisson<MultiFab> solver(geom, bc);
-            Exact exact{{AMREX_D_DECL(Real(1),Real(1),Real(0.5))},
-                        {AMREX_D_DECL(0,1,0)}};
-            pass = run_case("Dirichlet/Neumann (FFT::Poisson)", solver, geom, ba, dm, exact)
-                && pass;
+            auto const problo = geom.ProbLoArray();
+            auto const dx = geom.CellSizeArray();
+
+            // phi = sin(pi x) cos(pi y) sin(pi z / 2), lap(phi) = -(1 + 1 + 1/4) pi^2 phi
+            MultiFab rhs(ba, dm, 1, 0);
+            MultiFab phi_exact(ba, dm, 1, 0);
+            auto const& rhs_a = rhs.arrays();
+            auto const& exact_a = phi_exact.arrays();
+            ParallelFor(rhs, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+            {
+                Real const AMREX_D_DECL(x = problo[0] + (Real(i)+Real(0.5))*dx[0],
+                                        y = problo[1] + (Real(j)+Real(0.5))*dx[1],
+                                        z = problo[2] + (Real(k)+Real(0.5))*dx[2]);
+                Real const p = AMREX_D_TERM(std::sin(pi*x), * std::cos(pi*y), * std::sin(Real(0.5)*pi*z));
+                exact_a[b](i,j,k) = p;
+                rhs_a[b](i,j,k) = -(AMREX_D_TERM(Real(1), + Real(1), + Real(0.25))) * pi*pi * p;
+            });
+
+            MultiFab phi(ba, dm, 1, 1);
+            solver.solve(phi, rhs);
+
+            MultiFab resid(ba, dm, 1, 0);
+            auto const& resid_a = resid.arrays();
+            auto const& phi_a = phi.const_arrays();
+            ParallelFor(resid, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+            {
+                auto const& p = phi_a[b];
+                Real lap = AMREX_D_TERM(
+                    (p(i-1,j,k) - Real(2)*p(i,j,k) + p(i+1,j,k)) / (dx[0]*dx[0]),
+                  + (p(i,j-1,k) - Real(2)*p(i,j,k) + p(i,j+1,k)) / (dx[1]*dx[1]),
+                  + (p(i,j,k-1) - Real(2)*p(i,j,k) + p(i,j,k+1)) / (dx[2]*dx[2]));
+                resid_a[b](i,j,k) = lap - rhs_a[b](i,j,k);
+            });
+            Real const res = resid.norm0() / rhs.norm0();
+            MultiFab::Subtract(phi_exact, phi, 0, 0, 1, 0);
+            Real const err = phi_exact.norm0();
+
+            amrex::Print() << "Dirichlet/Neumann (FFT::Poisson)\n"
+                           << "    relative residual " << res << "\n"
+                           << "    max error         " << err << "\n";
+            if (res > res_tol) { status = 1; }
         }
 
 #if (AMREX_SPACEDIM == 3)
@@ -162,23 +148,59 @@ int main (int argc, char* argv[])
         //    zlo, Dirichlet at zhi). PoissonHybrid also accepts a non-uniform
         //    dz: solver.solve(phi, rhs, dz).
         {
-            Array<BCPair,AMREX_SPACEDIM> bc{
-                BCPair{FFT::Boundary::periodic, FFT::Boundary::periodic},
-                BCPair{FFT::Boundary::periodic, FFT::Boundary::periodic},
-                BCPair{FFT::Boundary::even,     FFT::Boundary::odd}};
+            Array<std::pair<FFT::Boundary,FFT::Boundary>,AMREX_SPACEDIM> bc;
+            bc[0] = {FFT::Boundary::periodic, FFT::Boundary::periodic};
+            bc[1] = {FFT::Boundary::periodic, FFT::Boundary::periodic};
+            bc[2] = {FFT::Boundary::even,     FFT::Boundary::odd}; // Neumann at zlo, Dirichlet at zhi
             Geometry geom(domain, rb, CoordSys::cartesian, {1,1,0});
             FFT::PoissonHybrid<MultiFab> solver(geom, bc);
-            Exact exact{{Real(2),Real(2),Real(0.5)}, {0,0,1}};
-            pass = run_case("Periodic x,y + Neumann/Dirichlet z (FFT::PoissonHybrid)",
-                            solver, geom, ba, dm, exact) && pass;
+            auto const problo = geom.ProbLoArray();
+            auto const dx = geom.CellSizeArray();
+
+            // phi = sin(2 pi x) sin(2 pi y) cos(pi z / 2), lap(phi) = -(4 + 4 + 1/4) pi^2 phi
+            MultiFab rhs(ba, dm, 1, 0);
+            MultiFab phi_exact(ba, dm, 1, 0);
+            auto const& rhs_a = rhs.arrays();
+            auto const& exact_a = phi_exact.arrays();
+            ParallelFor(rhs, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+            {
+                Real const x = problo[0] + (Real(i)+Real(0.5))*dx[0];
+                Real const y = problo[1] + (Real(j)+Real(0.5))*dx[1];
+                Real const z = problo[2] + (Real(k)+Real(0.5))*dx[2];
+                Real const p = std::sin(2*pi*x) * std::sin(2*pi*y) * std::cos(Real(0.5)*pi*z);
+                exact_a[b](i,j,k) = p;
+                rhs_a[b](i,j,k) = -Real(8.25) * pi*pi * p;
+            });
+
+            MultiFab phi(ba, dm, 1, 1);
+            solver.solve(phi, rhs);
+
+            MultiFab resid(ba, dm, 1, 0);
+            auto const& resid_a = resid.arrays();
+            auto const& phi_a = phi.const_arrays();
+            ParallelFor(resid, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k)
+            {
+                auto const& p = phi_a[b];
+                Real lap = (p(i-1,j,k) - Real(2)*p(i,j,k) + p(i+1,j,k)) / (dx[0]*dx[0])
+                         + (p(i,j-1,k) - Real(2)*p(i,j,k) + p(i,j+1,k)) / (dx[1]*dx[1])
+                         + (p(i,j,k-1) - Real(2)*p(i,j,k) + p(i,j,k+1)) / (dx[2]*dx[2]);
+                resid_a[b](i,j,k) = lap - rhs_a[b](i,j,k);
+            });
+            Real const res = resid.norm0() / rhs.norm0();
+            MultiFab::Subtract(phi_exact, phi, 0, 0, 1, 0);
+            Real const err = phi_exact.norm0();
+
+            amrex::Print() << "Periodic x,y + Neumann/Dirichlet z (FFT::PoissonHybrid)\n"
+                           << "    relative residual " << res << "\n"
+                           << "    max error         " << err << "\n";
+            if (res > res_tol) { status = 1; }
         }
 #endif
 
-        if (pass) {
+        if (status == 0) {
             amrex::Print() << "PASSED\n";
         } else {
             amrex::Print() << "FAILED\n";
-            status = 1;
         }
     }
     amrex::Finalize();

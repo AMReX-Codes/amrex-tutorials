@@ -2,7 +2,6 @@
 #include <AMReX_MLABecLaplacian.H>
 #include <AMReX_MLMG.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_ParReduce.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
@@ -111,22 +110,12 @@ int main (int argc, char* argv[])
         Real const g_discrete = std::pow(Real(1)/(Real(1)+dt*kappa*lam), nsteps);
         Real const g_pde = std::exp(-kappa*Real(AMREX_SPACEDIM*4)*Math::pi<Real>()*Math::pi<Real>()*time);
 
-        // max |phi_new - g*phi0| for both g in one pass.
-        auto const& pn = phi_new.const_arrays();
-        auto const& p0 = phi0.const_arrays();
-        auto errs = ParReduce(TypeList<ReduceOpMax, ReduceOpMax>{}, TypeList<Real, Real>{},
-                              phi_new, IntVect(0),
-            [=] AMREX_GPU_DEVICE (int box_no, int i, int j, int k) -> GpuTuple<Real, Real>
-            {
-                Real const a = pn[box_no](i,j,k);
-                Real const b = p0[box_no](i,j,k);
-                return { std::abs(a - g_discrete*b), std::abs(a - g_pde*b) };
-            });
-        Real err_discrete = amrex::get<0>(errs);
-        Real err_pde = amrex::get<1>(errs);
-        ParallelAllReduce::Max<Real>({err_discrete, err_pde}, ParallelDescriptor::Communicator());
-        err_discrete /= g_discrete;
-        err_pde /= g_pde;
+        // Relative errors max |phi_new - g*phi0| / g for both g
+        MultiFab diff(ba, dm, 1, 0);
+        MultiFab::LinComb(diff, Real(1), phi_new, 0, -g_discrete, phi0, 0, 0, 1, 0);
+        Real const err_discrete = diff.norm0() / g_discrete;
+        MultiFab::LinComb(diff, Real(1), phi_new, 0, -g_pde, phi0, 0, 0, 1, 0);
+        Real const err_pde = diff.norm0() / g_pde;
 
         amrex::Print() << "Decay factor: numerical " << phi_new.norm0()/phi0.norm0()
                        << ", discrete exact " << g_discrete

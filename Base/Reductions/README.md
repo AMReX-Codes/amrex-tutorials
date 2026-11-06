@@ -2,7 +2,8 @@
 
 Compute sums, minima, maxima and counts over a `MultiFab` and a device
 vector, on CPU and GPU, and combine the results across MPI ranks. The data,
-$\phi = i + j + k$, has simple exact answers that the program checks.
+$\phi = i + j + k$, has a simple exact sum and maximum; the program prints
+them next to the computed values and checks the two sums.
 
 **Key APIs:** `ParReduce`, `ReduceOps`, `ReduceData`, `Reducer`,
 `ReduceOpSum/Min/Max`, `MultiFab::sum/min/max/norm0/norm1/norm2`,
@@ -45,8 +46,19 @@ ParReduce:
   min = 0 (exact 0)
   max = 93 (exact 93)
 ReduceOps/ReduceData:
-  sum of squares = 79233024 (exact 79233024)
-  even cells = 16384 (exact 16384)
-...
+  sum of squares = 79233024
+  even cells = 16384
+Reducer:
+  sum of squares = 79233024
+  even cells = 16384
+MultiFab member functions:
+  sum() = 1523712 (exact 1523712)
+  min() = 0
+  max() = 93 (exact 93)
+  norm0() = 93
+  norm1() = 1523712
+  norm2() = 8901.293389
+Reduce::Sum on a Gpu::DeviceVector:
+  sum = 1001000 (exact 1001000)
 PASSED
 ```

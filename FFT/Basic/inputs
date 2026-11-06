@@ -1,6 +1,7 @@
-# Number of cells in each direction and the maximum box size
+# Number of cells in each direction (more than 16, so that the wavenumber-8
+# part of the test field is resolved) and the maximum box size
 n_cell = 32
 max_grid_size = 16
 
-# Low-pass filter cutoff wavenumber
+# Low-pass filter cutoff wavenumber, less than 8
 kcut = 4

@@ -28,11 +28,9 @@ when its grids change.
   built from an `AmrCore` takes the new grids from it and only needs the
   `Redistribute` after `regrid`.
 
-The test checks that no level-0 particle lies under level 1 and every
-level-1 particle lies in its region, before and after the moves and the
-regrid; that the fraction of particles on level 1 is the volume fraction of
-the fine region; that the deposited mass equals the total weight; and that
-the number of particles is conserved.
+After the regrid, the test checks that no level-0 particle lies under
+level 1, that every level-1 particle lies in its region, and that the
+deposited mass equals the total weight.
 
 **Key APIs:** `ParticleContainerPureSoA(geom, dmap, ba, rr)`,
 `NumberOfParticlesAtLevel`, `ReduceSum(pc, lev, f)`, `Redistribute`,

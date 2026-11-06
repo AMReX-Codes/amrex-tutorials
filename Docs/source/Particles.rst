@@ -24,7 +24,7 @@ Basics
 :Key APIs: ``ParticleContainerPureSoA``, ``SetSoACompileTimeNames``,
    ``AddRealComp``, ``DefineAndReturnParticleTile``, ``ParticleTileData``,
    ``SetParticleIDandCPU``, ``ParIter``, ``Redistribute``,
-   ``ParticleReduce``, ``Increment``, ``WritePlotFile``, ``Checkpoint``,
+   ``ReduceSum``, ``Increment``, ``WritePlotFile``, ``Checkpoint``,
    ``Restart``
 
 A first particle code. Each particle stores its position, velocity and
@@ -32,15 +32,13 @@ weight as separate arrays; the first ``AMREX_SPACEDIM`` real components are
 the positions. A component ``dist`` (distance traveled) is added at run
 time. Particles are created on the device with ``nppc`` random particles
 per cell, move in straight lines through a periodic domain, and are moved to
-their new grid and MPI rank by ``Redistribute``. ``ParticleReduce`` computes
-the total weight, kinetic energy and path length in one pass. The program
+their new grid and MPI rank by ``Redistribute``. ``ReduceSum`` computes
+the total weight and kinetic energy. The program
 writes a plotfile with the particle count per cell and the particles, and a
 particle checkpoint that it reads back with ``Restart``.
 
 The test checks that the number of particles, total weight and kinetic
-energy are conserved, that the total path length is
-:math:`n_\text{steps}\,\Delta t \sum |v|`, and that the restarted particles
-match.
+energy are conserved.
 
 The components are named with an enum; the container stores all of them,
 including the positions and the id/cpu word, as separate arrays.
@@ -210,8 +208,8 @@ EBTracers
 :Level: ★★
 :Source: `Particles/EBTracers <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Particles/EBTracers>`__
 :Key APIs: ``mac_interpolate``, ``FillSignedDistance``, ``ParticleToMesh``,
-           ``ParticleInterpolator::Linear``, ``ReduceSum``/``ReduceMax`` over
-           particles, ``MLEBABecLap``
+           ``ParticleInterpolator::Linear``, ``ReduceSum`` over particles,
+           ``MLEBABecLap``
 
 Tracer particles carry a scalar through a flow around an embedded boundary:
 each particle has a fixed weight, and depositing the weights on the mesh
@@ -236,10 +234,8 @@ gradient of ``s``. This works for any EB geometry.
 
 The particles move forward to ``stop_time`` and back with the velocity
 reversed. The program checks that the deposited weight equals the total
-particle weight, that no particle stays more than 0.2 cells inside the
-sphere (measured with the exact sphere), and that the particles that were
-never reflected return, on average, to within 0.001 cells of where they
-started.
+particle weight, and that the particles that were never reflected return,
+on average, to within 0.001 cells of where they started.
 
 Run:
 
@@ -253,8 +249,7 @@ Run:
 
    Back at t = 0:
      particles reflected off the EB: 210
-     max depth inside the sphere after any step: 0.07412058333 cells
-     distance of the other particles from their start: mean 3.902734996e-05, max 0.0415392124 cells
+     mean distance of the other particles from their start: 3.902734996e-05 cells
      relative error of the deposited weight: 2.526048763e-14
    PASSED
 
@@ -284,9 +279,9 @@ Organize the particles of a tile:
    another tile, and ``transformParticles`` copies particles while changing
    them (here: reversing the velocity).
 
-The test checks each step: per-cell counts against
-``ParticleContainer::Increment``, sorted order, the partition, the number of
-filtered particles, and the reversed velocities.
+The test checks that the ``DenseBins`` counts match
+``ParticleContainer::Increment`` and that the particles are in order after
+``SortParticlesByCell``.
 
 Binning by cell and looping over the particles of each cell:
 
@@ -322,7 +317,8 @@ NeighborList
 :Source: `Particles/NeighborList <https://github.com/AMReX-Codes/amrex-tutorials/tree/main/Particles/NeighborList>`__
 :Key APIs: ``NeighborParticleContainerPureSoA``, ``fillNeighbors``,
    ``updateNeighbors``, ``buildNeighborList``, ``NeighborList::data``,
-   ``getNeighbors``, ``Redistribute``, ``ParticleReduce``, ``RandomNormal``
+   ``getNeighbors``, ``Redistribute``, ``ReduceSum``, ``ReduceMax``,
+   ``RandomNormal``
 
 A small molecular dynamics code with short-range forces. Particles are soft
 spheres of diameter :math:`\sigma` with the potential
@@ -337,7 +333,7 @@ one cell, larger than :math:`\sigma`, so the list stays valid for
 ``num_rebuild`` steps; in between, ``updateNeighbors`` only refreshes the
 positions of the neighbor copies.
 
-The test checks that the total momentum is conserved to round-off (pair
+The test checks that the total momentum is conserved (pair
 forces are equal and opposite, also across tiles and MPI ranks) and that the
 relative change in total energy is below 1%.
 
@@ -401,9 +397,8 @@ The problem is a Langmuir (plasma) oscillation. In normalized units
 at rest, displaced by :math:`\xi_0 \sin(kx)`, and linear theory gives
 :math:`E_x = -(q n_0 \xi_0/\epsilon_0) \sin(kx) \cos(\omega_p t)`. The code
 measures the frequency from the zero crossings of the :math:`\sin(kx)` mode
-of :math:`E_x`. It checks that the frequency and the initial amplitude agree
-with theory to 2%, and that the total (field plus kinetic) energy changes by
-less than 2%.
+of :math:`E_x`. It checks that the frequency agrees with theory to 2%, and
+that the total (field plus kinetic) energy changes by less than 2%.
 
 Code structure
 ^^^^^^^^^^^^^^
@@ -464,7 +459,7 @@ plotfiles ``plt00000``, ``plt00050`` and ``plt00100`` contain ``rho``,
 
    Initial E mode amplitude: 0.009936866131 (linear theory 0.01)
    Measured frequency: 0.9956005796 (plasma frequency 1)
-   Relative errors: frequency 0.004399420394, amplitude 0.006313386911, max energy change 0.001909800398
+   Relative errors: frequency 0.0043994204, max energy change 0.001909799947
    PASSED
 
 To add species, create one container per species and sum their charge

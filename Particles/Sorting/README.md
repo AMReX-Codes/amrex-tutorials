@@ -17,8 +17,8 @@ partition them, and copy subsets or transformed copies to other containers.
    another tile, and `transformParticles` copies particles while changing
    them (here: reversing the velocity).
 
-The test checks each step: per-cell counts, sorted order, partition, the
-number of filtered particles, and the reversed velocities.
+The test checks that the `DenseBins` counts match `Increment` and that the
+particles are in order after `SortParticlesByCell`.
 
 **Key APIs:** `amrex::DenseBins`, `amrex::getParticleCell`,
 `SortParticlesByCell`, `SortParticlesByBin`, `amrex::partitionParticles`,
@@ -47,8 +47,8 @@ mpiexec -n 2 ./main3d.gnu.MPI.ex inputs
 ```
 Number of particles: 131072
 DenseBins: max difference in particles per cell = 0
-Out-of-order neighbors: initial 65496, after SortParticlesByCell 0, after SortParticlesByBin 0
-partitionParticles: 68497 fast particles, 0 misplaced
+Out-of-order neighbors: initial 65501, after SortParticlesByCell 0, after SortParticlesByBin 0
+partitionParticles: 68497 fast particles
 filterParticles: 62575 slow particles
 transformParticles: velocity sum 1123.82041 -> -1123.82041
 PASSED

@@ -36,7 +36,7 @@ kernels with `BL_PROFILE` (see [HeatEquation](../HeatEquation#profiling)).
   is still correct, but the floating-point traps `amrex.fpe_trap_*` (see
   [Debugging](https://amrex-codes.github.io/amrex/tutorials_html/VisualizationAndDebugging.html))
   would stop the program there. This is why the traps are a debugging aid
-  for scalar runs, and why the tests do not enable them.
+  for scalar runs.
 - GCC's default floating-point model (`-ftrapping-math`) does not evaluate
   arithmetic inside the arms of a `?:` speculatively, so a select like
   `(p > c) ? p - c : c - p` keeps the loop scalar; `-fno-trapping-math`

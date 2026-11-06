@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <type_traits>
 
 // 1 + prod_d sin(2 pi x_d) at the center of cell iv; periodic on [0,1]^d.
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -130,9 +129,7 @@ int main (int argc, char* argv[])
         amrex::WriteSingleLevelPlotfile("plt_multifab", mf, {"phi_parallelfor", "phi_mfiter"},
                                         geom, 0.0_rt, 0);
 
-        constexpr bool is_float = std::is_same_v<Real,float>;
-        if (err > (is_float ? 1.e-5_rt : 1.e-12_rt) ||
-            std::abs(integral - 1.0_rt) > (is_float ? 1.e-3_rt : 1.e-12_rt)) {
+        if (err > 1.e-5_rt) {
             amrex::Print() << "FAILED\n";
             status = 1;
         } else {

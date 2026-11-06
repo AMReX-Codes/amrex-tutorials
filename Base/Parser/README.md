@@ -3,7 +3,7 @@
 Evaluate functions given as strings at runtime, e.g., initial conditions
 from the inputs file, inside GPU kernels. `amrex::Parser` handles
 floating-point expressions and `amrex::IParser` integer ones. The program
-compares the results with hard-coded C++ versions of the default expressions.
+builds the same `Parser` in two ways and checks that they agree.
 
 **Key APIs:** `Parser`, `IParser`, `setConstant`, `registerVariables`,
 `compile<N>`, `ParmParse::makeParser`
@@ -45,7 +45,5 @@ ic.function = A * sin(2*pi*x) * cos(2*pi*y) * exp(-t)
 ic.tag      = max(i, max(j, k)) < n/2
 max |phi| = 1.201407003, tagged cells = 4096
 Parser vs. makeParser: max diff = 0
-Parser vs. C++: max diff = 0
-IParser vs. C++: max diff = 0
 PASSED
 ```

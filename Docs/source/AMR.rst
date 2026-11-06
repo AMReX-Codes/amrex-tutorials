@@ -73,7 +73,7 @@ Parameters: ``n_cell`` (coarse cells per direction), ``max_grid_size``,
 
    Initial mass: 0.005550189972
    Final mass:   0.005550189972 after 100 steps, time = 0.003662109375
-   Relative change in mass: 1.719036495e-15
+   Relative change in mass: 1.093932315e-15
    PASSED
 
 .. _amr-advectionamrcore:
@@ -252,7 +252,7 @@ Run:
 .. code-block:: text
 
    Finished 320 level-0 steps at time 1 with 2 levels
-   Max error of v: 1.063265662e-05
+   Max error of v: 1.055941888e-05
    PASSED
 
 Useful options are ``wave.rk_order``, ``wave.cfl``, ``amr.n_cell``,

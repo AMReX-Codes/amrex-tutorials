@@ -52,6 +52,6 @@ Parameters: `n_cell` (coarse cells per direction), `max_grid_size`, `nsteps`,
 ```
 Initial mass: 0.005550189972
 Final mass:   0.005550189972 after 100 steps, time = 0.003662109375
-Relative change in mass: 1.719036495e-15
+Relative change in mass: 1.093932315e-15
 PASSED
 ```

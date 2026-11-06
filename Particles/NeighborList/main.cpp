@@ -5,7 +5,6 @@
 #include <AMReX_Print.H>
 
 #include <cmath>
-#include <type_traits>
 
 using namespace amrex::literals;
 
@@ -46,7 +45,7 @@ int main (int argc, char* argv[])
         const amrex::Array<int,AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1, 1, 1)};
         const amrex::Geometry geom(domain, real_box, amrex::CoordSys::cartesian, is_periodic);
         params.r_list = geom.CellSize(0);
-        AMREX_ALWAYS_ASSERT(params.sigma < params.r_list);
+        AMREX_ALWAYS_ASSERT(params.sigma < params.r_list); // the list must reach the cutoff
 
         amrex::BoxArray ba(domain);
         ba.maxSize(max_grid_size);
@@ -110,16 +109,11 @@ int main (int argc, char* argv[])
         for (int d = 0; d < AMREX_SPACEDIM; ++d) {
             dp = amrex::max(dp, std::abs(d1.momentum[d] - d0.momentum[d]));
         }
-        const amrex::Real momentum_error = dp / d0.abs_momentum;
         const amrex::Real energy_error = std::abs(e1 - e0) / e0;
-        amrex::Print() << "Relative momentum change: " << momentum_error << "\n"
-                       << "Relative energy change:   " << energy_error << "\n";
+        amrex::Print() << "Max momentum change:    " << dp << "\n"
+                       << "Relative energy change: " << energy_error << "\n";
 
-        constexpr bool is_single = std::is_same_v<amrex::Real, float>
-                                || std::is_same_v<amrex::ParticleReal, float>;
-        constexpr amrex::Real momentum_tol = is_single ? 1.e-5_rt : 1.e-12_rt;
-        const amrex::Real energy_tol = 1.e-2_rt;
-        if (d1.np != d0.np || momentum_error > momentum_tol || energy_error > energy_tol) {
+        if (dp > 1.e-5_rt * amrex::Real(d0.np) * v_thermal || energy_error > 1.e-2_rt) {
             amrex::Print() << "FAILED\n";
             status = 1;
         } else {

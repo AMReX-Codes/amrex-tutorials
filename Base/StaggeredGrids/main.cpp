@@ -44,39 +44,6 @@ position (int i, int j, int k, amrex::IndexType itype,
     return x;
 }
 
-// Sets the velocity on the faces normal to direction dir.
-struct FaceVelocity
-{
-    int dir;
-    amrex::Array4<Real> u;
-    amrex::GpuArray<Real,AMREX_SPACEDIM> plo, dx;
-
-    AMREX_GPU_DEVICE void operator() (int i, int j, int k) const noexcept
-    {
-        amrex::IndexType const itype(amrex::IntVect::TheDimensionVector(dir));
-        u(i,j,k) = shear(dir, position(i, j, k, itype, plo, dx));
-    }
-};
-
-// Largest error of a MultiFab against a function of position (a device
-// lambda), valid cells only.
-template <typename F>
-Real max_error (amrex::MultiFab const& mf, int comp, amrex::Geometry const& geom, F const& f)
-{
-    auto const plo = geom.ProbLoArray();
-    auto const dx = geom.CellSizeArray();
-    amrex::IndexType const itype = mf.ixType();
-    auto const& a = mf.const_arrays();
-    Real err = amrex::ParReduce(amrex::TypeList<amrex::ReduceOpMax>{}, amrex::TypeList<Real>{},
-                                mf, amrex::IntVect(0),
-        [=] AMREX_GPU_DEVICE (int b, int i, int j, int k) noexcept -> amrex::GpuTuple<Real>
-        {
-            return {std::abs(a[b](i,j,k,comp) - f(position(i, j, k, itype, plo, dx)))};
-        });
-    amrex::ParallelDescriptor::ReduceRealMax(err);
-    return err;
-}
-
 int main (int argc, char* argv[])
 {
     amrex::Initialize(argc, argv);
@@ -123,10 +90,26 @@ int main (int argc, char* argv[])
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+            AMREX_D_TERM(amrex::Array4<Real> const& u0 = umac[0].array(mfi);,
+                         amrex::Array4<Real> const& u1 = umac[1].array(mfi);,
+                         amrex::Array4<Real> const& u2 = umac[2].array(mfi););
             amrex::ParallelFor(AMREX_D_DECL(mfi.nodaltilebox(0), mfi.nodaltilebox(1), mfi.nodaltilebox(2)),
-                               AMREX_D_DECL((FaceVelocity{0, umac[0].array(mfi), plo, dx}),
-                                            (FaceVelocity{1, umac[1].array(mfi), plo, dx}),
-                                            (FaceVelocity{2, umac[2].array(mfi), plo, dx})));
+                AMREX_D_DECL(
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+                {
+                    amrex::IndexType const xface(amrex::IntVect::TheDimensionVector(0));
+                    u0(i,j,k) = shear(0, position(i, j, k, xface, plo, dx));
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+                {
+                    amrex::IndexType const yface(amrex::IntVect::TheDimensionVector(1));
+                    u1(i,j,k) = shear(1, position(i, j, k, yface, plo, dx));
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+                {
+                    amrex::IndexType const zface(amrex::IntVect::TheDimensionVector(2));
+                    u2(i,j,k) = shear(2, position(i, j, k, zface, plo, dx));
+                }));
         }
         // A face on a box boundary is stored in both boxes. OverrideSync makes
         // the copies agree; not needed here, the value depends only on the index.
@@ -142,12 +125,20 @@ int main (int argc, char* argv[])
         amrex::MultiFab ucc(ba, dm, AMREX_SPACEDIM, 0);
         amrex::average_face_to_cellcenter(ucc, amrex::GetArrOfConstPtrs(umac), geom);
 
-        Real const err_div = divu.norm0();
-        Real err_ucc = 0.0_rt;
-        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-            err_ucc = amrex::max(err_ucc, max_error(ucc, d, geom,
-                [=] AMREX_GPU_DEVICE (amrex::GpuArray<Real,AMREX_SPACEDIM> const& x) { return shear(d, x); }));
+        // The exact velocity at the cell centers, minus the averaged one.
+        amrex::MultiFab exact_ucc(ba, dm, AMREX_SPACEDIM, 0);
+        {
+            auto const& ea = exact_ucc.arrays();
+            amrex::IndexType const itype = exact_ucc.ixType();
+            amrex::ParallelFor(exact_ucc, amrex::IntVect(0), AMREX_SPACEDIM,
+                [=] AMREX_GPU_DEVICE (int b, int i, int j, int k, int n) noexcept
+            {
+                ea[b](i,j,k,n) = shear(n, position(i, j, k, itype, plo, dx));
+            });
         }
+        amrex::MultiFab::Subtract(exact_ucc, ucc, 0, 0, AMREX_SPACEDIM, 0);
+        Real const err_div = divu.norm0();
+        Real const err_ucc = exact_ucc.norm0(0, AMREX_SPACEDIM, amrex::IntVect(0));
         amrex::Print() << "Max |div u| = " << err_div
                        << ", max error of the cell-averaged velocity = " << err_ucc << "\n";
 
@@ -168,8 +159,16 @@ int main (int argc, char* argv[])
         amrex::average_cellcenter_to_face(amrex::GetArrOfPtrs(phi_face), phi, geom);
         Real err_face = 0.0_rt;
         for (int d = 0; d < AMREX_SPACEDIM; ++d) {
-            err_face = amrex::max(err_face, max_error(phi_face[d], 0, geom,
-                [=] AMREX_GPU_DEVICE (amrex::GpuArray<Real,AMREX_SPACEDIM> const& x) { return linear(x); }));
+            // The exact values on the faces, minus the averaged ones.
+            amrex::MultiFab exact_face(phi_face[d].boxArray(), dm, 1, 0);
+            auto const& ea = exact_face.arrays();
+            amrex::IndexType const itype = exact_face.ixType();
+            amrex::ParallelFor(exact_face, [=] AMREX_GPU_DEVICE (int b, int i, int j, int k) noexcept
+            {
+                ea[b](i,j,k) = linear(position(i, j, k, itype, plo, dx));
+            });
+            amrex::MultiFab::Subtract(exact_face, phi_face[d], 0, 0, 1, 0);
+            err_face = amrex::max(err_face, exact_face.norm0());
         }
         amrex::Print() << "Max error of the face-averaged scalar = " << err_face << "\n";
 
@@ -184,8 +183,9 @@ int main (int argc, char* argv[])
         }
         amrex::MultiFab psi_cc(ba, dm, 1, 0);
         amrex::average_node_to_cellcenter(psi_cc, 0, psi, 0, 1);
-        Real const err_node = max_error(psi_cc, 0, geom,
-            [=] AMREX_GPU_DEVICE (amrex::GpuArray<Real,AMREX_SPACEDIM> const& x) { return linear(x); });
+        // phi holds the same linear function at the cell centers.
+        amrex::MultiFab::Subtract(phi, psi_cc, 0, 0, 1, 0);
+        Real const err_node = phi.norm0();
         amrex::Print() << "Max error of the cell-averaged nodal data = " << err_node << "\n";
 
         if (write_plotfile) {

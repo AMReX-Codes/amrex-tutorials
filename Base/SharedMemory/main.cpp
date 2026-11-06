@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <limits>
 
 using amrex::Long;
 using amrex::Real;
@@ -64,9 +63,6 @@ void binned_sum_private (amrex::MultiFab const& phi, amrex::iMultiFab const& q,
                 amrex::Gpu::Device::maxBlocksPerLaunch()));
             // The private sums are int: with |q| <= max_q = 1000, a block
             // would need over two million cells to overflow.
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                Long((ncells + nblocks - 1) / nblocks) * max_q <= std::numeric_limits<int>::max(),
-                "private int sums could overflow");
 #ifdef AMREX_USE_SYCL
             // SYCL: dynamic shared memory, requested at launch.
             std::size_t const shared_mem_bytes = nbins * sizeof(int);

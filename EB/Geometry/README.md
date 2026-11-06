@@ -12,12 +12,9 @@ program builds each geometry listed in `geometries` on `[-1,1]^D` (default
 - `stl`: a triangulated surface from an STL file (`octahedron.stl`), read
   through the `eb2.*` runtime parameters.
 
-For each geometry, the program counts regular, cut and covered cells, sums
-the fluid volume, the EB surface area, and the fluid area of the plane
-`x = 0` from the x-face area fractions. It compares the volume with the
-exact value when one is known (not for a user-supplied `parser.function` or
-another `eb2.*` geometry), and for the sphere also the EB area and the area
-at `x = 0`. It fails if a relative error is larger than 2% (at `n_cell = 32`).
+For each geometry, the program counts regular, cut and covered cells and
+sums the fluid volume and the EB surface area. For the sphere it compares
+both with the exact values and fails if a relative error is larger than 5%.
 It writes a plotfile `plt_<geometry>` with the cell type and the volume
 fraction, and in 3D the EB surface of `surface_geometry` to `eb.pvtp` for
 ParaView.
@@ -57,10 +54,10 @@ finer grid, `n_cell = 128`.
 ```
 Geometry: sphere
   regular, cut, covered cells: 2920, 1760, 28088
-  fluid volume:        0.90020653
-  EB surface area:     4.51266773
-  fluid area at x = 0: 1.129279637
-  expected volume:     0.9047786842, relative error 0.005053339927
+  fluid volume:    0.90020653
+  EB surface area: 4.51266773
+  expected volume: 0.9047786842, relative error 0.005053339927
+  expected area:   4.523893421, relative error 0.002481422557
   ...
 PASSED
 ```

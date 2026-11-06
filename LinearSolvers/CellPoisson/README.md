@@ -53,8 +53,8 @@ Boundary conditions: dirichlet neumann periodic
 MLMG: Initial rhs               = 116.7325837
 MLMG: Initial residual (resid0) = 2821.164753
 MLMG: Final Iter. 7 resid, resid/resid0 = 4.106625795e-08, 1.455649051e-11
-...
 n_cell = 32: max error = 0.003249084214
+...
 n_cell = 64: max error = 0.0008196247914
 Convergence rate = 1.98699761
 PASSED

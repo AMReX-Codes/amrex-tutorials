@@ -12,18 +12,17 @@ through a periodic domain, and use reductions, plotfiles and checkpoints.
 - Particles move in straight lines. After each step, `Redistribute` moves
   them to their new grid and MPI rank and wraps them around periodic
   boundaries.
-- `ParticleReduce` sums the weight, kinetic energy and path length in one pass.
+- `ReduceSum` sums the weight and the kinetic energy over all particles.
 - A plotfile with the particle count per cell plus the particles, and a
   particle checkpoint that is read back with `Restart`.
 
 The test checks that the number of particles, total weight and kinetic
-energy are conserved, that the total path length is `nsteps*dt*sum|v|`, and
-that the restarted particles match.
+energy are conserved.
 
 **Key APIs:** `amrex::ParticleContainerPureSoA`, `SetSoACompileTimeNames`,
 `AddRealComp`, `DefineAndReturnParticleTile`, `ParticleTileData`,
 `amrex::SetParticleIDandCPU`, `ParIter`, `Redistribute`,
-`amrex::ParticleReduce`, `Increment`, `WritePlotFile`, `Checkpoint`, `Restart`
+`amrex::ReduceSum`, `Increment`, `WritePlotFile`, `Checkpoint`, `Restart`
 
 ## Build and run
 
@@ -51,8 +50,8 @@ Use `n_cell`, `nppc` and `nsteps` to make the problem larger. Set
 Real components: x y z vx vy vz w dist
 Initial: 65536 particles, total weight 65653.57918, kinetic energy 32840.52706
 Final:   65536 particles, total weight 65653.57918, kinetic energy 32840.52706
-Restart: 65536 particles, total weight 65653.57918
-Relative errors: weight 8.865877785e-16, energy 2.215542278e-16, path length 3.696117777e-16
+Restart: 65536 particles, total weight 65653.57918, kinetic energy 32840.52706
+Relative errors: weight 4.432938892e-16, energy 8.862169114e-16
 PASSED
 ```
 

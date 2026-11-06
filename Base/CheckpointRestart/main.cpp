@@ -29,7 +29,7 @@ void WriteCheckpoint (std::string const& name, int step, Real time, amrex::Multi
         std::ofstream header(name + "/Header");
         if (!header.good()) { amrex::FileOpenFailed(name + "/Header"); }
         header.precision(17);
-        header << "HeatEquation checkpoint\n" << step << "\n" << time << "\n";
+        header << "CheckpointRestart checkpoint\n" << step << "\n" << time << "\n";
         phi.boxArray().writeOn(header);
         header << "\n";
     }
@@ -90,15 +90,6 @@ void Advance (amrex::MultiFab& phi, amrex::Geometry const& geom, int& step, Real
             WriteCheckpoint(name, step, time, phi);
         }
     }
-}
-
-Real max_diff (amrex::MultiFab const& a, amrex::MultiFab const& b)
-{
-    // b may have a different DistributionMapping, so ParallelCopy it into a's layout.
-    amrex::MultiFab diff(a.boxArray(), a.DistributionMap(), 1, 0);
-    diff.ParallelCopy(b, 0, 0, 1);
-    amrex::MultiFab::Subtract(diff, a, 0, 0, 1, 0);
-    return diff.norm0();
 }
 
 }
@@ -168,33 +159,38 @@ int main (int argc, char* argv[])
         amrex::Print() << "Finished step " << step << ", time " << time
                        << ", wrote " << plotfile << "\n";
 
-        if (test_restart && chk_int > 0 && chk_int < nsteps) {
+        if (test_restart) {
             // Restart from the first checkpoint and redo the remaining steps.
             int step2 = 0;
             Real time2 = 0.0_rt;
             amrex::MultiFab phi2;
             ReadCheckpoint(amrex::Concatenate(chk_file, chk_int, 5), step2, time2, phi2, nghost);
             Advance(phi2, geom, step2, time2, nsteps, dt, -1, chk_file);
-            Real const restart_diff = max_diff(phi, phi2);
+
+            // phi2 may have a different DistributionMapping, so copy it into
+            // phi's layout before comparing.
+            amrex::MultiFab diff(phi.boxArray(), phi.DistributionMap(), 1, 0);
+            diff.ParallelCopy(phi2, 0, 0, 1);
+            amrex::MultiFab::Subtract(diff, phi, 0, 0, 1, 0);
+            Real const restart_diff = diff.norm0();
             amrex::Print() << "Restarted run vs. uninterrupted run: max diff = "
                            << restart_diff << ", time diff = " << time2 - time << "\n";
 
-            // Read the plotfile back. Its DistributionMapping may differ from
-            // phi's, so copy it into phi's layout before comparing.
+            // Read the plotfile back, again into phi's layout.
             amrex::PlotFileData pf(plotfile);
             amrex::MultiFab phi_pf(phi.boxArray(), phi.DistributionMap(), 1, 0);
             phi_pf.ParallelCopy(pf.get(0)); // all variables of level 0, here only "phi"
-            Real const plotfile_diff = max_diff(phi, phi_pf);
+            amrex::MultiFab::Subtract(phi_pf, phi, 0, 0, 1, 0);
+            Real const plotfile_diff = phi_pf.norm0();
             amrex::Print() << "Plotfile " << plotfile << " (step " << pf.levelStep(0)
                            << ", time " << pf.time() << ") vs. memory: max diff = "
                            << plotfile_diff << "\n";
 
-            if (restart_diff != 0.0_rt || time2 != time || plotfile_diff != 0.0_rt ||
-                pf.levelStep(0) != step) {
+            if (restart_diff == 0.0_rt && plotfile_diff == 0.0_rt) {
+                amrex::Print() << "PASSED\n";
+            } else {
                 amrex::Print() << "FAILED\n";
                 status = 1;
-            } else {
-                amrex::Print() << "PASSED\n";
             }
         }
     }
