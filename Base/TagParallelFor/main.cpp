@@ -123,8 +123,8 @@ int main (int argc, char* argv[])
 
         // 2. One launch for all tags. The kernel receives the tag of its
         //    cell. ParallelFor builds a TagVector (copies the tags to the
-        //    device) and synchronizes on every call, so no explicit
-        //    synchronization is needed here.
+        //    device) on every call. Like other ParallelFor calls, it is
+        //    asynchronous.
         auto const tags = make_boundary_tags(phi_tags, domain, nghost);
         for (int irep = 0; irep < nrepeat; ++irep) {
             BL_PROFILE("tags_rebuilt");
@@ -134,6 +134,7 @@ int main (int argc, char* argv[])
             {
                 reflect(tag.fab, i, j, k, n, tag.face, dlo, dhi);
             });
+            amrex::Gpu::streamSynchronize();
         }
 
         // 3. The TagVector is built once and reused; it only needs to be

@@ -31,9 +31,13 @@ checks that the results agree, and times them with `BL_PROFILE` (see
   over the tags that opens its own OpenMP parallel region, so do not call
   it inside one.
 - `ParallelFor(Vector<Tag>, ...)` builds a `TagVector` (copies the tags to
-  the device) and synchronizes the stream on every call. When the same tags
-  are used repeatedly, build the `TagVector` once and rebuild it only when
-  the grids or the `MultiFab` change.
+  the device) on every call. When the same tags are used repeatedly, build
+  the `TagVector` once and rebuild it only when the grids or the `MultiFab`
+  change.
+- Like other `ParallelFor` calls, both forms are asynchronous on GPU: the
+  kernel may still be running when the call returns. The program calls
+  `Gpu::streamSynchronize()` in each timed loop so that the timer includes
+  the kernel.
 - Use `ParallelFor(mf, ...)` (see [MultiFab](../MultiFab)) when the work is
   the same on every box. Tags are for irregular sets of boxes: physical
   boundary conditions, corrections at coarse/fine faces, operations on a
