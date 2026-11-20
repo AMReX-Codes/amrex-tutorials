@@ -822,8 +822,10 @@ the face. The tags are built on the host:
    :end-before: int main
 
 The kernel receives ``(i, j, k, n, tag)``. ``ParallelFor`` over a
-``Vector`` of tags copies the tags to the device and synchronizes the
-stream on every call, so for repeated use the ``TagVector`` is built once:
+``Vector`` of tags copies the tags to the device on every call, so for
+repeated use the ``TagVector`` is built once. Like other ``ParallelFor``
+calls, both forms are asynchronous on GPU, so each timed loop calls
+``Gpu::streamSynchronize()`` for the timer to include the kernel:
 
 .. literalinclude:: ../../Base/TagParallelFor/main.cpp
    :language: cpp
